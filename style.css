@@ -95,3 +95,57 @@ footer{font-size:9px}
   .subject h3{font-size:13px}
   .facility-body h3{font-size:12px}
 }
+
+/* CampusIQ refinement: restrained page switching and accessible sign-in experience */
+.page{animation:none!important}
+.page-wipe,.page-wipe span{display:none!important;animation:none!important}
+.nav{transition:background-color .16s ease,color .16s ease,box-shadow .16s ease!important}
+.nav:hover{transform:none!important}
+.signin-btn{border:0;border-radius:10px;background:linear-gradient(135deg,#7666ef,#5b4ed0);color:#fff;font:700 13px 'DM Sans',sans-serif;padding:10px 17px;cursor:pointer;box-shadow:0 5px 14px #6554db2b;transition:filter .15s ease,box-shadow .15s ease}
+.signin-btn:hover{filter:brightness(1.07);box-shadow:0 7px 18px #6554db40}
+.auth-backdrop{position:fixed;inset:0;z-index:60;background:rgba(17,18,38,.68);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.auth-backdrop.open{display:flex}
+.auth-card{position:relative;background:#fff;color:#20213c;border:1px solid #e9e7f7;border-radius:24px;width:min(100%,440px);padding:34px 36px 26px;box-shadow:0 28px 90px #09091c55;text-align:left}
+.auth-close{position:absolute;right:17px;top:15px;width:34px;height:34px;border:0;border-radius:10px;background:#f4f3fb;color:#6d6c87;font-size:23px;cursor:pointer}
+.auth-logo{display:block;width:48px;height:48px;object-fit:contain;margin-bottom:17px}
+.auth-eyebrow{font-size:10px!important;font-weight:800;letter-spacing:1.5px;color:#7666e9;margin:0 0 8px!important}
+.auth-card h2{font:800 29px/1.2 Manrope,sans-serif;letter-spacing:-.8px;margin:0 0 8px}
+.auth-subtitle{font-size:14px!important;color:#777992;line-height:1.6;margin:0 0 24px!important}
+.auth-card form>label{display:block;font-size:12px;font-weight:700;color:#3b3d5a;margin:15px 0 7px}
+.auth-card input[type=email],.auth-card input[type=password],.auth-card input[type=text]{width:100%;height:46px;border:1px solid #dedfee;border-radius:11px;padding:0 13px;font:14px 'DM Sans',sans-serif;color:#22233e;background:#fff;outline:none}
+.auth-card input:focus{border-color:#8373ef;box-shadow:0 0 0 3px #8272ef20}
+.password-field{display:flex;align-items:center;position:relative}
+.password-field input{padding-right:58px!important}
+.password-field button{position:absolute;right:9px;border:0;background:transparent;color:#7062db;font-weight:700;font-size:12px;cursor:pointer;padding:8px}
+.auth-options{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:13px 0 8px}
+.auth-options .remember{display:flex;align-items:center;gap:7px;font-size:12px;color:#676983}
+.auth-options input{accent-color:#7061e5}
+.text-action,.auth-foot button{border:0;background:transparent;color:#695add;font:700 12px 'DM Sans',sans-serif;cursor:pointer;padding:0}
+.auth-error{font-size:12px;color:#c24155;line-height:1.5;min-height:0;margin:7px 0}
+.auth-submit,.demo-login{width:100%;height:46px;border-radius:11px;font:700 14px 'DM Sans',sans-serif;cursor:pointer}
+.auth-submit{border:0;color:#fff;background:linear-gradient(120deg,#7766ee,#5c4bd1);box-shadow:0 8px 18px #6857dc30}
+.auth-submit:hover{filter:brightness(1.06)}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#a0a0b6;font-size:10px;font-weight:700}
+.auth-divider:before,.auth-divider:after{content:'';height:1px;background:#ecebf4;flex:1}
+.demo-login{border:1px solid #dedcf3;background:#f8f7ff;color:#51479f}
+.demo-login:hover{background:#f0edff}
+.auth-foot{text-align:center;color:#777992;font-size:12px;margin:20px 0 0!important}
+.auth-note{text-align:center;color:#9a9bb0;font-size:10px;line-height:1.5;margin:15px 0 0!important}
+body.dark .auth-card{background:#1b1c34;color:#f1f0ff;border-color:#343451}
+body.dark .auth-card h2,body.dark .auth-card form>label{color:#f1f0ff}
+body.dark .auth-subtitle,body.dark .auth-foot{color:#b2b2cc}
+body.dark .auth-card input[type=email],body.dark .auth-card input[type=password],body.dark .auth-card input[type=text]{background:#14152a;border-color:#3a3b58;color:#f5f4ff}
+body.dark .demo-login{background:#282642;border-color:#464265;color:#d7d1ff}
+body.dark .auth-close{background:#2a2b46;color:#e4e2ff}
+@media(max-width:600px){.auth-card{padding:29px 22px 22px;border-radius:20px}.auth-card h2{font-size:25px}.signin-btn{padding:9px 11px;font-size:12px}.actions{gap:7px}}
+
+/* Final stability and presentation pass */
+html{scroll-behavior:auto}
+body.auth-open{overflow:hidden}
+.page{animation:none!important;transition:none!important}
+.page-wipe,.page-wipe span{display:none!important}
+.auth-backdrop{overscroll-behavior:contain}
+.auth-card{max-height:calc(100dvh - 32px);overflow-y:auto}
+.auth-submit:disabled,.demo-login:disabled{opacity:.65;cursor:wait}
+button:disabled{cursor:not-allowed}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.float{animation:none!important}}

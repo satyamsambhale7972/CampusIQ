@@ -1,29 +1,36 @@
-# CampusIQ — Premium Professional Website
+# CampusIQ — Professional Smart Campus Prototype
 
-A complete, responsive, multi-section front-end prototype for a smart campus platform.
+A responsive static website prototype with Overview, Academics, Attendance, Campus Events, Facilities, and AI Insights sections.
 
-## Included files
-- `index.html` — full website structure and sections
-- `style.css` — responsive visual system, comfortable font sizes, gradients, animations and dark mode
-- `script.js` — tab navigation, colored transitions, filters, search, demo modals and insight interactions
-- `campusiq-logo.svg` — custom scalable CampusIQ vector logo
-- `README.md` — setup instructions
+## Run locally
 
-## Visual improvements
-- Custom CampusIQ logo with a clean C/IQ-inspired symbol and purple-to-mint palette
-- More readable typography across headings, cards, tables and navigation
-- Consistent premium palette: deep indigo, violet, mint, soft coral and clean light backgrounds
-- Color-wipe tab transitions plus animated page entry
-- Responsive layouts for desktop, tablet and mobile
-- Light/dark theme toggle
+1. Extract this ZIP into a folder.
+2. Open `index.html` in a modern browser, or serve this folder with a static web server.
+3. Keep `index.html`, `style.css`, `script.js`, and `campusiq-logo.svg` together in the same folder.
 
-## Publish on your existing GitHub repository
-1. Extract this ZIP.
-2. In your existing `CampusIQ` repository, upload the **contents** of this folder to the repository root (not the ZIP itself).
-3. Replace `index.html`, `style.css`, and `script.js`; add `campusiq-logo.svg`.
-4. Commit the changes.
-5. Confirm Settings → Pages publishes from `main` and `/(root)`.
-6. Wait for deployment and hard-refresh the website with Ctrl + F5.
+## Demo sign-in
 
-## Honest prototype note
-Schedules, attendance, events, facilities and AI insights are sample demo data. No real student database, authentication, campus sensors or AI service is connected.
+- The Sign in button opens the demo sign-in panel.
+- Submit an email and password (minimum four characters) or choose **Continue with demo account**.
+- This creates only a temporary client-side demo session. It does not authenticate a real user, store a password, or create an account on a server.
+- Sign out ends the demo session. Remember Me stores only the demo email in local browser storage.
+- Password recovery is not connected. Real authentication requires a secure authentication provider/backend.
+
+## Public deployment
+
+This is a static HTML/CSS/JavaScript website; it does not require a build step.
+
+### GitHub Pages
+1. Upload the five files to the root of your repository.
+2. In GitHub, open **Settings → Pages**.
+3. Choose **Deploy from a branch**, select `main` and `/(root)`, then save.
+4. Wait for the deployment status and open the URL shown in Pages settings.
+
+### Vercel
+1. Import the GitHub repository in Vercel.
+2. For a static site, leave the framework preset as Other if prompted, with no build command and the project root as the output directory.
+3. Deploy and open the URL Vercel provides.
+
+## Prototype data
+
+Dashboard figures, events, availability, and insights are sample content for demonstration. No live campus database, booking service, notification provider, or AI service is connected.
