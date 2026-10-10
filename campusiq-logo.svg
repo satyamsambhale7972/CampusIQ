@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">CampusIQ logo</title>
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b7bff"/><stop offset=".55" stop-color="#6556e8"/><stop offset="1" stop-color="#35cfa8"/></linearGradient>
+  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient>
+</defs>
+<rect x="5" y="5" width="110" height="110" rx="31" fill="#17172f"/>
+<rect x="9" y="9" width="102" height="102" rx="27" fill="url(#g)"/>
+<path d="M9 36Q9 9 36 9H84Q111 9 111 36V45Q60 70 9 45Z" fill="url(#shine)"/>
+<path d="M69 35a27 27 0 1 0 0 50" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+<path d="M72 45h20M72 60h15M72 75h20" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+<path d="m88 19 3.5 7.5L100 30l-8.5 3.5L88 42l-3.5-8.5L76 30l8.5-3.5Z" fill="#fff1b7"/>
+<circle cx="92" cy="91" r="5" fill="#b8ffe9"/>
+</svg>
