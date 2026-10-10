@@ -1,10 +1,1 @@
-// CampusIQ front-end prototype interactions
-document.querySelectorAll('a[href^="#"]').forEach((link) => {
-  link.addEventListener('click', (event) => {
-    const target = document.querySelector(link.getAttribute('href'));
-    if (target) {
-      event.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-});
+const menu=document.getElementById('menu');const nav=document.getElementById('nav');if(menu&&nav){menu.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));menu.textContent=open?'✕':'☰';});}document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',event=>{const target=document.querySelector(link.getAttribute('href'));if(!target)return;event.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'});if(nav&&nav.classList.contains('open')){nav.classList.remove('open');menu.textContent='☰';menu.setAttribute('aria-expanded','false');}}));
