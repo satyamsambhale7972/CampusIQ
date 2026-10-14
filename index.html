@@ -1,22 +1,1637 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#15152f"><title>CampusIQ — Smart Campus</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head>
-<body><aside class="sidebar" id="sidebar"><a class="brand" href="#" data-page="overview"><img class="brand-logo" src="campusiq-logo.svg" alt="CampusIQ logo"><span class="brand-lockup"><b>Campus<span>IQ</span></b><small>SMART CAMPUS PLATFORM</small></span></a><p class="nav-label">WORKSPACE</p><nav><button class="nav active" data-page="overview"><i>◈</i>Overview</button><button class="nav" data-page="academics"><i>▤</i>Academics</button><button class="nav" data-page="attendance"><i>◷</i>Attendance</button><button class="nav" data-page="events"><i>✦</i>Campus events <em>3</em></button><button class="nav" data-page="facilities"><i>⌂</i>Facilities</button><button class="nav" data-page="insights"><i>⌁</i>AI insights <span class="live"></span></button></nav><div class="side-bottom"><div class="help"><span>✧</span><b>Need a hand?</b><p>Explore your smarter campus space.</p><button id="helpBtn">Explore help ↗</button></div><div class="user"><span class="avatar">SS</span><div><b>Student Space</b><small>Student account</small></div><span class="more">•••</span></div></div></aside>
-<main><header class="topbar"><button class="hamb" id="hamb">☰</button><div class="crumb">Workspace <span>/</span> <b id="crumb">Overview</b></div><div class="actions"><span class="status"><i></i> Campus status <b>Demo</b></span><button class="icon-btn" id="theme" title="Toggle light/dark mode">◐</button><button class="icon-btn" id="notify" title="Notifications">♧<sup></sup></button><button class="signin-btn" id="signInBtn">Sign in</button><button class="avatar top-avatar" id="profile" aria-label="Open profile">SS</button></div></header>
-<section class="page active" id="page-overview"><div class="intro-row"><div><p class="eyebrow">✦ &nbsp; YOUR CAMPUS, CONNECTED</p><h1>Make today <span class="gradient">count.</span></h1><p class="subtitle">Your campus life, organised in one intelligent space.</p></div><div class="date"><span>▦</span><div><small>TODAY</small><b id="today">Today</b></div></div></div>
-<div class="hero"><div class="hero-copy"><span class="pill">✦ CAMPUSIQ INTELLIGENCE</span><h2>A smarter way to<br><i>campus life.</i></h2><p>Less searching. More doing. Everything you need to stay ahead, right where you need it.</p><button class="primary" data-go="insights">Explore AI insights <b>↗</b></button></div><div class="hero-art"><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div><div class="core"><img src="campusiq-logo.svg" alt="" aria-hidden="true"></div><div class="float f1"><span class="ficon mint">◷</span><div><small>ATTENDANCE</small><b>92.4%</b></div><strong>↗</strong></div><div class="float f2"><span class="ficon lilac">▤</span><div><small>NEXT CLASS</small><b>Data Structures</b></div></div><div class="float f3"><span class="ficon peach">✦</span><div><small>UP NEXT</small><b>Innovation Day</b></div></div><span class="spark">✧</span></div></div>
-<div class="section-title"><div><h2>Your campus at a glance</h2><p>A quick pulse on your student life.</p></div><button class="link" data-go="insights">View insights →</button></div>
-<div class="stats"><article class="stat s-blue"><div class="stat-top"><span>◷</span><label>↗ 2.4%</label></div><p>Attendance rate</p><strong>92.4<small>%</small></strong><div class="bars"><i style="height:35%"></i><i style="height:49%"></i><i style="height:42%"></i><i style="height:62%"></i><i style="height:53%"></i><i style="height:78%"></i><i style="height:68%"></i><i style="height:100%"></i></div><small>Great work — keep it up</small></article><article class="stat s-purple"><div class="stat-top"><span>▤</span><label>This week</label></div><p>Classes completed</p><strong>18<small class="muted"> / 22</small></strong><div class="progress"><i style="width:82%"></i></div><small>82% of weekly schedule</small></article><article class="stat s-orange"><div class="stat-top"><span>✦</span><label>3 new</label></div><p>Upcoming events</p><strong>06</strong><div class="event-dots">● ● ● ● ● ● <small>+2</small></div><small>Discover something new</small></article><article class="stat s-green"><div class="stat-top"><span>⌂</span><label>Available</label></div><p>Study spaces</p><strong>24<small class="muted"> / 30</small></strong><div class="progress green"><i style="width:80%"></i></div><small>6 spaces currently occupied</small></article></div>
-<div class="dashboard-grid"><article class="panel"><div class="panel-head"><div><h3>Today's schedule</h3><p>Your next steps, all in one place.</p></div><button class="round" data-go="academics">↗</button></div><div class="schedule-date"><b>MON</b><strong>October 12</strong><span></span><small>4 classes</small></div><div class="schedule"><div class="schedule-row"><time>09:00<small>AM</small></time><i class="dot blue-dot"></i><div class="class cb"><label>LECTURE</label><h4>Data Structures & Algorithms</h4><p>Room A-204 · Dr. Sharma</p><small>09:00 – 10:00</small></div></div><div class="schedule-row"><time>10:15<small>AM</small></time><i class="dot purple-dot"></i><div class="class cp"><label>PRACTICAL</label><h4>Web Development Lab</h4><p>Lab C-102 · Prof. Mehta</p><small>10:15 – 11:45</small></div></div><div class="schedule-row"><time>12:00<small>PM</small></time><i class="dot orange-dot"></i><div class="class co"><label>LECTURE</label><h4>Database Management Systems</h4><p>Room B-110 · Dr. Patil</p><small>12:00 – 01:00</small></div></div><div class="schedule-row"><time>02:00<small>PM</small></time><i class="dot green-dot"></i><div class="class cg"><label>WORKSHOP</label><h4>AI Project Studio</h4><p>Innovation Hub · CampusIQ team</p><small>02:00 – 03:30</small></div></div></div><button class="wide-link" data-go="academics">View full timetable →</button></article>
-<div class="right-col"><article class="panel"><div class="panel-head"><div><h3>Campus pulse</h3><p>What's happening around you.</p></div><span class="live-label">● LIVE</span></div><div class="feature-event"><div class="event-art"><span>✦</span><i></i></div><div><label>FEATURED EVENT</label><h4>Innovation Day 2026</h4><p>Showcase ideas. Meet creators. Build what's next.</p><button class="link" data-go="events">Explore event ↗</button></div></div><div class="activity"><span class="activity-icon purple-bg">✧</span><div><b>Hackathon registrations open</b><small>Student innovation · 2 hours ago</small></div></div><div class="activity"><span class="activity-icon mint-bg">⌂</span><div><b>Library hours extended</b><small>Campus update · 4 hours ago</small></div></div><button class="wide-link" data-go="events">See all updates →</button></article><article class="tip"><div><span>✦</span><label>YOUR IQ TIP</label><button id="newTip">↻</button></div><h3 id="tipTitle">Small steps. Big progress.</h3><p id="tipText">Try a 25-minute focus session before your next class. Consistency beats cramming.</p><small>✧ Powered by CampusIQ</small></article></div></div><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#15152f">
+  <title>CampusIQ — Smart Student Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-<section class="page" id="page-academics"><div class="page-intro"><p class="eyebrow">✦ &nbsp; LEARN WITH CLARITY</p><h1>Own your <span class="gradient">learning.</span></h1><p class="subtitle">Your timetable, coursework, and learning goals in one place.</p></div><div class="academic-hero"><div><label>WEEKLY PROGRESS</label><h2>You're building momentum.</h2><p>18 of 22 classes completed this week.</p><div class="progress big"><i style="width:82%"></i></div><small>82% complete · 4 classes remaining</small></div><div class="ring"><b>82<small>%</small></b><span>COMPLETE</span></div></div><div class="toolbar"><div class="search"><span>⌕</span><input id="classSearch" placeholder="Search subjects or rooms..."></div><span id="subjectCount">4 subjects</span></div><div class="subjects" id="subjects"><article class="subject" data-search="data structures algorithms room a-204 sharma"><div class="subject-icon blue-bg">⌘</div><label>CORE</label><h3>Data Structures & Algorithms</h3><p>Dr. Sharma · Room A-204</p><div class="meta">◷ 09:00 AM <span>4 credits</span></div><div class="progress"><i style="width:78%"></i></div><small>Course progress <b>78%</b></small></article><article class="subject" data-search="web development lab c-102 mehta"><div class="subject-icon purple-bg">⌘</div><label>PRACTICAL</label><h3>Web Development</h3><p>Prof. Mehta · Lab C-102</p><div class="meta">◷ 10:15 AM <span>3 credits</span></div><div class="progress purple"><i style="width:64%"></i></div><small>Course progress <b>64%</b></small></article><article class="subject" data-search="database management systems b-110 patil"><div class="subject-icon orange-bg">▤</div><label>CORE</label><h3>Database Management Systems</h3><p>Dr. Patil · Room B-110</p><div class="meta">◷ 12:00 PM <span>4 credits</span></div><div class="progress orange"><i style="width:71%"></i></div><small>Course progress <b>71%</b></small></article><article class="subject" data-search="ai project studio innovation hub campusiq"><div class="subject-icon mint-bg">✦</div><label>WORKSHOP</label><h3>AI Project Studio</h3><p>CampusIQ team · Innovation Hub</p><div class="meta">◷ 02:00 PM <span>2 credits</span></div><div class="progress green"><i style="width:86%"></i></div><small>Course progress <b>86%</b></small></article></div><div class="section-title"><div><h2>Learning shortcuts</h2><p>Get to your next task faster.</p></div></div><div class="shortcuts"><button data-toast="Assignments are a prototype feature."><span>▣</span><b>Assignments</b><small>Track tasks & deadlines ↗</small></button><button data-toast="Your study planner is a prototype feature."><span>◷</span><b>Study planner</b><small>Plan your focus time ↗</small></button><button data-toast="Course resources are sample content."><span>▤</span><b>Course resources</b><small>Notes and materials ↗</small></button></div><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section>
+  <!-- Collapsible Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#" data-page="overview" title="CampusIQ Home">
+      <img class="brand-logo" src="campusiq-logo.svg" alt="CampusIQ logo">
+      <span class="brand-lockup">
+        <b>Campus<span>IQ</span></b>
+        <small>SMART CAMPUS PLATFORM</small>
+      </span>
+    </a>
 
-<section class="page" id="page-attendance"><div class="page-intro"><p class="eyebrow">✦ &nbsp; SHOW UP FOR YOUR FUTURE</p><h1>Your effort, <span class="gradient">in focus.</span></h1><p class="subtitle">Understand your attendance before it becomes a concern.</p></div><div class="attendance-top"><article class="panel"><div class="panel-head"><div><h3>Overall attendance</h3><p>Across all listed subjects</p></div><label class="good-pill">On track</label></div><div class="att-content"><div class="att-ring"><div><b>92.4<small>%</small></b><span>ATTENDANCE</span></div></div><div><h2>You're doing great.</h2><p>You're comfortably above the sample 75% target. Keep the consistency going.</p><small>● Present <b>92.4%</b></small><small class="muted-text">● Absent <b>7.6%</b></small></div></div></article><article class="att-tip"><span>✦</span><label>CAMPUSIQ NUDGE</label><h2>Consistency is a superpower.</h2><p>Build a small routine: review tomorrow's timetable before you sleep.</p><button class="primary" data-go="academics">View timetable →</button></article></div><div class="section-title"><div><h2>Subject breakdown</h2><p>Example attendance data for this prototype.</p></div><div class="filters"><button class="filter selected" data-att="all">All subjects</button><button class="filter" data-att="risk">Needs attention</button></div></div><article class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>SUBJECT</th><th>CLASSES HELD</th><th>ATTENDED</th><th>ATTENDANCE</th><th>STATUS</th></tr></thead><tbody id="attendanceRows"><tr data-rate="95"><td><b>⌘ &nbsp; Data Structures & Algorithms</b></td><td>20</td><td>19</td><td><span class="rate">95% <i><em style="width:95%"></em></i></span></td><td><label class="good-pill">Excellent</label></td></tr><tr data-rate="80"><td><b>⌘ &nbsp; Web Development</b></td><td>15</td><td>12</td><td><span class="rate">80% <i><em style="width:80%"></em></i></span></td><td><label class="good-pill">On track</label></td></tr><tr data-rate="72"><td><b>▤ &nbsp; Database Management Systems</b></td><td>18</td><td>13</td><td><span class="rate">72% <i><em style="width:72%"></em></i></span></td><td><label class="warn-pill">Needs focus</label></td></tr><tr data-rate="100"><td><b>✦ &nbsp; AI Project Studio</b></td><td>10</td><td>10</td><td><span class="rate">100% <i><em style="width:100%"></em></i></span></td><td><label class="good-pill">Excellent</label></td></tr></tbody></table></div><div class="table-foot"><span id="attendanceCount">Showing sample data for 4 subjects</span><span>Target shown: 75%</span></div></article><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section>
+    <p class="nav-label">WORKSPACE</p>
+    <nav>
+      <button class="nav active" data-page="overview"><i>◈</i><span>Overview</span></button>
+      <button class="nav" data-page="radar"><i>🎯</i><span>Success Radar</span></button>
+      <button class="nav" data-page="planner"><i>📅</i><span>Study Planner</span></button>
+      <button class="nav" data-page="career"><i>🚀</i><span>Career Roadmap</span></button>
+      <button class="nav" data-page="academics"><i>▤</i><span>Academics</span></button>
+      <button class="nav" data-page="performance"><i>🏅</i><span>Results & CGPA</span></button>
+      <button class="nav" data-page="attendance"><i>◷</i><span>Attendance</span></button>
+      <button class="nav" data-page="navigator"><i>🧭</i><span>Campus Directory</span></button>
+      <button class="nav" data-page="notices"><i>📢</i><span>Notices</span></button>
+      <button class="nav" data-page="events"><i>✦</i><span>Events</span> <em id="navEventsBadge">4</em></button>
+      <button class="nav" data-page="facilities"><i>⌂</i><span>Facilities</span></button>
+      <button class="nav" data-page="insights"><i>⌁</i><span>AI Co-Pilot</span> <span class="live"></span></button>
+      <button class="nav" data-page="help"><i>❓</i><span>Help Centre</span></button>
+      <button class="nav" data-page="admin" id="navAdminBtn" style="display:none"><i>⚙</i><span>Admin Console</span></button>
+    </nav>
 
-<section class="page" id="page-events"><div class="page-intro"><p class="eyebrow">✦ &nbsp; FIND YOUR PEOPLE</p><h1>Campus is <span class="gradient">happening.</span></h1><p class="subtitle">Discover events, meet collaborators, and try something new.</p></div><div class="event-feature"><div class="event-poster"><label>CAMPUS SPOTLIGHT · 2026</label><div>MAKE<br><i>IT HAPPEN.</i></div><small>IDEAS → PEOPLE → POSSIBILITY</small><span class="poster-orb"></span></div><div class="event-copy"><label class="featured-label">FEATURED EVENT</label><h2>Innovation Day 2026</h2><p>One day. Fresh ideas. A campus full of possibility. Share a project, join a team, or come get inspired.</p><div class="event-meta">▦ October 22, 2026<br>⌖ Innovation Hub<br>◷ 10:00 AM onwards</div><button class="primary" id="register">Register interest ↗</button><small>Demo interaction — no real registration is submitted.</small></div></div><div class="section-title"><div><h2>Coming up</h2><p>Something for every kind of curious.</p></div><div class="filters"><button class="event-filter filter selected" data-event="all">All events</button><button class="event-filter filter" data-event="tech">Tech</button><button class="event-filter filter" data-event="community">Community</button></div></div><div class="event-grid" id="eventGrid"><article class="event-card" data-kind="tech"><div class="poster hack"><span>BUILD<br>BEYOND.</span><i>⌘</i></div><div class="event-card-body"><label>TECHNOLOGY · OCT 18</label><h3>Campus Hack Night</h3><p>Bring an idea, find your team, and build something useful in one evening.</p><div>◷ 5:00 PM · Lab C <button data-interest="Campus Hack Night">I'm interested ↗</button></div></div></article><article class="event-card" data-kind="community"><div class="poster wellness"><span>RESET.<br>REFRESH.</span><i>✿</i></div><div class="event-card-body"><label>COMMUNITY · OCT 20</label><h3>Mindful Campus Hour</h3><p>Take a breather with a guided reset and a little space to recharge.</p><div>◷ 4:00 PM · Garden <button data-interest="Mindful Campus Hour">I'm interested ↗</button></div></div></article><article class="event-card" data-kind="tech"><div class="poster ai"><span>THINK<br>IN AI.</span><i>✦</i></div><div class="event-card-body"><label>WORKSHOP · OCT 25</label><h3>AI Project Showcase</h3><p>Explore student experiments and see how ideas become working prototypes.</p><div>◷ 11:00 AM · Hall B <button data-interest="AI Project Showcase">I'm interested ↗</button></div></div></article></div><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section>
+    <div class="side-bottom">
+      <div class="help">
+        <span>✧</span>
+        <b>Need Assistance?</b>
+        <p>Support tickets & campus FAQs.</p>
+        <button id="helpSideBtn" type="button" data-go="help">Open Help Centre ↗</button>
+      </div>
 
-<section class="page" id="page-facilities"><div class="page-intro"><p class="eyebrow">✦ &nbsp; MAKE SPACE FOR GREAT WORK</p><h1>Find your <span class="gradient">next spot.</span></h1><p class="subtitle">Explore the places that make campus feel like yours.</p></div><div class="facility-hero"><div><label>CAMPUS SPACES</label><h2>Your perfect place to focus is closer than you think.</h2><p>Browse sample spaces and see their demo availability.</p></div><div><b>24<span>/30</span></b><small>SPACES AVAILABLE</small><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div><div class="toolbar"><div class="search"><span>⌕</span><input id="facilitySearch" placeholder="Search spaces or facilities..."></div><div class="filters"><button class="facility-filter filter selected" data-facility="all">All spaces</button><button class="facility-filter filter" data-facility="study">Study</button><button class="facility-filter filter" data-facility="social">Social</button></div></div><div class="facility-grid" id="facilityGrid"><article class="facility-card" data-kind="study" data-search="central library silent study books"><div class="facility-art lib"><span>▤</span><label>FOCUS ZONE</label></div><div class="facility-body"><div><h3>Central Library</h3><label class="open">● Open</label></div><p>A calm place for deep work, reading, and research.</p><small>⌖ Block A · Floor 2<br>◷ 8 AM – 8 PM</small><div class="capacity">Seat availability <b>12 / 16</b><i><em style="width:75%"></em></i></div><button data-space="Central Library">View space ↗</button></div></article><article class="facility-card" data-kind="study" data-search="innovation hub project teamwork lab"><div class="facility-art hub"><span>✦</span><label>MAKE & BUILD</label></div><div class="facility-body"><div><h3>Innovation Hub</h3><label class="open">● Open</label></div><p>Collaborate, prototype, and turn ambitious ideas into reality.</p><small>⌖ Block C · Ground<br>◷ 9 AM – 6 PM</small><div class="capacity">Workstations <b>7 / 10</b><i><em style="width:70%"></em></i></div><button data-space="Innovation Hub">View space ↗</button></div></article><article class="facility-card" data-kind="social" data-search="student commons cafe food social"><div class="facility-art commons"><span>☕</span><label>TAKE A BREATHER</label></div><div class="facility-body"><div><h3>Student Commons</h3><label class="busy">● Busy</label></div><p>A welcoming spot for quick bites, chats, and casual teamwork.</p><small>⌖ Main Building<br>◷ 8 AM – 7 PM</small><div class="capacity">Open tables <b>3 / 8</b><i><em style="width:38%"></em></i></div><button data-space="Student Commons">View space ↗</button></div></article><article class="facility-card" data-kind="social" data-search="green garden outdoor relaxation"><div class="facility-art garden"><span>✿</span><label>OUTDOOR RESET</label></div><div class="facility-body"><div><h3>Reflection Garden</h3><label class="open">● Open</label></div><p>Fresh air, a little quiet, and room to think between classes.</p><small>⌖ East Courtyard<br>◷ Open campus hours</small><div class="capacity">Open seating <b>8 / 12</b><i><em style="width:67%"></em></i></div><button data-space="Reflection Garden">View space ↗</button></div></article></div><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section>
+      <div class="user" id="sidebarUserBox" role="button" tabindex="0" title="Manage student profile">
+        <span class="avatar" id="sidebarAvatar">SS</span>
+        <div>
+          <b id="sidebarUserName">Student Space</b>
+          <small id="sidebarUserSubtitle">Authenticating...</small>
+        </div>
+        <div class="menu-anchor">
+          <button class="menu-btn" id="sidebarThreeDotBtn" type="button" aria-label="Account options">•••</button>
+          <div class="menu-dropdown" id="sidebarMenuDropdown">
+            <button class="menu-item" type="button" id="menuItemProfile">👤 Profile & Account</button>
+            <button class="menu-item" type="button" id="menuItemOtp">📱 Mobile Verification</button>
+            <button class="menu-item" type="button" id="menuItemNotif">🔔 Notification Prefs</button>
+            <button class="menu-item danger" type="button" id="menuItemSignOut">🚪 Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
 
-<section class="page" id="page-insights"><div class="page-intro"><p class="eyebrow">✦ &nbsp; A LITTLE MORE CLARITY</p><h1>Meet your <span class="gradient">campus co-pilot.</span></h1><p class="subtitle">Helpful summaries and smart nudges for a more intentional campus day.</p></div><div class="insight-hero"><div class="ai-orb">✦</div><div><span class="pill">CAMPUSIQ AI · DEMO</span><h2>Make the next move<br><i>your best one.</i></h2><p>Explore sample insights built around student routines. No real student records or AI service are connected.</p><button class="primary" id="generate">Generate my daily brief ✦</button></div></div><div class="section-title"><div><h2>Your daily brief</h2><p>Example recommendations based on the sample dashboard.</p></div><label class="info-pill">Sample insights</label></div><div class="insight-grid" id="insightGrid"><article class="insight-card lavender"><label>◷ &nbsp; TIME MANAGEMENT</label><h3>Protect your focus window.</h3><p>Your sample timetable has a gap after lunch. Use 25 minutes to review DSA notes before the afternoon workshop.</p><button data-go="academics">Open timetable ↗</button></article><article class="insight-card mint"><label>⌂ &nbsp; CAMPUS SPACES</label><h3>Try a change of scenery.</h3><p>The demo shows study seats in the Central Library. A quiet space can make focused work easier.</p><button data-go="facilities">Find a space ↗</button></article><article class="insight-card peach"><label>✦ &nbsp; CAMPUS LIFE</label><h3>Make room for curiosity.</h3><p>Innovation Day is coming up in the sample calendar. Consider sharing a project or meeting a new team.</p><button data-go="events">Explore events ↗</button></article></div><div class="disclaimer">ⓘ &nbsp; <p><b>Prototype transparency:</b> CampusIQ currently uses front-end demo data. These are example insights, not personalised AI predictions. A real deployment needs secure data integration and an AI service.</p></div><footer>© 2026 CampusIQ <span>Built for a more connected campus ✦</span><label>Prototype · Sample data</label></footer></section></main>
-<div class="toast" id="toast">✓ <span id="toastText">Done</span></div><div class="backdrop" id="backdrop"><div class="modal"><button id="closeModal">×</button><span>✦</span><label>CAMPUSIQ DEMO</label><h2 id="modalTitle">A closer look</h2><p id="modalText">This is a front-end prototype interaction.</p><button class="primary" id="okay">Got it ✓</button></div></div><div class="auth-backdrop" id="authBackdrop" aria-hidden="true"><section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle"><button class="auth-close" id="authClose" type="button" aria-label="Close sign in">×</button><img src="campusiq-logo.svg" alt="CampusIQ" class="auth-logo"><p class="auth-eyebrow">YOUR CAMPUS, CONNECTED</p><h2 id="authTitle">Welcome back</h2><p class="auth-subtitle" id="authSubtitle">Sign in to your CampusIQ student space.</p><form id="signInForm"><label for="authEmail">Email address</label><input id="authEmail" name="email" type="email" placeholder="you@example.com" autocomplete="username" required><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="4" required><button type="button" id="togglePassword">Show</button></div><div class="auth-options"><label class="remember"><input type="checkbox" id="rememberMe"> Remember me</label><button type="button" class="text-action" id="forgotPassword">Forgot password?</button></div><p class="auth-error" id="authError" role="alert"></p><button class="auth-submit" type="submit" id="authSubmit">Sign in</button></form><div class="auth-divider"><span>OR</span></div><button class="demo-login" type="button" id="demoLogin">Continue with demo account</button><p class="auth-foot" id="authFoot">New to CampusIQ? <button type="button" id="createAccount">Create account</button></p><p class="auth-note">Secure account access powered by Supabase when configured.</p></section></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="script.js"></script></body></html>
+  <!-- Main Content Area -->
+  <main id="mainContainer">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamb" id="hamb" aria-label="Toggle navigation">☰</button>
+        <button class="icon-btn" id="sidebarCollapseBtn" title="Toggle Sidebar" aria-label="Toggle Sidebar" style="display:none">⇄</button>
+        <div class="crumb">Workspace <span>/</span> <b id="crumb">Overview</b></div>
+      </div>
+      
+      <div class="actions">
+        <span class="status" id="campusStatus"><i></i> Campus status <b id="campusStatusText">Online</b></span>
+        <button class="icon-btn" id="theme" title="Toggle light/dark mode" aria-label="Toggle theme">◐</button>
+        <button class="icon-btn" id="notify" title="Notifications" aria-label="Notifications">♧<sup id="notifySup" style="display:none"></sup></button>
+        <button class="signin-btn" id="signInBtn">Sign in</button>
+        <button class="avatar top-avatar" id="profile" aria-label="Open profile">SS</button>
+      </div>
+    </header>
+
+    <!-- PAGE 1: OVERVIEW (12-SECTION STUDENT COCKPIT) -->
+    <section class="page active" id="page-overview">
+      <div class="intro-row">
+        <div>
+          <p class="eyebrow">✦ &nbsp; CAMPUSIQ 2.0 STUDENT OPERATING SYSTEM</p>
+          <h1>Campus <span class="gradient">Cockpit.</span></h1>
+          <p class="subtitle" id="overviewSubtitle">Real-time academic telemetry, verified records, and AI assistance.</p>
+        </div>
+        <div class="date">
+          <span>▦</span>
+          <div>
+            <small>TODAY</small>
+            <b id="today">Loading date...</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 1: Hero Welcome & Academic Identity Banner -->
+      <div class="hero" id="overviewHeroCard">
+        <div class="hero-copy">
+          <span class="pill" id="overviewPill">✦ VERIFIED STUDENT SPACE</span>
+          <h2 id="overviewWelcomeName">Welcome to<br><i>CampusIQ 2.0.</i></h2>
+          <p id="overviewWelcomeDesc">Your academic life, attendance velocity, and revision planner in one synchronized cockpit.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="primary" data-go="radar">Open Success Radar <b>↗</b></button>
+            <button class="quick-action-pill" data-go="planner" style="color:#fff;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2)">Study Timetable 📅</button>
+          </div>
+        </div>
+        <div class="hero-art">
+          <div class="orbit o1"></div>
+          <div class="orbit o2"></div>
+          <div class="orbit o3"></div>
+          <div class="core">
+            <img src="campusiq-logo.svg" alt="CampusIQ logo" aria-hidden="true">
+          </div>
+          <div class="float f1">
+            <span class="ficon mint">◷</span>
+            <div><small>ATTENDANCE</small><b id="floatAttendance">92.4%</b></div>
+            <strong>↗</strong>
+          </div>
+          <div class="float f2">
+            <span class="ficon lilac">🏅</span>
+            <div><small>CGPA STANDING</small><b id="floatCgpa">8.88 / 10</b></div>
+          </div>
+          <div class="float f3">
+            <span class="ficon peach">✦</span>
+            <div><small>STUDY TARGET</small><b id="floatStudyTarget">3.0 hrs/day</b></div>
+          </div>
+          <span class="spark">✧</span>
+        </div>
+      </div>
+
+      <!-- 12-Section Cockpit Grid -->
+      <div class="cockpit-grid-12">
+
+        <!-- CARD 2: Today's Schedule & Room Finder (Span 7) -->
+        <article class="cockpit-card cockpit-span-7" id="cardTodaySchedule">
+          <div class="cockpit-header">
+            <h3><span>📅</span> Today's Class Timetable</h3>
+            <button class="cockpit-header-action" data-go="academics" title="View Full Timetable">↗</button>
+          </div>
+          <div class="schedule-date" style="margin:0 0 12px">
+            <b id="scheduleDayBadge">TODAY</b>
+            <strong id="scheduleDateStr">Current Session</strong>
+            <span></span>
+            <small id="scheduleClassCount">4 courses</small>
+          </div>
+          <div class="schedule" id="overviewScheduleContainer">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+        <!-- CARD 3: Academic Performance & CGPA Standing (Span 5) -->
+        <article class="cockpit-card cockpit-span-5" id="cardAcademicPerf">
+          <div class="cockpit-header">
+            <h3><span>🏅</span> Academic Standing</h3>
+            <button class="cockpit-header-action" data-go="performance" title="View Digital Marksheet">↗</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0">
+            <div>
+              <strong style="font:800 32px 'Manrope',sans-serif;color:var(--indigo-primary)" id="cockpitCgpaValue">--</strong>
+              <small style="color:var(--muted);display:block">Cumulative CGPA / 10.0</small>
+            </div>
+            <div style="text-align:right">
+              <span class="badge" style="background:#e0e7ff;color:#4338ca;font-weight:700;padding:4px 8px;border-radius:6px" id="cockpitSemesterBadge">Semester 5</span>
+              <small style="display:block;margin-top:4px;color:var(--muted)" id="cockpitCreditsEarned">-- Credits</small>
+            </div>
+          </div>
+          <div class="progress purple" style="margin:14px 0 8px">
+            <i id="cockpitCgpaProgress" style="width:85%"></i>
+          </div>
+          <small style="color:var(--muted);font-size:11px" id="cockpitPerfNote">Official institutional result verified by Controller of Examinations.</small>
+        </article>
+
+        <!-- CARD 4: Attendance Velocity & Margin (Span 4) -->
+        <article class="cockpit-card cockpit-span-4" id="cardAttendanceVelocity">
+          <div class="cockpit-header">
+            <h3><span>◷</span> Attendance Velocity</h3>
+            <button class="cockpit-header-action" data-go="attendance" title="View Attendance Log">↗</button>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <strong style="font:800 28px 'Manrope',sans-serif;color:#10b981" id="cockpitAttendanceRate">--%</strong>
+            <span style="font-size:11px;color:var(--muted)">Target: 75% minimum</span>
+          </div>
+          <div class="progress green" style="margin:10px 0">
+            <i id="cockpitAttendanceProgress" style="width:90%"></i>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin:0" id="cockpitAttendanceSafety">Safe: You can miss up to <b>--</b> classes and stay above 75%.</p>
+        </article>
+
+        <!-- CARD 5: Exams & Deadlines Countdown (Span 4) -->
+        <article class="cockpit-card cockpit-span-4" id="cardDeadlinesCountdown">
+          <div class="cockpit-header">
+            <h3><span>⏳</span> Deadlines & Exams</h3>
+            <button class="cockpit-header-action" data-go="academics" title="View Calendar">↗</button>
+          </div>
+          <div class="countdown-grid" id="cockpitCountdownGrid">
+            <div class="countdown-box">
+              <b id="countdownMidterm">--d</b>
+              <small>Mid-Term Exams</small>
+            </div>
+            <div class="countdown-box">
+              <b id="countdownAssignment">--d</b>
+              <small>Next Assignment</small>
+            </div>
+            <div class="countdown-box">
+              <b id="countdownEndterm">--d</b>
+              <small>Final End-Term</small>
+            </div>
+          </div>
+        </article>
+
+        <!-- CARD 6: Coursework & Assignment Tracker (Span 4) -->
+        <article class="cockpit-card cockpit-span-4" id="cardAssignmentsProgress">
+          <div class="cockpit-header">
+            <h3><span>▣</span> Coursework Tasks</h3>
+            <button class="cockpit-header-action" id="cardOpenAsgnBtn" title="Open Assignments Manager">↗</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--muted)">Pending Submissions</span>
+            <span class="info-pill" id="cockpitPendingAsgnCount">0 Pending</span>
+          </div>
+          <div id="cockpitAssignmentMiniList" style="display:grid;gap:6px">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+        <!-- CARD 7: Verified Notice Intelligence (Span 6) -->
+        <article class="cockpit-card cockpit-span-6" id="cardNoticeIntelligence">
+          <div class="cockpit-header">
+            <h3><span>📢</span> Campus Bulletins</h3>
+            <button class="cockpit-header-action" data-go="notices" title="View All Notices">↗</button>
+          </div>
+          <div id="cockpitNoticesContainer" style="display:grid;gap:8px">
+            <!-- Populated dynamically with priority tags and bookmarks -->
+          </div>
+        </article>
+
+        <!-- CARD 8: AI Study Recommendations (Span 6) -->
+        <article class="cockpit-card cockpit-span-6" id="cardAiRecommendations">
+          <div class="cockpit-header">
+            <h3><span>✦</span> AI Study Actions</h3>
+            <button class="cockpit-header-action" data-go="radar" title="Open Success Radar">↗</button>
+          </div>
+          <div id="cockpitAiActionsList" style="display:grid;gap:8px">
+            <!-- Populated dynamically from Success Radar recommendations -->
+          </div>
+        </article>
+
+        <!-- CARD 9: Quick Action Launchpad (Span 6) -->
+        <article class="cockpit-card cockpit-span-6" id="cardQuickActions">
+          <div class="cockpit-header">
+            <h3><span>⚡</span> Quick Launchpad</h3>
+          </div>
+          <div class="quick-actions-bar">
+            <button class="quick-action-pill" data-go="radar">🎯 Success Radar</button>
+            <button class="quick-action-pill" data-go="planner">📅 Revision Timetable</button>
+            <button class="quick-action-pill" data-go="career">🚀 Career Roadmap</button>
+            <button class="quick-action-pill" data-go="navigator">🧭 Campus Directory</button>
+            <button class="quick-action-pill" data-go="facilities">⌂ Book Study Room</button>
+            <button class="quick-action-pill" data-go="help">🎫 Raise Support Ticket</button>
+          </div>
+        </article>
+
+        <!-- CARD 10: Active Support & Grievances (Span 6) -->
+        <article class="cockpit-card cockpit-span-6" id="cardSupportStatus">
+          <div class="cockpit-header">
+            <h3><span>🎫</span> Support & Helpdesk</h3>
+            <button class="cockpit-header-action" data-go="help" title="Help Centre">↗</button>
+          </div>
+          <div id="cockpitSupportContainer" style="display:grid;gap:8px">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+        <!-- CARD 11: Recent Student Audit Activity Trail (Span 8) -->
+        <article class="cockpit-card cockpit-span-8" id="cardRecentActivityTrail">
+          <div class="cockpit-header">
+            <h3><span>🕒</span> Persistent Activity Trail</h3>
+            <small style="color:var(--muted)">Verified institutional audit log</small>
+          </div>
+          <div class="activity-stream" id="cockpitActivityStream">
+            <!-- Populated dynamically from /api/activities/recent -->
+          </div>
+        </article>
+
+        <!-- CARD 12: Campus Facilities & Occupancy (Span 4) -->
+        <article class="cockpit-card cockpit-span-4" id="cardCampusSpaces">
+          <div class="cockpit-header">
+            <h3><span>⌂</span> Study Spaces</h3>
+            <button class="cockpit-header-action" data-go="facilities" title="All Facilities">↗</button>
+          </div>
+          <div id="cockpitFacilitiesList" style="display:grid;gap:8px">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 2: ACADEMICS -->
+    <section class="page" id="page-academics">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; LEARN WITH CLARITY</p>
+        <h1>Own your <span class="gradient">learning.</span></h1>
+        <p class="subtitle">Your timetable, assignments, syllabus materials, and study planner in one place.</p>
+      </div>
+
+      <div class="academic-hero">
+        <div>
+          <label>SEMESTER CURRICULUM</label>
+          <h2 id="academicsHeroTitle">Active Curriculum Overview</h2>
+          <p id="academicsHeroSubtitle">All subjects registered for your department.</p>
+          <div class="progress big">
+            <i id="academicsHeroBar" style="width:82%"></i>
+          </div>
+          <small id="academicsHeroStats">13 credits enrolled · 4 active subjects</small>
+        </div>
+        <div class="ring">
+          <b id="academicsRingPct">82<small>%</small></b>
+          <span>PROGRESS</span>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search">
+          <span>⌕</span>
+          <input id="classSearch" placeholder="Search courses, instructors, or rooms...">
+        </div>
+        <span id="subjectCount">Loading courses...</span>
+      </div>
+
+      <div class="subjects" id="subjects">
+        <!-- Dynamically populated -->
+      </div>
+
+      <div class="section-title">
+        <div>
+          <h2>Learning shortcuts</h2>
+          <p>Productivity tools for coursework and exam preparation.</p>
+        </div>
+      </div>
+
+      <div class="shortcuts">
+        <button id="openAssignmentsBtn" type="button">
+          <span>▣</span>
+          <b>Assignments Manager</b>
+          <small>Track tasks, deadlines & priorities ↗</small>
+        </button>
+
+        <button id="openPlannerBtn" type="button">
+          <span>◷</span>
+          <b>Study Planner & Focus Timer</b>
+          <small>Plan focus blocks & pomodoro sessions ↗</small>
+        </button>
+
+        <button id="openResourcesBtn" type="button">
+          <span>▤</span>
+          <b>Course Resources & Syllabus</b>
+          <small>Lecture notes, slides & past papers ↗</small>
+        </button>
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 3: RESULTS & DIGITAL MARKSHEETS (NEW) -->
+    <section class="page" id="page-performance">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; VERIFIED ACADEMIC RECORDS</p>
+        <h1>Performance & <span class="gradient">Marksheets.</span></h1>
+        <p class="subtitle">Official examination marks, credit points, grade calculations, and downloadable grade cards.</p>
+      </div>
+
+      <!-- Performance KPI Row -->
+      <div class="stats">
+        <article class="stat s-purple">
+          <div class="stat-top"><span>🏅</span><label>Cumulative</label></div>
+          <p>CGPA Standing</p>
+          <strong id="marksheetCgpa">8.88<small>/10</small></strong>
+          <small>Grade Distinction: First Class</small>
+        </article>
+        <article class="stat s-blue">
+          <div class="stat-top"><span>▤</span><label>Current Semester</label></div>
+          <p>SGPA Score</p>
+          <strong id="marksheetSgpa">8.88</strong>
+          <small>Total 13 Semester Credits</small>
+        </article>
+        <article class="stat s-green">
+          <div class="stat-top"><span>✓</span><label>Status</label></div>
+          <p>Result Status</p>
+          <strong id="marksheetStatus">PASS</strong>
+          <small>All registered subjects cleared</small>
+        </article>
+        <article class="stat s-orange">
+          <div class="stat-top"><span>📝</span><label>Tasks</label></div>
+          <p>Assignment Completion</p>
+          <strong id="marksheetAsgnRate">100<small>%</small></strong>
+          <small>All internal coursework submitted</small>
+        </article>
+      </div>
+
+      <!-- Printable Digital Marksheet Area -->
+      <div class="marksheet-card" id="printMarksheetArea">
+        <div class="marksheet-header">
+          <div class="marksheet-title">
+            <h2>CampusIQ Examination Directorate</h2>
+            <p>Institutional Grade Card & Academic Performance Summary</p>
+          </div>
+          <div>
+            <span class="watermark-badge watermark-official" id="marksheetBadge">● OFFICIAL RECORD</span>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="primary" id="printMarksheetBtn" type="button" style="padding:7px 12px;font-size:11px">Print Marksheet 🖨</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="student-meta-grid">
+          <div class="student-meta-item">
+            <small>Student Name</small>
+            <b id="msStudentName">Satyam Sambhale</b>
+          </div>
+          <div class="student-meta-item">
+            <small>Student ID</small>
+            <b id="msStudentId">STU-10294</b>
+          </div>
+          <div class="student-meta-item">
+            <small>Course & Branch</small>
+            <b id="msCourseBranch">B.Tech (CSE)</b>
+          </div>
+          <div class="student-meta-item">
+            <small>Academic Session</small>
+            <b id="msSession">Semester 5 (2025-2026)</b>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="marks-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Course Name</th>
+                <th>Credits</th>
+                <th>Internal (40)</th>
+                <th>External (60)</th>
+                <th>Total (100)</th>
+                <th>Grade</th>
+                <th>Grade Point</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="marksheetTableBody">
+              <!-- Dynamically populated from /api/academics/results -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="marksheet-footer">
+          <div class="verification-box">
+            <span>Official Verification Ref:</span>
+            <span class="ref-pill" id="msVerificationRef">REF-STU102-CS301-S5</span>
+            <small>Digitally verified by Examination Controller</small>
+          </div>
+          <div>
+            <b style="font-size:12px;color:var(--ink)">SGPA: <span id="msFooterSgpa">8.88</span> | CGPA: <span id="msFooterCgpa">8.88</span></b>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 4: ATTENDANCE -->
+    <section class="page" id="page-attendance">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; SHOW UP FOR YOUR FUTURE</p>
+        <h1>Your effort, <span class="gradient">in focus.</span></h1>
+        <p class="subtitle">Real-time attendance calculations based on official institutional class records.</p>
+      </div>
+
+      <div class="attendance-top">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Overall attendance</h3>
+              <p>Across all enrolled curriculum subjects</p>
+            </div>
+            <label class="good-pill" id="attOverallPill">On track</label>
+          </div>
+
+          <div class="att-content">
+            <div class="att-ring" id="attRingGraphic">
+              <div>
+                <b id="attOverallRate">--<small>%</small></b>
+                <span>ATTENDANCE</span>
+              </div>
+            </div>
+            <div>
+              <h2 id="attHeading">Loading attendance...</h2>
+              <p id="attSummaryText">Calculating threshold metrics...</p>
+              <small>● Attended <b id="attPresentCount">-- classes</b></small>
+              <small class="muted-text">● Absent <b id="attAbsentCount">-- classes</b></small>
+            </div>
+          </div>
+        </article>
+
+        <article class="att-tip">
+          <span>✦</span>
+          <label>ATTENDANCE COMPLIANCE</label>
+          <h2>Mandatory 75% Target.</h2>
+          <p>Institutional senate rules require 75% attendance to sit for semester examinations.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="primary" id="openLogAttendanceBtn" type="button">Log Attendance +</button>
+            <button class="primary" data-go="academics" type="button" style="background:#ffffff20">View Timetable →</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="section-title">
+        <div>
+          <h2>Subject breakdown</h2>
+          <p>Official course attendance records and compliance status.</p>
+        </div>
+        <div class="filters">
+          <button class="filter selected" data-att="all">All subjects</button>
+          <button class="filter" data-att="risk">Needs attention (&lt;75%)</button>
+        </div>
+      </div>
+
+      <article class="panel table-panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SUBJECT</th>
+                <th>CLASSES HELD</th>
+                <th>ATTENDED</th>
+                <th>ATTENDANCE RATE</th>
+                <th>STATUS</th>
+                <th>ACTION NEEDED</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceRows">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div class="table-foot">
+          <span id="attendanceCount">Showing registered courses</span>
+          <span>Mandatory minimum target: 75%</span>
+        </div>
+      </article>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 5: CAMPUS EVENTS -->
+    <section class="page" id="page-events">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; FIND YOUR PEOPLE</p>
+        <h1>Campus is <span class="gradient">happening.</span></h1>
+        <p class="subtitle">Discover verified campus events, collaborate with peers, and RSVP in real time.</p>
+      </div>
+
+      <div class="event-feature" id="eventsFeaturedContainer">
+        <div class="event-poster">
+          <label>CAMPUS SPOTLIGHT · 2026</label>
+          <div>MAKE<br><i>IT HAPPEN.</i></div>
+          <small>IDEAS → PEOPLE → POSSIBILITY</small>
+          <span class="poster-orb"></span>
+        </div>
+        <div class="event-copy">
+          <label class="featured-label">FEATURED EVENT</label>
+          <h2 id="featuredEventTitle">Innovation Day 2026</h2>
+          <p id="featuredEventDesc">One day. Fresh ideas. A campus full of possibility. Share a project, join a team, or come get inspired.</p>
+          <div class="event-meta" id="featuredEventMeta">
+            ▦ October 22, 2026<br>
+            ⌖ Innovation Hub & Main Auditorium<br>
+            ◷ 10:00 AM onwards
+          </div>
+          <button class="primary" id="featuredRegisterBtn" type="button">Register interest ↗</button>
+          <small id="featuredRegisterStatus">Real-time RSVP integration</small>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div>
+          <h2>Coming up</h2>
+          <p>Official student activities, competitions, and workshops.</p>
+        </div>
+        <div class="filters">
+          <button class="event-filter filter selected" data-event="all">All events</button>
+          <button class="event-filter filter" data-event="tech">Technology</button>
+          <button class="event-filter filter" data-event="community">Community</button>
+          <button class="event-filter filter" data-event="workshop">Workshops</button>
+        </div>
+      </div>
+
+      <div class="event-grid" id="eventGrid">
+        <!-- Dynamically populated from /api/events -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 6: FACILITIES -->
+    <section class="page" id="page-facilities">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; MAKE SPACE FOR GREAT WORK</p>
+        <h1>Find your <span class="gradient">next spot.</span></h1>
+        <p class="subtitle">Explore campus study rooms, maker labs, and reserve workstations.</p>
+      </div>
+
+      <div class="facility-hero">
+        <div>
+          <label>CAMPUS SPACES</label>
+          <h2>Your perfect place to focus is closer than you think.</h2>
+          <p>Live occupancy monitoring and study space reservations.</p>
+        </div>
+        <div>
+          <b id="facilitiesAvailableHero">--<span>/--</span></b>
+          <small>TOTAL SEATS FREE</small>
+          <div class="mini-bars" id="facilityBars">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search">
+          <span>⌕</span>
+          <input id="facilitySearch" placeholder="Search libraries, labs, or commons...">
+        </div>
+        <div class="filters">
+          <button class="facility-filter filter selected" data-facility="all">All spaces</button>
+          <button class="facility-filter filter" data-facility="study">Study</button>
+          <button class="facility-filter filter" data-facility="social">Social</button>
+        </div>
+      </div>
+
+      <div class="facility-grid" id="facilityGrid">
+        <!-- Dynamically populated from /api/facilities -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 7: AI INSIGHTS & CO-PILOT -->
+    <section class="page" id="page-insights">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; A LITTLE MORE CLARITY</p>
+        <h1>Meet your <span class="gradient">campus co-pilot.</span></h1>
+        <p class="subtitle">Personalized academic guidance, attendance nudges, and intelligent student support.</p>
+      </div>
+
+      <div class="insight-hero">
+        <div class="ai-orb">✦</div>
+        <div>
+          <span class="pill" id="aiHeroBadge">CAMPUSIQ AI CO-PILOT</span>
+          <h2>Make the next move<br><i>your best one.</i></h2>
+          <p>Your academic assistant analyzes your registered courses, attendance rates, pending assignments, and timetable to deliver actionable study plans.</p>
+          <button class="primary" id="generate">Generate my daily brief ✦</button>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div>
+          <h2>Your daily brief</h2>
+          <p>Personalized recommendations based on your verified student profile.</p>
+        </div>
+        <label class="info-pill">Live AI Briefing</label>
+      </div>
+
+      <div class="insight-grid" id="insightGrid">
+        <!-- Dynamically populated from /api/ai/brief -->
+      </div>
+
+      <!-- Interactive AI Chat Console -->
+      <article class="ai-chat-card" id="aiChatCard">
+        <div class="ai-chat-header">
+          <h3><span>✦</span> CampusIQ Academic Assistant</h3>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button id="clearAiChatBtn" type="button" style="border:0;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer">Clear Chat ↻</button>
+            <span class="ai-status-pill" id="aiStatusPill">Grounded in campus records</span>
+          </div>
+        </div>
+
+        <div class="ai-chat-messages" id="aiChatMessages">
+          <div class="ai-bubble ai-bubble-assistant">
+            Hello! I am your <b>CampusIQ Academic Co-Pilot</b>. I have direct access to your enrolled courses, current attendance records, classroom timetable, marksheet scores, and pending coursework.<br><br>
+            How can I support your studies today?
+            <span class="ai-bubble-time">Just now</span>
+          </div>
+        </div>
+
+        <div class="ai-suggestions">
+          <button class="ai-pill-btn" type="button" data-prompt="What is my current CGPA and marks breakdown?">🏅 My CGPA & Marks</button>
+          <button class="ai-pill-btn" type="button" data-prompt="What is my attendance standing across all subjects?">📊 Attendance standing</button>
+          <button class="ai-pill-btn" type="button" data-prompt="Where and when is my next scheduled class?">📍 Next class location</button>
+          <button class="ai-pill-btn" type="button" data-prompt="What coursework or assignments do I have due?">📝 Pending assignments</button>
+        </div>
+
+        <form class="ai-chat-input-bar" id="aiChatForm">
+          <input type="text" id="aiQueryInput" placeholder="Ask about marks, attendance, rooms, or study spaces..." autocomplete="off" required>
+          <button type="submit" id="aiSendBtn">Ask Co-Pilot ↗</button>
+        </form>
+      </article>
+
+      <div class="disclaimer">
+        ⓘ &nbsp;
+        <p><b>CampusIQ Data Integrity:</b> Answers are strictly grounded in your authenticated student records and official university schedules. Provider keys remain securely stored on the backend server.</p>
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 8: CAMPUS HELP CENTRE (NEW) -->
+    <section class="page" id="page-help">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; STUDENT SUPPORT & HELPLINE</p>
+        <h1>Campus <span class="gradient">Help Centre.</span></h1>
+        <p class="subtitle">Search university FAQs, contact IT support, or submit a support ticket to student affairs.</p>
+      </div>
+
+      <!-- Support KPI Grid -->
+      <div class="stats">
+        <article class="stat s-blue">
+          <div class="stat-top"><span>📞</span><label>Verified Contacts</label></div>
+          <p>IT Helpdesk</p>
+          <strong style="font-size:18px">helpdesk@campusiq.edu</strong>
+          <small>Ext: 1042 · Central Block A</small>
+        </article>
+        <article class="stat s-purple">
+          <div class="stat-top"><span>🏛️</span><label>Academic Affairs</label></div>
+          <p>Dean's Office</p>
+          <strong style="font-size:18px">academics@campusiq.edu</strong>
+          <small>Mon-Fri · 09:00 AM – 05:00 PM</small>
+        </article>
+        <article class="stat s-green">
+          <div class="stat-top"><span>🚑</span><label>Campus Helpline</label></div>
+          <p>Emergency Line</p>
+          <strong style="font-size:18px">+91 020 2569 0000</strong>
+          <small>Campus Security & Medical Center</small>
+        </article>
+        <article class="stat s-orange">
+          <div class="stat-top"><span>🎫</span><label>Track Issues</label></div>
+          <p>Support Tickets</p>
+          <strong id="helpOpenTicketsCount">0 Active</strong>
+          <small>Track resolution history</small>
+        </article>
+      </div>
+
+      <!-- Support Action Bar -->
+      <div class="section-title">
+        <div>
+          <h2>Your Support Tickets</h2>
+          <p>Persistent issue tracking with college departments.</p>
+        </div>
+        <button class="primary" id="openCreateTicketBtn" type="button">Raise Support Ticket +</button>
+      </div>
+
+      <div id="studentTicketsListContainer">
+        <!-- Dynamically populated from /api/help/tickets -->
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="section-title" style="margin-top:36px">
+        <div>
+          <h2>Frequently Asked Questions</h2>
+          <p>Official institutional rules, attendance guidelines, and marksheet protocols.</p>
+        </div>
+      </div>
+
+      <div id="faqAccordionContainer" style="display:grid;gap:10px">
+        <!-- Dynamically populated from /api/help/faqs -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- PAGE 9: ADMIN CONSOLE (STAFF ONLY) -->
+    <section class="page" id="page-admin">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; INSTITUTIONAL ADMINISTRATION</p>
+        <h1>Staff <span class="gradient">Control Console.</span></h1>
+        <p class="subtitle">Publish examination results, manage support tickets, and view security audit logs.</p>
+      </div>
+
+      <div class="section-title">
+        <div>
+          <h2>Open Student Support Tickets</h2>
+          <p>Respond to student queries and update ticket resolution status.</p>
+        </div>
+      </div>
+
+      <div id="adminTicketsContainer">
+        <!-- Populated from /api/admin/tickets -->
+      </div>
+
+      <div class="section-title" style="margin-top:36px">
+        <div>
+          <h2>Security & Operational Audit Logs</h2>
+          <p>Tamper-evident system activity log.</p>
+        </div>
+      </div>
+
+      <article class="panel table-panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>ACTOR</th>
+                <th>ACTION</th>
+                <th>ENTITY</th>
+                <th>TARGET ID</th>
+              </tr>
+            </thead>
+            <tbody id="adminAuditLogsBody">
+              <!-- Populated from /api/admin/audit-logs -->
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- ====================================================================
+         PAGE: STUDENT SUCCESS RADAR
+         ==================================================================== -->
+    <section class="page" id="page-radar">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; MULTI-DIMENSIONAL ACADEMIC TELEMETRY</p>
+        <h1>Student Success <span class="gradient">Radar.</span></h1>
+        <p class="subtitle">Personalized academic insight cockpit combining strengths, attendance trends, and computed study recommendations.</p>
+      </div>
+
+      <div class="radar-hero">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+          <div>
+            <h2 id="radarOverallAssessment">Academic Standing: Exemplary</h2>
+            <p id="radarHeroSubtitle">Real-time synthesis of attendance velocity, coursework milestones, and historical grade points.</p>
+          </div>
+          <div style="text-align:right">
+            <span class="badge" style="background:rgba(255,255,255,0.2);color:#fff;font-size:12px;padding:6px 12px;border-radius:8px">Score: <strong id="radarOverallScore">-- / 100</strong></span>
+            <small style="display:block;margin-top:6px;color:#c7c6e6" id="radarAttendanceVelocity">Attendance: --% (+0.0% velocity)</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strengths, Needs Attention, Velocity Cards -->
+      <div class="radar-grid-cards">
+        <article class="radar-stat-box">
+          <span class="badge" style="background:#d1fae5;color:#047857">💪 Subject Strengths</span>
+          <h4 style="margin:6px 0 12px;font:700 14px Manrope">Top Performing Disciplines</h4>
+          <div id="radarStrengthsList">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+        <article class="radar-stat-box">
+          <span class="badge" style="background:#fee2e2;color:#b91c1c">⚠️ Needs Attention</span>
+          <h4 style="margin:6px 0 12px;font:700 14px Manrope">High-Priority Focus Areas</h4>
+          <div id="radarWeaknessesList">
+            <!-- Populated dynamically -->
+          </div>
+        </article>
+
+        <article class="radar-stat-box">
+          <span class="badge" style="background:#e0e7ff;color:#4338ca">📈 Attendance Velocity</span>
+          <h4 style="margin:6px 0 12px;font:700 14px Manrope">Attendance & Buffer Health</h4>
+          <div style="padding:10px 0">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--muted)">Current Attendance</span>
+              <strong id="radarAttCurrent">--%</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--muted)">Cutoff Minimum</span>
+              <strong>75.0%</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--muted)">Buffer Allowance</span>
+              <strong id="radarAttBuffer" style="color:#10b981">-- classes safe</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Actionable Study Recommendations -->
+      <div class="section-title">
+        <div>
+          <h2>Data-Grounded Study Recommendations</h2>
+          <p>Personalized next actions computed from verified academic data and attendance records.</p>
+        </div>
+      </div>
+
+      <div id="radarRecommendationsContainer" style="display:grid;gap:12px">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Calculation Rationale Disclaimer -->
+      <div class="radar-rationale-box">
+        <strong>Transparent Calculation Methodology:</strong>
+        <p id="radarRationaleText" style="margin:6px 0 0">
+          The Success Radar synthesizes registered course marks, attendance percentage vs. the 75% institutional threshold, and assignment completion ratios. Scores above 80 indicate high academic health. AI study recommendations are derived directly from actual academic records and strictly segregated from official examination marks.
+        </p>
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- ====================================================================
+         PAGE: AI STUDY PLANNER & REVISION TIMETABLE
+         ==================================================================== -->
+    <section class="page" id="page-planner">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; EXAM REVISION & TIMETABLE GENERATOR</p>
+        <h1>AI Study <span class="gradient">Planner.</span></h1>
+        <p class="subtitle">Dynamic revision schedule with session tracking, daily hour goals, and one-click completion status.</p>
+      </div>
+
+      <!-- Planner Target Status Box -->
+      <div class="academic-hero" style="background:linear-gradient(110deg,#1e1b4b,#3730a3)">
+        <div>
+          <label>REVISION GOAL</label>
+          <h2 id="plannerTitle">Semester 5 Comprehensive Revision</h2>
+          <p id="plannerExamTarget">Target Exam: Mid-Term & End-Term Examinations 2026</p>
+          <div class="progress big" style="background:rgba(255,255,255,0.2)">
+            <i id="plannerProgressBar" style="width:50%;background:linear-gradient(90deg,#818cf8,#34d399)"></i>
+          </div>
+          <small id="plannerStatsText">Daily Goal: 3.0 hrs/day · 2 of 4 sessions completed</small>
+        </div>
+        <div class="ring">
+          <b id="plannerCompletionRing">50<small>%</small></b>
+          <span>DONE</span>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="primary" id="openAddSessionBtn" type="button">Add Study Session +</button>
+          <span style="font-size:12px;color:var(--muted)" id="plannerSessionSummary">Scheduled Sessions</span>
+        </div>
+      </div>
+
+      <div class="planner-calendar-grid" id="plannerSessionsGrid">
+        <!-- Dynamically populated from /api/study-planner -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- ====================================================================
+         PAGE: SKILL & CAREER ROADMAP
+         ==================================================================== -->
+    <section class="page" id="page-career">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; STUDENT CAREER ADVANCEMENT</p>
+        <h1>Career <span class="gradient">Roadmap.</span></h1>
+        <p class="subtitle">Track competencies, portfolio projects, certifications, and internship readiness milestones.</p>
+      </div>
+
+      <div class="toolbar">
+        <button class="primary" id="openAddGoalBtn" type="button">Add Career Goal +</button>
+        <span style="font-size:12px;color:var(--muted)" id="careerGoalsSummary">Loading roadmap goals...</span>
+      </div>
+
+      <div id="careerGoalsContainer">
+        <!-- Populated dynamically from /api/career-roadmap -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- ====================================================================
+         PAGE: CAMPUS NAVIGATOR & SERVICE FINDER
+         ==================================================================== -->
+    <section class="page" id="page-navigator">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; SEARCHABLE CAMPUS DIRECTORY & NAVIGATION</p>
+        <h1>Campus <span class="gradient">Navigator.</span></h1>
+        <p class="subtitle">Locate academic departments, laboratories, libraries, administrative offices, and emergency helplines.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="search" style="max-width:420px">
+          <span>⌕</span>
+          <input id="navigatorSearchInput" placeholder="Search buildings, labs, libraries, or faculty...">
+        </div>
+        <div class="filters" id="navigatorFilters">
+          <button class="filter selected" data-cat="all">All Locations</button>
+          <button class="filter" data-cat="academic">Academic</button>
+          <button class="filter" data-cat="library">Libraries</button>
+          <button class="filter" data-cat="lab">Labs</button>
+          <button class="filter" data-cat="service">Student Services</button>
+          <button class="filter" data-cat="admin">Administration</button>
+          <button class="filter" data-cat="medical">Medical & Helpline</button>
+        </div>
+      </div>
+
+      <div class="nav-directory-grid" id="navigatorDirectoryGrid">
+        <!-- Populated dynamically from /api/navigator/directory -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+    <!-- ====================================================================
+         PAGE: CAMPUS NOTICE INTELLIGENCE
+         ==================================================================== -->
+    <section class="page" id="page-notices">
+      <div class="page-intro">
+        <p class="eyebrow">✦ &nbsp; OFFICIAL INSTITUTIONAL BULLETIN</p>
+        <h1>Notice <span class="gradient">Intelligence.</span></h1>
+        <p class="subtitle">Verified notices with priority tracking, bookmarks, expiration warnings, and read receipts.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="search" style="max-width:380px">
+          <span>⌕</span>
+          <input id="noticesSearchInput" placeholder="Filter announcements by title or keyword...">
+        </div>
+        <div class="filters" id="noticesFilters">
+          <button class="filter selected" data-priority="all">All Bulletins</button>
+          <button class="filter" data-priority="urgent">Urgent</button>
+          <button class="filter" data-priority="high">High Priority</button>
+          <button class="filter" data-priority="normal">Normal</button>
+          <button class="filter" id="filterSavedNoticesBtn">★ Bookmarked</button>
+        </div>
+      </div>
+
+      <div id="noticesIntelligenceContainer">
+        <!-- Populated dynamically from /api/announcements/intelligence -->
+      </div>
+
+      <footer>
+        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
+        <label>Production Edition · Verified Student Platform</label>
+      </footer>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       INTERACTIVE MODALS & DIALOGS
+       ==================================================================== -->
+
+  <!-- Toast Notification Popup -->
+  <div class="toast" id="toast" role="status" aria-live="polite">✓ <span id="toastText">Done</span></div>
+
+  <!-- Standard Alert/Confirm Modal -->
+  <div class="backdrop" id="backdrop">
+    <div class="modal">
+      <button id="closeModal" aria-label="Close dialog">×</button>
+      <span>✦</span>
+      <label>CAMPUSIQ PLATFORM</label>
+      <h2 id="modalTitle">Notice</h2>
+      <p id="modalText">Message goes here.</p>
+      <button class="primary" id="okay">Got it ✓</button>
+    </div>
+  </div>
+
+  <!-- Authentication Backdrop Modal (Sign In / Sign Up / Reset Password) -->
+  <div class="auth-backdrop" id="authBackdrop" aria-hidden="true">
+    <section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="auth-close" id="authClose" type="button" aria-label="Close authentication">×</button>
+      <img src="campusiq-logo.svg" alt="CampusIQ" class="auth-logo">
+      <p class="auth-eyebrow">YOUR CAMPUS, CONNECTED</p>
+      <h2 id="authTitle">Welcome back</h2>
+      <p class="auth-subtitle" id="authSubtitle">Sign in to your CampusIQ student space.</p>
+
+      <form id="signInForm">
+        <div id="signupNameGroup" hidden>
+          <label for="authFullName">Full name</label>
+          <input id="authFullName" name="fullName" type="text" placeholder="e.g. Satyam Sambhale">
+        </div>
+
+        <label for="authEmail">Student email address</label>
+        <input id="authEmail" name="email" type="email" placeholder="student@example.com" autocomplete="username" required>
+
+        <div id="authPasswordGroup">
+          <label for="authPassword">Password</label>
+          <div class="password-field">
+            <input id="authPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="6">
+            <button type="button" id="togglePassword">Show</button>
+          </div>
+        </div>
+
+        <div class="auth-options" id="authOptionsRow">
+          <label class="remember"><input type="checkbox" id="rememberMe"> Remember me</label>
+          <button type="button" class="text-action" id="forgotPassword">Forgot password?</button>
+        </div>
+
+        <p class="auth-error" id="authError" role="alert"></p>
+
+        <button class="auth-submit" type="submit" id="authSubmit">Sign in securely</button>
+      </form>
+
+      <p class="auth-foot" id="authFoot">
+        New to CampusIQ? <button type="button" id="createAccount">Create account</button>
+      </p>
+      <p class="auth-note">Production access secured with Supabase Auth & JWT token verification.</p>
+    </section>
+  </div>
+
+  <!-- Mobile Number & OTP Verification Modal -->
+  <div class="backdrop" id="otpBackdrop">
+    <div class="modal">
+      <button id="closeOtpModal" aria-label="Close OTP verification">×</button>
+      <span>📱</span>
+      <label>SECURITY VERIFICATION</label>
+      <h2>Verify Mobile Number</h2>
+      <p>Receive official exam alerts and two-factor recovery via SMS.</p>
+
+      <div id="otpStepSend">
+        <div class="form-group" style="text-align:left">
+          <label>Mobile Number with Country Code</label>
+          <div class="phone-input-row">
+            <select class="form-select" id="otpCountryCode">
+              <option value="+91" selected>🇮🇳 +91 (India)</option>
+              <option value="+1">🇺🇸 +1 (USA)</option>
+              <option value="+44">🇬🇧 +44 (UK)</option>
+              <option value="+971">🇦🇪 +971 (UAE)</option>
+            </select>
+            <input class="form-input" id="otpPhoneNumber" type="tel" placeholder="9876543210" maxlength="15" autofocus>
+          </div>
+        </div>
+        <p class="auth-error" id="otpSendError" role="alert"></p>
+        <div class="btn-row">
+          <button class="primary" id="sendOtpBtn" type="button" style="width:100%">Send Verification OTP ↗</button>
+        </div>
+      </div>
+
+      <div id="otpStepVerify" style="display:none">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Code generated for <b id="otpTargetDisplay">--</b></p>
+        
+        <!-- Live Instant OTP Banner (100% Glitch-Free) -->
+        <div class="otp-banner" id="otpLiveBanner">
+          <div class="otp-banner-header">
+            <small>✦ INSTANT VERIFICATION CODE</small>
+            <span class="good-pill" style="font-size:10px;padding:2px 8px">Valid for 5 min</span>
+          </div>
+          <div class="otp-code-highlight" id="otpCodeDisplay">------</div>
+          <button type="button" class="btn-autofill" id="autoFillOtpBtn">⚡ Click to Auto-fill Code</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">Instant verification active. Use this code to verify your phone number immediately.</div>
+        </div>
+
+        <div class="otp-box-row">
+          <input class="otp-input" id="otpInputCode" type="text" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        </div>
+        <div class="cooldown-text" id="otpCooldownText">Resend code in <span id="otpCooldownSec">60</span>s</div>
+        <p class="auth-error" id="otpVerifyError" role="alert"></p>
+        <div class="btn-row" style="flex-direction:column;gap:8px">
+          <button class="primary" id="confirmOtpBtn" type="button" style="width:100%">Verify Code ✓</button>
+          <button class="btn-secondary" id="resendOtpBtn" type="button" disabled style="width:100%">Resend OTP</button>
+          <button type="button" class="change-number-link" id="changeNumberBtn">← Change mobile number</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Profile & Account Settings Modal -->
+  <div class="backdrop" id="profileBackdrop">
+    <div class="modal modal-large">
+      <button id="closeProfileModal" aria-label="Close profile">×</button>
+      <div class="modal-head">
+        <h2>Student Profile & Settings</h2>
+        <span class="good-pill" id="profileRoleBadge">Student Account</span>
+      </div>
+
+      <div class="modal-scrollable">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:#f7f7fc;border-radius:12px">
+          <span class="avatar" id="profileAvatarLarge" style="width:56px;height:56px;font-size:18px">SS</span>
+          <div>
+            <b id="profileDisplayNameLarge" style="font:800 16px Manrope;display:block">Satyam Sambhale</b>
+            <small id="profilePhoneStatus" style="font-size:12px;color:#28a981">● Phone Verified (+91)</small>
+          </div>
+          <button class="btn-secondary" id="openOtpFromProfileBtn" type="button" style="margin-left:auto;font-size:11px">Update Mobile 📱</button>
+        </div>
+
+        <form id="profileForm">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="profileFullNameInput">Full Name</label>
+              <input class="form-input" id="profileFullNameInput" type="text" required>
+            </div>
+            <div class="form-group">
+              <label for="profileStudentIdInput">Student ID / Roll No</label>
+              <input class="form-input" id="profileStudentIdInput" type="text" readonly title="Verified enrollment ID cannot be modified by student">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="profileEmailInput">Registered Email</label>
+              <input class="form-input" id="profileEmailInput" type="email" readonly>
+            </div>
+            <div class="form-group">
+              <label for="profileJoiningInput">Date of Joining</label>
+              <input class="form-input" id="profileJoiningInput" type="text" readonly>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="profileDeptInput">Department / Course</label>
+              <input class="form-input" id="profileDeptInput" type="text" required>
+            </div>
+            <div class="form-group">
+              <label for="profileSemesterInput">Academic Year & Semester</label>
+              <input class="form-input" id="profileSemesterInput" type="text" required>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-secondary" id="profileDeleteAccountBtn" type="button" style="color:var(--danger)">Purge Account</button>
+            <button class="btn-secondary" id="profileSignOutBtn" type="button">Sign Out</button>
+            <button class="primary" type="submit">Save Changes ✓</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Support Ticket Modal -->
+  <div class="backdrop" id="ticketBackdrop">
+    <div class="modal">
+      <button id="closeTicketModal" aria-label="Close ticket dialog">×</button>
+      <span>🎫</span>
+      <label>SUPPORT TICKETING</label>
+      <h2>Create Support Ticket</h2>
+      <p>Submit an inquiry to student affairs or technical services.</p>
+
+      <form id="createTicketForm" style="text-align:left">
+        <div class="form-group">
+          <label for="ticketSubject">Subject</label>
+          <input class="form-input" id="ticketSubject" placeholder="e.g. Attendance discrepancy in CS303" required>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="ticketCategory">Category</label>
+            <select class="form-select" id="ticketCategory" required>
+              <option value="academic">Academic & Timetable</option>
+              <option value="attendance">Attendance Discrepancy</option>
+              <option value="results">Results & Marksheet</option>
+              <option value="facilities">Facility / Lab Access</option>
+              <option value="technical">Technical / Login Issue</option>
+              <option value="general">General Campus Inquiry</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ticketPriority">Priority</label>
+            <select class="form-select" id="ticketPriority" required>
+              <option value="low">Low Priority</option>
+              <option value="medium" selected>Medium Priority</option>
+              <option value="high">High Priority</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ticketMessage">Description & Details</label>
+          <textarea class="form-textarea" id="ticketMessage" rows="4" placeholder="Explain your inquiry with course codes or dates..." required></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" type="submit" style="width:100%">Submit Support Ticket ↗</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ticket Conversation Details Modal -->
+  <div class="backdrop" id="ticketDetailsBackdrop">
+    <div class="modal modal-large">
+      <button id="closeTicketDetailsModal" aria-label="Close ticket conversation">×</button>
+      <div class="modal-head">
+        <div>
+          <h2 id="tdSubject">Ticket Subject</h2>
+          <small id="tdMeta" style="color:var(--muted)">TICK-2026-1049 · Category: Academic</small>
+        </div>
+        <span class="ticket-status-pill status-open" id="tdStatusPill">OPEN</span>
+      </div>
+
+      <div class="modal-scrollable">
+        <div class="ai-chat-messages" id="tdMessageThread" style="max-height:300px;margin-bottom:14px">
+          <!-- Populated from ticket details -->
+        </div>
+
+        <form id="tdReplyForm" style="display:flex;gap:10px">
+          <input type="hidden" id="tdActiveTicketId">
+          <input class="form-input" id="tdReplyInput" placeholder="Write a response to this ticket..." required>
+          <button class="primary" type="submit">Reply ↗</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-in Notifications Drawer -->
+  <div class="notif-drawer" id="notifDrawer">
+    <div class="notif-drawer-header">
+      <div>
+        <h3 style="font:800 16px Manrope;margin:0">Notifications</h3>
+        <small id="notifDrawerUnreadCount" style="color:var(--muted)">0 unread bulletins</small>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="markAllNotifReadBtn" type="button" style="border:0;background:none;color:var(--purple);font-size:11px;font-weight:700;cursor:pointer">Mark all read</button>
+        <button id="closeNotifDrawer" type="button" style="border:0;background:#f3f4f6;width:28px;height:28px;border-radius:6px;cursor:pointer">×</button>
+      </div>
+    </div>
+    <div class="notif-list" id="notifDrawerList">
+      <!-- Populated from /api/notifications -->
+    </div>
+  </div>
+
+  <!-- Assignments Manager Modal -->
+  <div class="backdrop" id="assignmentsBackdrop">
+    <div class="modal modal-large">
+      <button id="closeAssignmentsModal" aria-label="Close assignments">×</button>
+      <div class="modal-head">
+        <h2>Assignments Manager</h2>
+        <span class="info-pill" id="assignmentCountBadge">0 tasks</span>
+      </div>
+
+      <div class="modal-scrollable">
+        <div class="task-list" id="assignmentListContainer">
+          <p style="color:var(--muted);text-align:center;padding:20px">Loading your coursework assignments...</p>
+        </div>
+
+        <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">
+          <h4 style="margin:0 0 10px;font:700 13px Manrope">Add New Assignment</h4>
+          <form id="addAssignmentForm">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="asgnTitle">Assignment Title</label>
+                <input class="form-input" id="asgnTitle" placeholder="e.g. Implement Dijkstra's Algorithm" required>
+              </div>
+              <div class="form-group">
+                <label for="asgnSubject">Course</label>
+                <select class="form-select" id="asgnSubject">
+                  <!-- Populated from subjects -->
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="asgnDueDate">Due Date</label>
+                <input class="form-input" id="asgnDueDate" type="date" required>
+              </div>
+              <div class="form-group">
+                <label for="asgnPriority">Priority</label>
+                <select class="form-select" id="asgnPriority">
+                  <option value="low">Low Priority</option>
+                  <option value="medium" selected>Medium Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="primary" type="submit">Add Assignment +</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Planner Modal -->
+  <div class="backdrop" id="plannerBackdrop">
+    <div class="modal modal-large">
+      <button id="closePlannerModal" aria-label="Close planner">×</button>
+      <div class="modal-head">
+        <h2>Study Planner & Focus Timer</h2>
+        <span class="info-pill">Pomodoro Method</span>
+      </div>
+
+      <div class="modal-scrollable" style="text-align:center">
+        <div style="background:linear-gradient(135deg,#252250,#47389c);color:#fff;border-radius:16px;padding:24px;margin-bottom:18px">
+          <p style="font-size:11px;letter-spacing:1px;color:#c0b7ff;font-weight:700;margin:0 0 6px">FOCUS WINDOW</p>
+          <h1 id="timerDisplay" style="font:800 48px Manrope;margin:0 0 14px">25:00</h1>
+          <div style="display:flex;justify-content:center;gap:12px">
+            <button class="primary" id="timerToggleBtn" type="button">Start Session ▶</button>
+            <button class="btn-secondary" id="timerResetBtn" type="button" style="color:#fff;background:#ffffff20">Reset ↻</button>
+          </div>
+        </div>
+
+        <div style="text-align:left">
+          <h4 style="font:700 13px Manrope;margin:0 0 8px">Recommended Focus Blocks</h4>
+          <div style="display:grid;gap:8px;font-size:12px;color:var(--muted)">
+            <div style="padding:10px;border:1px solid var(--line);border-radius:8px">
+              <b>Morning Block (08:30 – 09:00 AM)</b>: Review DSA lecture notes before Dr. Sharma's lecture in Room A-204.
+            </div>
+            <div style="padding:10px;border:1px solid var(--line);border-radius:8px">
+              <b>Afternoon Block (01:15 – 01:45 PM)</b>: Practice SQL normalization queries at the Central Library.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Resources Modal -->
+  <div class="backdrop" id="resourcesBackdrop">
+    <div class="modal modal-large">
+      <button id="closeResourcesModal" aria-label="Close resources">×</button>
+      <div class="modal-head">
+        <h2>Course Resources & Syllabus</h2>
+        <span class="info-pill">Official Notes & Past Papers</span>
+      </div>
+
+      <div class="modal-scrollable" id="resourcesListContainer">
+        <!-- Dynamically populated from /api/academics/resources -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Attendance Modal -->
+  <div class="backdrop" id="logAttendanceBackdrop">
+    <div class="modal">
+      <button id="closeLogAttendanceModal" aria-label="Close dialog">×</button>
+      <span>◷</span>
+      <label>ATTENDANCE LOG</label>
+      <h2>Log Class Record</h2>
+      <p>Record your lecture attendance entry.</p>
+
+      <form id="logAttendanceForm" style="text-align:left">
+        <div class="form-group">
+          <label for="attSubjectSelect">Subject</label>
+          <select class="form-select" id="attSubjectSelect" required>
+            <!-- Populated from subjects -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="attDateInput">Date</label>
+          <input class="form-input" id="attDateInput" type="date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="attStatusSelect">Status</label>
+          <select class="form-select" id="attStatusSelect" required>
+            <option value="present" selected>Present</option>
+            <option value="absent">Absent</option>
+            <option value="late">Late</option>
+            <option value="excused">Excused (Medical/Official)</option>
+          </select>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" type="submit" style="width:100%">Save Attendance Entry ✓</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Book Facility Modal -->
+  <div class="backdrop" id="bookFacilityBackdrop">
+    <div class="modal">
+      <button id="closeBookFacilityModal" aria-label="Close dialog">×</button>
+      <span>⌂</span>
+      <label>SPACE RESERVATION</label>
+      <h2 id="bookFacilityTitle">Reserve Study Space</h2>
+      <p id="bookFacilityLocation">Confirm your desk reservation.</p>
+
+      <form id="bookFacilityForm" style="text-align:left">
+        <input type="hidden" id="bookFacilityId">
+
+        <div class="form-group">
+          <label for="bookDateInput">Date</label>
+          <input class="form-input" id="bookDateInput" type="date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="bookSlotSelect">Time Slot</label>
+          <select class="form-select" id="bookSlotSelect" required>
+            <option value="09:00 AM – 11:00 AM">09:00 AM – 11:00 AM (Morning)</option>
+            <option value="11:30 AM – 01:30 PM">11:30 AM – 01:30 PM (Mid-day)</option>
+            <option value="02:00 PM – 04:00 PM" selected>02:00 PM – 04:00 PM (Afternoon)</option>
+            <option value="04:30 PM – 06:30 PM">04:30 PM – 06:30 PM (Evening)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="bookPurposeInput">Purpose</label>
+          <input class="form-input" id="bookPurposeInput" value="Individual study & research" required>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" type="submit" style="width:100%">Confirm Reservation ✓</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Study Session Modal -->
+  <div class="backdrop" id="addSessionBackdrop">
+    <div class="modal">
+      <button id="closeAddSessionModal" aria-label="Close add session">×</button>
+      <span>📅</span>
+      <label>AI STUDY PLANNER</label>
+      <h2>Schedule Revision Session</h2>
+      <p>Add a structured subject review slot to your timetable.</p>
+
+      <form id="addSessionForm" style="text-align:left">
+        <div class="form-group">
+          <label for="sessSubjectInput">Subject Name</label>
+          <input class="form-input" id="sessSubjectInput" placeholder="e.g. Operating Systems" required>
+        </div>
+        <div class="form-group">
+          <label for="sessTopicInput">Revision Topic / Chapters</label>
+          <input class="form-input" id="sessTopicInput" placeholder="e.g. Virtual Memory & Page Replacement" required>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="sessDateInput">Date</label>
+            <input class="form-input" id="sessDateInput" type="date" required>
+          </div>
+          <div class="form-group">
+            <label for="sessTimeInput">Start Time</label>
+            <input class="form-input" id="sessTimeInput" type="time" value="16:00" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="sessDurationInput">Duration (Minutes)</label>
+          <input class="form-input" id="sessDurationInput" type="number" min="15" max="360" value="60" required>
+        </div>
+        <div class="btn-row">
+          <button class="primary" type="submit" style="width:100%">Schedule Session +</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Career Goal Modal -->
+  <div class="backdrop" id="addGoalBackdrop">
+    <div class="modal">
+      <button id="closeAddGoalModal" aria-label="Close add goal">×</button>
+      <span>🚀</span>
+      <label>CAREER ROADMAP</label>
+      <h2>New Roadmap Goal</h2>
+      <p>Define a competency target or internship milestone.</p>
+
+      <form id="addGoalForm" style="text-align:left">
+        <div class="form-group">
+          <label for="goalTitleInput">Goal Title</label>
+          <input class="form-input" id="goalTitleInput" placeholder="e.g. AWS Cloud Practitioner Certification" required>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="goalCategorySelect">Category</label>
+            <select class="form-select" id="goalCategorySelect" required>
+              <option value="skill" selected>Core Skill</option>
+              <option value="internship">Internship Prep</option>
+              <option value="project">Portfolio Project</option>
+              <option value="certification">Certification</option>
+              <option value="academic">Academic Excellence</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="goalTargetDateInput">Target Date</label>
+            <input class="form-input" id="goalTargetDateInput" type="date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="goalMilestonesInput">Checklist Milestones (one per line)</label>
+          <textarea class="form-input" id="goalMilestonesInput" rows="3" placeholder="Complete Cloud Fundamentals module&#10;Solve 5 sample practice papers&#10;Schedule certification exam"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="primary" type="submit" style="width:100%">Create Roadmap Goal +</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- External Supabase SDK (optional client-side auth) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="campus-mock-engine.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

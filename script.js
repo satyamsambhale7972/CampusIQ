@@ -1,80 +1,2810 @@
-(()=>{const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];const pages=['overview','academics','attendance','events','facilities','insights'],names={overview:'Overview',academics:'Academics',attendance:'Attendance',events:'Campus events',facilities:'Facilities',insights:'AI insights'};let toastTimer,tip=0;function toast(msg){$('#toastText').textContent=msg;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2600)}function go(page){if(!pages.includes(page))return;$$('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('#crumb').textContent=names[page];$('#sidebar').classList.remove('open');history.replaceState(null,'','#'+page);window.scrollTo({top:0,behavior:'auto'})}document.addEventListener('click',e=>{const n=e.target.closest('[data-page]'),g=e.target.closest('[data-go]');if(n){e.preventDefault();go(n.dataset.page)}if(g){e.preventDefault();go(g.dataset.go)}});$('#hamb').onclick=()=>$('#sidebar').classList.toggle('open');document.addEventListener('click',e=>{if(innerWidth<=850&&$('#sidebar').classList.contains('open')&&!$('#sidebar').contains(e.target)&&!e.target.closest('#hamb'))$('#sidebar').classList.remove('open')});$('#today').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});const hash=location.hash.slice(1);if(pages.includes(hash))go(hash);$('#theme').onclick=()=>{document.body.classList.toggle('dark');$('#theme').textContent=document.body.classList.contains('dark')?'☀':'◐';toast(document.body.classList.contains('dark')?'Dark appearance enabled':'Light appearance enabled')};function modal(title,text){$('#modalTitle').textContent=title;$('#modalText').textContent=text;$('#backdrop').classList.add('open')}function close(){ $('#backdrop').classList.remove('open') }$('#closeModal').onclick=close;$('#okay').onclick=close;$('#backdrop').onclick=e=>{if(e.target===$('#backdrop'))close()};document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});$('#helpBtn').onclick=()=>modal('Welcome to CampusIQ','Use the left navigation to explore Academics, Attendance, Campus events, Facilities, and AI insights. Each section changes dynamically without reloading the website.');$('#notify').onclick=()=>modal('You’re all caught up','This prototype has no connected notification service. A real CampusIQ deployment could show timetable changes, event reminders, and campus announcements.');$('#profile').onclick=()=>modal('Student Space','This is a sample profile. Authentication and personal account data are not connected in this front-end prototype.');$('#newTip').onclick=()=>{const tips=[['Small steps. Big progress.','Try a 25-minute focus session before your next class. Consistency beats cramming.'],['Make tomorrow easier.','Spend two minutes checking your next day’s timetable before logging off.'],['Learn out loud.','Explaining one concept to a friend can reveal what you understand best.'],['Give your brain a reset.','A short walk can help you return to a task with fresh focus.']];tip=(tip+1)%tips.length;$('#tipTitle').textContent=tips[tip][0];$('#tipText').textContent=tips[tip][1];toast('A fresh CampusIQ tip is ready')};$('#classSearch').addEventListener('input',e=>{let q=e.target.value.toLowerCase().trim(),count=0;$$('.subject').forEach(c=>{let ok=c.dataset.search.includes(q);c.hidden=!ok;if(ok)count++});$('#subjectCount').textContent=count+' subject'+(count===1?'':'s');let empty=$('.subject-empty');if(!count&&!empty){empty=document.createElement('div');empty.className='empty subject-empty';empty.textContent='No subjects found. Try another search.';$('#subjects').append(empty)}else if(count&&empty)empty.remove()});$$('[data-att]').forEach(b=>b.onclick=()=>{$$('[data-att]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');let n=0;$$('#attendanceRows tr').forEach(r=>{let ok=b.dataset.att==='all'||+r.dataset.rate<75;r.hidden=!ok;if(ok)n++});$('#attendanceCount').textContent='Showing '+n+' sample subject'+(n===1?'':'s')});$$('[data-event]').forEach(b=>b.onclick=()=>{$$('[data-event]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');$$('#eventGrid .event-card').forEach(c=>c.hidden=b.dataset.event!=='all'&&c.dataset.kind!==b.dataset.event)});$('#register').onclick=()=>modal('Interest noted (demo)','Thanks for your interest in Innovation Day 2026. This is only a front-end demo; no registration or personal information was submitted.');$$('[data-interest]').forEach(b=>b.onclick=()=>modal('You’re interested! (demo)','Your interest in “'+b.dataset.interest+'” is shown for demonstration only. No registration has been submitted.'));$('#facilitySearch').addEventListener('input',filterFacilities);$$('[data-facility]').forEach(b=>b.onclick=()=>{$$('[data-facility]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');filterFacilities()});function filterFacilities(){let q=$('#facilitySearch').value.toLowerCase().trim(),type=$('.facility-filter.selected')?.dataset.facility||'all',n=0;$$('#facilityGrid .facility-card').forEach(c=>{let ok=(!q||c.dataset.search.includes(q))&&(type==='all'||c.dataset.kind===type);c.hidden=!ok;if(ok)n++});let empty=$('.facility-empty');if(!n&&!empty){empty=document.createElement('div');empty.className='empty facility-empty';empty.textContent='No spaces found. Try a different search or filter.';$('#facilityGrid').append(empty)}else if(n&&empty)empty.remove()}$$('[data-space]').forEach(b=>b.onclick=()=>{let c=b.closest('.facility-card');modal(b.dataset.space,$('.facility-body>div>label',c).textContent+'. Sample availability: '+$('.capacity b',c).textContent+'. This is illustrative data and is not connected to live sensors or room booking.')});$('#generate').onclick=()=>{let b=$('#generate');b.disabled=true;b.textContent='Generating sample insight…';const data=[['TIME MANAGEMENT','Protect your focus window.','Try a 25-minute review of DSA before your afternoon workshop.'],['CAMPUS SPACES','Find a calmer corner.','The demo shows study seats at Central Library. A quieter space may help you focus.'],['CAMPUS LIFE','Make room for curiosity.','Innovation Day is coming up in the sample calendar. Consider sharing a project.']];setTimeout(()=>{let d=data[Math.floor(Math.random()*data.length)],c=document.createElement('article');c.className='insight-card lavender';let label=document.createElement('label');label.textContent='✦  '+d[0];let h=document.createElement('h3');h.textContent=d[1];let p=document.createElement('p');p.textContent=d[2];let f=document.createElement('small');f.textContent='JUST GENERATED · DEMO';f.style.color='#8c7af0';c.append(label,h,p,f);$('#insightGrid').prepend(c);b.disabled=false;b.textContent='Generate another brief ✦';toast('New sample insight added')},650)};$$('[data-toast]').forEach(b=>b.onclick=()=>toast(b.dataset.toast));
-// Supabase authentication integration. Configure supabase-config.js before use.
-let authMode='signin', currentUser=null, supabaseClient=null;
-const authBackdrop=$('#authBackdrop'), authForm=$('#signInForm');
-const authEmail=$('#authEmail'), authPassword=$('#authPassword');
-const cfg=window.CAMPUSIQ_SUPABASE_CONFIG||{};
-const configured=Boolean(cfg.url && cfg.anonKey && !String(cfg.url).includes('YOUR_PROJECT') && !String(cfg.anonKey).includes('YOUR_SUPABASE'));
-if(configured && window.supabase?.createClient){
-  try { supabaseClient=window.supabase.createClient(cfg.url,cfg.anonKey); }
-  catch(err){ console.error('CampusIQ auth client could not initialize',err); }
-}
-function authReady(){return Boolean(supabaseClient)}
-function updateAuthUI(){
-  const signedIn=Boolean(currentUser);
-  $('#signInBtn').textContent=signedIn?'Sign out':'Sign in';
-  $('#signInBtn').setAttribute('aria-label',signedIn?'Sign out of CampusIQ':'Sign in to CampusIQ');
-  $('#profile').textContent=signedIn?(currentUser.email?.slice(0,1).toUpperCase()||'S'):'SS';
-  $('#profile').title=signedIn?'Open account details':'Sign in to CampusIQ';
-  const name=$('.user b'); if(name)name.textContent=signedIn?(currentUser.user_metadata?.full_name||currentUser.email?.split('@')[0]||'Student'):'Student Space';
-  const small=$('.user small'); if(small)small.textContent=signedIn?'Authenticated account':(authReady()?'Sign in to access your account':'Authentication setup required');
-  $('#demoLogin').hidden=true;
-}
-function openAuth(mode='signin'){
-  authMode=mode;
-  $('#authTitle').textContent=mode==='signup'?'Create your account':mode==='reset'?'Reset your password':'Welcome back';
-  $('#authSubtitle').textContent=mode==='signup'?'Create a CampusIQ account using your email address.':mode==='reset'?'We will email you a secure password-reset link.':'Sign in with your registered email and password.';
-  $('#authPassword').closest('.password-field').hidden=mode==='reset';
-  $('#rememberMe').closest('label').hidden=mode!=='signin';
-  $('#authSubmit').textContent=mode==='signup'?'Create account':mode==='reset'?'Send reset link':'Sign in securely';
-  $('#authFoot').innerHTML=mode==='signup'?'Already registered? <button type="button" id="createAccount">Sign in</button>':mode==='reset'?'Remembered your password? <button type="button" id="createAccount">Back to sign in</button>':'New to CampusIQ? <button type="button" id="createAccount">Create account</button>';
-  $('#authError').textContent=authReady()?'':'Authentication is not configured yet. Create a Supabase project, then add its Project URL and publishable/anon key to supabase-config.js.';
-  $('#authError').classList.toggle('setup-warning',!authReady());
-  authBackdrop.classList.add('open');authBackdrop.setAttribute('aria-hidden','false');document.body.classList.add('auth-open');
-  $('#createAccount').onclick=()=>openAuth(authMode==='signup'?'signin':'signin');
-  if(mode==='signup') $('#createAccount').onclick=()=>openAuth('signin');
-  setTimeout(()=>authEmail.focus(),60);
-}
-function closeAuth(){authBackdrop.classList.remove('open');authBackdrop.setAttribute('aria-hidden','true');document.body.classList.remove('auth-open');$('#authPassword').closest('.password-field').hidden=false;$('#rememberMe').closest('label').hidden=false}
-function authError(message){$('#authError').textContent=message;$('#authError').classList.remove('setup-warning')}
-function setBusy(busy){const b=$('#authSubmit');b.disabled=busy;b.textContent=busy?'Please wait…':authMode==='signup'?'Create account':authMode==='reset'?'Send reset link':'Sign in securely'}
-$('#signInBtn').onclick=async()=>{
-  if(!currentUser){openAuth('signin');return}
-  if(!authReady()){toast('Authentication is not configured.');return}
-  const {error}=await supabaseClient.auth.signOut();
-  if(error){toast('Sign out failed. Please try again.');console.error(error);return}
-  currentUser=null;updateAuthUI();toast('You have signed out securely.');
-};
-$('#authClose').onclick=closeAuth;
-authBackdrop.addEventListener('click',e=>{if(e.target===authBackdrop)closeAuth()});
-$('#togglePassword').onclick=()=>{const show=authPassword.type==='password';authPassword.type=show?'text':'password';$('#togglePassword').textContent=show?'Hide':'Show';$('#togglePassword').setAttribute('aria-pressed',String(show))};
-$('#forgotPassword').onclick=()=>openAuth('reset');
-$('#signInForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  if(!authForm.reportValidity())return;
-  if(!authReady()){authError('Real login is not ready yet. Follow README.md to create Supabase and configure supabase-config.js. No demo sign-in is being simulated.');return}
-  const email=authEmail.value.trim(),password=authPassword.value;
-  if(authMode!=='reset' && password.length<8){authError('Use a password with at least 8 characters.');return}
-  setBusy(true);authError('');
-  try{
-    let result;
-    if(authMode==='signup'){
-      result=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
-      if(!result.error && !result.data.session){authError('Account created. Check your email for the confirmation link before signing in.');setBusy(false);return}
-    } else if(authMode==='reset'){
-      result=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
-      if(!result.error){authError('If an account exists for that email, a password-reset link will be sent. Check your inbox.');setBusy(false);return}
-    } else result=await supabaseClient.auth.signInWithPassword({email,password});
-    if(result.error)throw result.error;
-    currentUser=result.data?.user||result.data?.session?.user||null;
-    updateAuthUI();closeAuth();authForm.reset();authPassword.type='password';$('#togglePassword').textContent='Show';
-    toast(authMode==='signup'?'Account created successfully.': 'Signed in successfully.');
-  }catch(err){authError(err.message||'Authentication failed. Please check your details and try again.')}finally{setBusy(false)}
-});
-$('#profile').onclick=()=>{if(currentUser)modal('Your CampusIQ account',`Signed in as ${currentUser.email||'CampusIQ user'}. Use Sign out to end your session.`);else openAuth('signin')};
-if(authReady()){
-  supabaseClient.auth.getSession().then(({data,error})=>{if(error)console.error(error);currentUser=data?.session?.user||null;updateAuthUI()});
-  supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;updateAuthUI()});
-}
-updateAuthUI();
+/**
+ * CampusIQ — Production Client Application Logic
+ * Integrates Supabase Auth, FastAPI backend endpoints, dynamic rendering,
+ * AI Co-Pilot chat, task management, phone OTP, marksheets, support ticketing,
+ * notifications drawer, and role-based views.
+ */
+(() => {
+  'use strict';
+
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => [...document.querySelectorAll(selector)];
+
+  const pages = ['overview', 'radar', 'planner', 'career', 'academics', 'performance', 'attendance', 'navigator', 'notices', 'events', 'facilities', 'insights', 'help', 'admin'];
+  const pageTitles = {
+    overview: 'Campus Cockpit',
+    radar: 'Success Radar',
+    planner: 'Study Planner',
+    career: 'Career Roadmap',
+    academics: 'Academics',
+    performance: 'Results & Marksheets',
+    attendance: 'Attendance',
+    navigator: 'Campus Directory',
+    notices: 'Notice Intelligence',
+    events: 'Campus Events',
+    facilities: 'Facilities',
+    insights: 'AI Co-Pilot',
+    help: 'Help Centre & Support',
+    admin: 'Staff Console'
+  };
+
+  // Application State
+  let currentUser = null;
+  let supabaseClient = null;
+  let authMode = 'signin';
+  let cachedSubjects = [];
+  let cachedAttendance = null;
+  let cachedPerformance = null;
+  let cachedEvents = [];
+  let cachedFacilities = [];
+  let cachedAnnouncements = [];
+  let cachedNotifications = [];
+  let cachedTickets = [];
+  let toastTimer = null;
+  let tipIndex = 0;
+
+  // OTP State
+  let otpPhone = '';
+  let otpCountry = '+91';
+  let otpCooldownTimer = null;
+  let otpCooldownSeconds = 60;
+
+  // Focus Timer State
+  let timerSeconds = 25 * 60;
+  let timerInterval = null;
+  let timerRunning = false;
+
+  // Supabase Configuration Detection
+  const supabaseCfg = window.CAMPUSIQ_SUPABASE_CONFIG || {};
+  const isSupabaseConfigured = Boolean(
+    supabaseCfg.url &&
+    supabaseCfg.anonKey &&
+    !String(supabaseCfg.url).includes('YOUR_PROJECT') &&
+    !String(supabaseCfg.anonKey).includes('YOUR_SUPABASE')
+  );
+
+  if (isSupabaseConfigured && window.supabase?.createClient) {
+    try {
+      supabaseClient = window.supabase.createClient(supabaseCfg.url, supabaseCfg.anonKey);
+    } catch (err) {
+      console.warn('CampusIQ: Could not initialize Supabase client:', err);
+    }
+  }
+
+  // ---------------- UI Utilities ----------------
+  function toast(message) {
+    const toastEl = $('#toast');
+    const toastText = $('#toastText');
+    if (!toastEl || !toastText) return;
+    toastText.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+  }
+
+  function openModal(title, text) {
+    const modalTitle = $('#modalTitle');
+    const modalText = $('#modalText');
+    const backdrop = $('#backdrop');
+    if (!backdrop) return;
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalText) modalText.textContent = text;
+    backdrop.classList.add('open');
+  }
+
+  function closeModal() {
+    const backdrop = $('#backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  $('#closeModal')?.addEventListener('click', closeModal);
+  $('#okay')?.addEventListener('click', closeModal);
+  $('#backdrop')?.addEventListener('click', e => {
+    if (e.target === $('#backdrop')) closeModal();
+  });
+
+  // Global Escape Key Listener
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeAuth();
+      closeProfileModal();
+      closeAssignmentsModal();
+      closePlannerModal();
+      closeResourcesModal();
+      closeLogAttendanceModal();
+      closeBookFacilityModal();
+      closeOtpModal();
+      closeTicketModal();
+      closeTicketDetailsModal();
+      closeNotifDrawer();
+      closeThreeDotMenu();
+      closeAddSessionModal();
+      closeAddGoalModal();
+    }
+  });
+
+  // ---------------- Navigation ----------------
+  function navigateTo(page) {
+    if (!pages.includes(page)) return;
+    $$('.page').forEach(p => p.classList.toggle('active', p.id === `page-${page}`));
+    $$('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    const crumb = $('#crumb');
+    if (crumb) crumb.textContent = pageTitles[page] || 'Overview';
+    const sidebar = $('#sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+    history.replaceState(null, '', `#${page}`);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  document.addEventListener('click', e => {
+    const navBtn = e.target.closest('[data-page]');
+    const goBtn = e.target.closest('[data-go]');
+    if (navBtn) {
+      e.preventDefault();
+      navigateTo(navBtn.dataset.page);
+    } else if (goBtn) {
+      e.preventDefault();
+      navigateTo(goBtn.dataset.go);
+    }
+  });
+
+  // Hamburger menu for mobile
+  $('#hamb')?.addEventListener('click', () => {
+    $('#sidebar')?.classList.toggle('open');
+  });
+
+  document.addEventListener('click', e => {
+    const sidebar = $('#sidebar');
+    if (window.innerWidth <= 850 && sidebar?.classList.contains('open') && !sidebar.contains(e.target) && !e.target.closest('#hamb')) {
+      sidebar.classList.remove('open');
+    }
+  });
+
+  // Collapsible sidebar on desktop
+  const sidebarCollapseBtn = $('#sidebarCollapseBtn');
+  if (window.innerWidth > 1000 && sidebarCollapseBtn) {
+    sidebarCollapseBtn.style.display = 'block';
+    sidebarCollapseBtn.addEventListener('click', () => {
+      $('#sidebar')?.classList.toggle('collapsed');
+      $('#mainContainer')?.classList.toggle('sidebar-collapsed');
+    });
+  }
+
+  // Theme Toggle (Dark / Light mode) with localStorage persistence
+  const savedTheme = localStorage.getItem('campusiq_theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark');
+    if ($('#theme')) $('#theme').textContent = '☀';
+  }
+
+  $('#theme')?.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('campusiq_theme', isDark ? 'dark' : 'light');
+    if ($('#theme')) $('#theme').textContent = isDark ? '☀' : '◐';
+    toast(isDark ? 'Dark appearance enabled' : 'Light appearance enabled');
+  });
+
+  // Date display
+  if ($('#today')) {
+    $('#today').textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  // ---------------- Authentication & Token Management ----------------
+  function getStoredToken() {
+    return localStorage.getItem('campusiq_token') || '';
+  }
+
+  function setStoredToken(token) {
+    if (token) localStorage.setItem('campusiq_token', token);
+    else localStorage.removeItem('campusiq_token');
+  }
+
+  function getAuthHeaders() {
+    const token = getStoredToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
+
+  async function checkSession() {
+    try {
+      if (supabaseClient) {
+        const { data } = await supabaseClient.auth.getSession();
+        if (data?.session?.user) {
+          const supaUser = data.session.user;
+          setStoredToken(data.session.access_token);
+          currentUser = {
+            id: supaUser.id,
+            email: supaUser.email,
+            full_name: supaUser.user_metadata?.full_name || supaUser.email.split('@')[0],
+            role: 'student'
+          };
+          updateUserUI();
+          loadAllCampusData();
+          return;
+        }
+      }
+
+      const token = getStoredToken();
+      if (token) {
+        const res = await fetch('/api/auth/session', { headers: getAuthHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            currentUser = data.user;
+            updateUserUI();
+            loadAllCampusData();
+            return;
+          }
+        }
+      }
+
+      await initDefaultSession();
+    } catch (err) {
+      console.warn('Session check fallback:', err);
+      await initDefaultSession();
+    }
+  }
+
+  async function initDefaultSession() {
+    try {
+      const res = await fetch('/api/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'student@campusiq.edu', full_name: 'Satyam Sambhale' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStoredToken(data.access_token);
+        currentUser = data.user;
+        updateUserUI();
+        loadAllCampusData();
+      }
+    } catch (e) {
+      console.error('Failed to init default session:', e);
+    }
+  }
+
+  function updateUserUI() {
+    const signedIn = Boolean(currentUser);
+    const initials = currentUser?.full_name
+      ? currentUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+      : 'SS';
+    const displayName = currentUser?.full_name || 'Student Space';
+    const dept = currentUser?.department || 'Computer Science & Engineering';
+
+    if ($('#profile')) $('#profile').textContent = initials;
+    if ($('#signInBtn')) {
+      $('#signInBtn').textContent = signedIn ? 'Sign out' : 'Sign in';
+      $('#signInBtn').title = signedIn ? 'Sign out of CampusIQ' : 'Sign in to CampusIQ';
+    }
+
+    if ($('#sidebarAvatar')) $('#sidebarAvatar').textContent = initials;
+    if ($('#sidebarUserName')) $('#sidebarUserName').textContent = displayName;
+    if ($('#sidebarUserSubtitle')) $('#sidebarUserSubtitle').textContent = signedIn ? dept : 'Sign in required';
+
+    if ($('#overviewSubtitle')) {
+      $('#overviewSubtitle').textContent = `Welcome back, ${displayName}. Your academic schedule and attendance are up to date.`;
+    }
+
+    // Admin link visibility
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'faculty';
+    const adminNavBtn = $('#navAdminBtn');
+    if (adminNavBtn) adminNavBtn.style.display = isAdmin ? 'flex' : 'none';
+
+    // Mobile verification status in UI
+    if ($('#profilePhoneStatus')) {
+      const isVerified = Boolean(currentUser?.phone_verified);
+      $('#profilePhoneStatus').textContent = isVerified
+        ? `● Phone Verified (${currentUser.country_code || '+91'} ${currentUser.phone_number || ''})`
+        : '○ Mobile unverified (Click Update Mobile to verify)';
+      $('#profilePhoneStatus').style.color = isVerified ? '#28a981' : '#e07f30';
+    }
+
+    if ($('#menuItemOtp')) {
+      const isVerified = Boolean(currentUser?.phone_verified);
+      $('#menuItemOtp').innerHTML = isVerified
+        ? '📱 Mobile Verified <span style="color:#28a981;font-weight:800;margin-left:auto">✓</span>'
+        : '📱 Verify Mobile Number';
+    }
+  }
+
+  // ---------------- Contextual Three-Dot Menu ----------------
+  const sidebarThreeDotBtn = $('#sidebarThreeDotBtn');
+  const sidebarMenuDropdown = $('#sidebarMenuDropdown');
+
+  function toggleThreeDotMenu() {
+    sidebarMenuDropdown?.classList.toggle('show');
+  }
+
+  function closeThreeDotMenu() {
+    sidebarMenuDropdown?.classList.remove('show');
+  }
+
+  sidebarThreeDotBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    toggleThreeDotMenu();
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.menu-anchor')) {
+      closeThreeDotMenu();
+    }
+  });
+
+  $('#menuItemProfile')?.addEventListener('click', () => {
+    closeThreeDotMenu();
+    openProfileModal();
+  });
+
+  $('#menuItemOtp')?.addEventListener('click', () => {
+    closeThreeDotMenu();
+    openOtpModal();
+  });
+
+  $('#menuItemNotif')?.addEventListener('click', () => {
+    closeThreeDotMenu();
+    openNotifDrawer();
+  });
+
+  $('#menuItemSignOut')?.addEventListener('click', async () => {
+    closeThreeDotMenu();
+    if (supabaseClient) await supabaseClient.auth.signOut();
+    setStoredToken('');
+    currentUser = null;
+    updateUserUI();
+    toast('Signed out successfully.');
+    openAuth('signin');
+  });
+
+  // ---------------- Authentication Modal Handlers ----------------
+  const authBackdrop = $('#authBackdrop');
+  const authForm = $('#signInForm');
+  const authEmail = $('#authEmail');
+  const authPassword = $('#authPassword');
+  const authFullName = $('#authFullName');
+  const signupNameGroup = $('#signupNameGroup');
+  const authPasswordGroup = $('#authPasswordGroup');
+  const authOptionsRow = $('#authOptionsRow');
+  const authError = $('#authError');
+  const authSubmit = $('#authSubmit');
+  const authTitle = $('#authTitle');
+  const authSubtitle = $('#authSubtitle');
+  const authFoot = $('#authFoot');
+
+  function openAuth(mode = 'signin') {
+    authMode = mode;
+    if (authError) authError.textContent = '';
+    
+    if (mode === 'signup') {
+      if (authTitle) authTitle.textContent = 'Create Student Account';
+      if (authSubtitle) authSubtitle.textContent = 'Register with your student email to access courses and records.';
+      if (signupNameGroup) signupNameGroup.hidden = false;
+      if (authPasswordGroup) authPasswordGroup.hidden = false;
+      if (authOptionsRow) authOptionsRow.hidden = true;
+      if (authSubmit) authSubmit.textContent = 'Create account';
+      if (authFoot) authFoot.innerHTML = 'Already registered? <button type="button" id="toggleAuthMode">Sign in</button>';
+    } else if (mode === 'reset') {
+      if (authTitle) authTitle.textContent = 'Reset Password';
+      if (authSubtitle) authSubtitle.textContent = 'Enter your email to receive a secure password recovery link.';
+      if (signupNameGroup) signupNameGroup.hidden = true;
+      if (authPasswordGroup) authPasswordGroup.hidden = true;
+      if (authOptionsRow) authOptionsRow.hidden = true;
+      if (authSubmit) authSubmit.textContent = 'Send reset link';
+      if (authFoot) authFoot.innerHTML = 'Remembered your password? <button type="button" id="toggleAuthMode">Back to sign in</button>';
+    } else {
+      if (authTitle) authTitle.textContent = 'Welcome Back';
+      if (authSubtitle) authSubtitle.textContent = 'Sign in to access your synchronized courses and attendance.';
+      if (signupNameGroup) signupNameGroup.hidden = true;
+      if (authPasswordGroup) authPasswordGroup.hidden = false;
+      if (authOptionsRow) authOptionsRow.hidden = false;
+      if (authSubmit) authSubmit.textContent = 'Sign in securely';
+      if (authFoot) authFoot.innerHTML = 'New to CampusIQ? <button type="button" id="toggleAuthMode">Create account</button>';
+    }
+
+    authBackdrop?.classList.add('open');
+    authBackdrop?.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('auth-open');
+
+    $('#toggleAuthMode')?.addEventListener('click', () => {
+      openAuth(authMode === 'signin' ? 'signup' : 'signin');
+    });
+
+    setTimeout(() => authEmail?.focus(), 60);
+  }
+
+  function closeAuth() {
+    authBackdrop?.classList.remove('open');
+    authBackdrop?.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('auth-open');
+    if (authForm) authForm.reset();
+  }
+
+  $('#authClose')?.addEventListener('click', closeAuth);
+  authBackdrop?.addEventListener('click', e => {
+    if (e.target === authBackdrop) closeAuth();
+  });
+
+  $('#createAccount')?.addEventListener('click', () => openAuth('signup'));
+  $('#forgotPassword')?.addEventListener('click', () => openAuth('reset'));
+
+  $('#togglePassword')?.addEventListener('click', () => {
+    if (!authPassword) return;
+    const isText = authPassword.type === 'text';
+    authPassword.type = isText ? 'password' : 'text';
+    $('#togglePassword').textContent = isText ? 'Show' : 'Hide';
+  });
+
+  $('#signInBtn')?.addEventListener('click', async () => {
+    if (currentUser) {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      setStoredToken('');
+      currentUser = null;
+      updateUserUI();
+      toast('Signed out securely.');
+      openAuth('signin');
+    } else {
+      openAuth('signin');
+    }
+  });
+
+  authForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!authForm.reportValidity()) return;
+
+    const email = authEmail.value.trim();
+    const password = authPassword ? authPassword.value : '';
+    const fullName = authFullName ? authFullName.value.trim() : '';
+
+    if (authMode !== 'reset' && password.length < 6) {
+      if (authError) authError.textContent = 'Password must be at least 6 characters.';
+      return;
+    }
+
+    if (authSubmit) {
+      authSubmit.disabled = true;
+      authSubmit.textContent = 'Authenticating…';
+    }
+    if (authError) authError.textContent = '';
+
+    try {
+      if (authMode === 'signup') {
+        if (supabaseClient) {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: fullName } }
+          });
+          if (error) throw error;
+          if (data.session) {
+            setStoredToken(data.session.access_token);
+            currentUser = { id: data.user.id, email: data.user.email, full_name: fullName, role: 'student' };
+          } else {
+            toast('Confirmation email sent. Please check your inbox.');
+            closeAuth();
+            return;
+          }
+        } else {
+          const res = await fetch('/api/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, full_name: fullName })
+          });
+          if (!res.ok) throw new Error('Registration failed. Please check inputs.');
+          const data = await res.json();
+          setStoredToken(data.access_token);
+          currentUser = data.user;
+        }
+        toast('Account created successfully!');
+      } else if (authMode === 'reset') {
+        if (supabaseClient) {
+          const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+          if (error) throw error;
+          toast('Password reset link sent to your email.');
+          closeAuth();
+          return;
+        } else {
+          toast('Password reset instructions dispatched to your email.');
+          closeAuth();
+          return;
+        }
+      } else {
+        if (supabaseClient) {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          setStoredToken(data.session.access_token);
+          currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+            role: 'student'
+          };
+        } else {
+          const res = await fetch('/api/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          if (!res.ok) throw new Error('Invalid email or credentials.');
+          const data = await res.json();
+          setStoredToken(data.access_token);
+          currentUser = data.user;
+        }
+        toast('Signed in successfully.');
+      }
+
+      updateUserUI();
+      closeAuth();
+      loadAllCampusData();
+    } catch (err) {
+      console.error('Auth error:', err);
+      if (authError) authError.textContent = err.message || 'Authentication failed. Please try again.';
+    } finally {
+      if (authSubmit) {
+        authSubmit.disabled = false;
+        authSubmit.textContent = authMode === 'signup' ? 'Create account' : authMode === 'reset' ? 'Send reset link' : 'Sign in securely';
+      }
+    }
+  });
+
+  // ---------------- Mobile OTP Verification ----------------
+  const otpBackdrop = $('#otpBackdrop');
+  const otpStepSend = $('#otpStepSend');
+  const otpStepVerify = $('#otpStepVerify');
+  const otpCountryCode = $('#otpCountryCode');
+  const otpPhoneNumber = $('#otpPhoneNumber');
+  const otpInputCode = $('#otpInputCode');
+  const sendOtpBtn = $('#sendOtpBtn');
+  const confirmOtpBtn = $('#confirmOtpBtn');
+  const resendOtpBtn = $('#resendOtpBtn');
+  const otpSendError = $('#otpSendError');
+  const otpVerifyError = $('#otpVerifyError');
+  const otpCooldownText = $('#otpCooldownText');
+  const otpCooldownSec = $('#otpCooldownSec');
+  const otpTargetDisplay = $('#otpTargetDisplay');
+  const otpCodeDisplay = $('#otpCodeDisplay');
+  const autoFillOtpBtn = $('#autoFillOtpBtn');
+  const changeNumberBtn = $('#changeNumberBtn');
+
+  let currentActiveOtp = '';
+
+  function openOtpModal() {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    if (otpSendError) otpSendError.textContent = '';
+    if (otpVerifyError) otpVerifyError.textContent = '';
+    if (otpStepSend) otpStepSend.style.display = 'block';
+    if (otpStepVerify) otpStepVerify.style.display = 'none';
+    if (currentUser.phone_number && otpPhoneNumber) {
+      otpPhoneNumber.value = currentUser.phone_number;
+    }
+    otpBackdrop?.classList.add('open');
+    setTimeout(() => otpPhoneNumber?.focus(), 80);
+  }
+
+  function closeOtpModal() {
+    otpBackdrop?.classList.remove('open');
+    clearInterval(otpCooldownTimer);
+  }
+
+  $('#closeOtpModal')?.addEventListener('click', closeOtpModal);
+  $('#openOtpFromProfileBtn')?.addEventListener('click', () => {
+    closeProfileModal();
+    openOtpModal();
+  });
+
+  changeNumberBtn?.addEventListener('click', () => {
+    if (otpStepVerify) otpStepVerify.style.display = 'none';
+    if (otpStepSend) otpStepSend.style.display = 'block';
+    if (otpSendError) otpSendError.textContent = '';
+    setTimeout(() => otpPhoneNumber?.focus(), 80);
+  });
+
+  autoFillOtpBtn?.addEventListener('click', () => {
+    if (currentActiveOtp && otpInputCode) {
+      otpInputCode.value = currentActiveOtp;
+      toast('Verification code auto-filled ✓');
+      confirmOtpBtn?.focus();
+    }
+  });
+
+  otpPhoneNumber?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendOtpBtn?.click();
+    }
+  });
+
+  otpInputCode?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmOtpBtn?.click();
+    }
+  });
+
+  sendOtpBtn?.addEventListener('click', async () => {
+    const rawPhone = otpPhoneNumber?.value || '';
+    const phone = rawPhone.replace(/\D/g, '');
+    const country = otpCountryCode?.value || '+91';
+
+    if (phone.length < 10) {
+      if (otpSendError) otpSendError.textContent = 'Please enter a valid 10-digit mobile number.';
+      return;
+    }
+
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.textContent = 'Generating OTP…';
+    if (otpSendError) otpSendError.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ phone_number: phone, country_code: country })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.message || 'Could not dispatch OTP.');
+
+      otpPhone = phone;
+      otpCountry = country;
+      currentActiveOtp = data.dev_otp || data.otp || '';
+
+      if (otpTargetDisplay) otpTargetDisplay.textContent = `${country} ${phone}`;
+      if (otpCodeDisplay && currentActiveOtp) {
+        otpCodeDisplay.textContent = currentActiveOtp;
+      }
+      if (otpInputCode && currentActiveOtp) {
+        otpInputCode.value = currentActiveOtp;
+      }
+
+      toast(`OTP generated: ${currentActiveOtp || 'Check screen'}`);
+
+      if (otpStepSend) otpStepSend.style.display = 'none';
+      if (otpStepVerify) otpStepVerify.style.display = 'block';
+      startOtpCooldown(data.cooldown_seconds || 60);
+      confirmOtpBtn?.focus();
+    } catch (err) {
+      if (otpSendError) otpSendError.textContent = err.message;
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send Verification OTP ↗';
+    }
+  });
+
+  function startOtpCooldown(seconds = 60) {
+    clearInterval(otpCooldownTimer);
+    otpCooldownSeconds = seconds;
+    if (resendOtpBtn) resendOtpBtn.disabled = true;
+    if (otpCooldownText) otpCooldownText.style.display = 'block';
+    if (otpCooldownSec) otpCooldownSec.textContent = String(otpCooldownSeconds);
+
+    otpCooldownTimer = setInterval(() => {
+      otpCooldownSeconds--;
+      if (otpCooldownSec) otpCooldownSec.textContent = String(otpCooldownSeconds);
+      if (otpCooldownSeconds <= 0) {
+        clearInterval(otpCooldownTimer);
+        if (resendOtpBtn) resendOtpBtn.disabled = false;
+        if (otpCooldownText) otpCooldownText.style.display = 'none';
+      }
+    }, 1000);
+  }
+
+  resendOtpBtn?.addEventListener('click', async () => {
+    if (!otpPhone) return;
+    resendOtpBtn.disabled = true;
+    resendOtpBtn.textContent = 'Resending…';
+    try {
+      const res = await fetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ phone_number: otpPhone, country_code: otpCountry })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.message || 'Could not resend code.');
+
+      currentActiveOtp = data.dev_otp || data.otp || '';
+      if (otpCodeDisplay && currentActiveOtp) otpCodeDisplay.textContent = currentActiveOtp;
+      if (otpInputCode && currentActiveOtp) otpInputCode.value = currentActiveOtp;
+
+      toast(`New OTP code: ${currentActiveOtp}`);
+      startOtpCooldown(data.cooldown_seconds || 60);
+    } catch (err) {
+      if (otpVerifyError) otpVerifyError.textContent = err.message;
+    } finally {
+      resendOtpBtn.disabled = false;
+      resendOtpBtn.textContent = 'Resend OTP';
+    }
+  });
+
+  confirmOtpBtn?.addEventListener('click', async () => {
+    const rawOtp = otpInputCode?.value || '';
+    const otp = rawOtp.replace(/\D/g, '').trim();
+
+    if (!otp || otp.length < 4) {
+      if (otpVerifyError) otpVerifyError.textContent = 'Please enter the 6-digit code.';
+      return;
+    }
+
+    confirmOtpBtn.disabled = true;
+    confirmOtpBtn.textContent = 'Verifying…';
+    if (otpVerifyError) otpVerifyError.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ phone_number: otpPhone, country_code: otpCountry, otp })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || data.message || 'Incorrect verification code.');
+
+      toast('Mobile number verified successfully ✓');
+      currentUser.phone_number = otpPhone;
+      currentUser.country_code = otpCountry;
+      currentUser.phone_verified = true;
+
+      updateUserUI();
+      closeOtpModal();
+      
+      // Refresh notification badge to show the newly added verification confirmation
+      fetchNotifications();
+    } catch (err) {
+      if (otpVerifyError) otpVerifyError.textContent = err.message;
+    } finally {
+      confirmOtpBtn.disabled = false;
+      confirmOtpBtn.textContent = 'Verify Code ✓';
+    }
+  });
+
+  // ---------------- Profile Settings Dialog ----------------
+  const profileBackdrop = $('#profileBackdrop');
+  const profileForm = $('#profileForm');
+
+  function openProfileModal() {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    if ($('#profileFullNameInput')) $('#profileFullNameInput').value = currentUser.full_name || '';
+    if ($('#profileStudentIdInput')) $('#profileStudentIdInput').value = currentUser.student_id || 'STU-10294';
+    if ($('#profileEmailInput')) $('#profileEmailInput').value = currentUser.email || '';
+    if ($('#profileDeptInput')) $('#profileDeptInput').value = currentUser.department || 'Computer Science & Engineering';
+    if ($('#profileSemesterInput')) $('#profileSemesterInput').value = currentUser.year_semester || 'Year 3, Semester 5';
+    if ($('#profileJoiningInput')) $('#profileJoiningInput').value = currentUser.date_of_joining || 'August 2024';
+    if ($('#profileRoleBadge')) $('#profileRoleBadge').textContent = (currentUser.role || 'Student').toUpperCase() + ' ACCOUNT';
+
+    const initials = currentUser.full_name ? currentUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'SS';
+    if ($('#profileAvatarLarge')) $('#profileAvatarLarge').textContent = initials;
+    if ($('#profileDisplayNameLarge')) $('#profileDisplayNameLarge').textContent = currentUser.full_name || 'Student Space';
+    if ($('#profilePhoneStatus')) {
+      $('#profilePhoneStatus').textContent = currentUser.phone_verified
+        ? `● Verified (${currentUser.country_code || '+91'} ${currentUser.phone_number || ''})`
+        : '○ Mobile unverified (Click Update Mobile to verify)';
+      $('#profilePhoneStatus').style.color = currentUser.phone_verified ? '#28a981' : '#e07f30';
+    }
+
+    profileBackdrop?.classList.add('open');
+  }
+
+  function closeProfileModal() {
+    profileBackdrop?.classList.remove('open');
+  }
+
+  $('#closeProfileModal')?.addEventListener('click', closeProfileModal);
+  $('#profile')?.addEventListener('click', openProfileModal);
+  $('#sidebarUserBox')?.addEventListener('click', openProfileModal);
+
+  $('#profileDeleteAccountBtn')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to permanently delete your student account? All personal records and bookings will be purged.')) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/profile/account', { method: 'DELETE', headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Deletion failed.');
+      setStoredToken('');
+      currentUser = null;
+      closeProfileModal();
+      toast('Your student account has been purged.');
+      openAuth('signin');
+    } catch (err) {
+      toast('Failed: ' + err.message);
+    }
+  });
+
+  profileForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fullName = $('#profileFullNameInput').value.trim();
+    const department = $('#profileDeptInput').value.trim();
+    const yearSemester = $('#profileSemesterInput').value.trim();
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ full_name: fullName, department, year_semester: yearSemester })
+      });
+      if (!res.ok) throw new Error('Failed to update profile.');
+      const data = await res.json();
+      currentUser = { ...currentUser, ...data.profile };
+      updateUserUI();
+      closeProfileModal();
+      toast('Profile updated successfully ✓');
+    } catch (err) {
+      toast('Update failed: ' + err.message);
+    }
+  });
+
+  // ---------------- Slide-in Notifications Drawer ----------------
+  const notifDrawer = $('#notifDrawer');
+  const notifyBtn = $('#notify');
+  const closeNotifDrawerBtn = $('#closeNotifDrawer');
+  const markAllNotifReadBtn = $('#markAllNotifReadBtn');
+
+  function openNotifDrawer() {
+    notifDrawer?.classList.add('open');
+    fetchNotifications();
+  }
+
+  function closeNotifDrawer() {
+    notifDrawer?.classList.remove('open');
+  }
+
+  notifyBtn?.addEventListener('click', openNotifDrawer);
+  closeNotifDrawerBtn?.addEventListener('click', closeNotifDrawer);
+
+  async function fetchNotifications() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/notifications', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedNotifications = data.notifications || [];
+        renderNotifications(data.unread_count || 0);
+      }
+    } catch (err) {
+      console.warn('Notifications fetch error:', err);
+    }
+  }
+
+  function renderNotifications(unreadCount) {
+    const list = $('#notifDrawerList');
+    const sup = $('#notifySup');
+    const countEl = $('#notifDrawerUnreadCount');
+
+    if (sup) sup.style.display = unreadCount > 0 ? 'block' : 'none';
+    if (countEl) countEl.textContent = `${unreadCount} unread bulletin${unreadCount === 1 ? '' : 's'}`;
+
+    if (!list) return;
+    if (!cachedNotifications.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px">No notifications on file.</div>';
+      return;
+    }
+
+    list.innerHTML = cachedNotifications.map(n => `
+      <div class="notif-card ${n.is_read ? '' : 'unread'}" data-id="${n.id}">
+        <b>${n.title}</b>
+        <p>${n.message}</p>
+        <small style="color:var(--muted);font-size:10px;margin-top:4px;display:block">${n.created_at || 'Recent'}</small>
+      </div>
+    `).join('');
+
+    $$('.notif-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const id = card.dataset.id;
+        await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', headers: getAuthHeaders() });
+        card.classList.remove('unread');
+        fetchNotifications();
+      });
+    });
+  }
+
+  markAllNotifReadBtn?.addEventListener('click', async () => {
+    await fetch('/api/notifications/read-all', { method: 'POST', headers: getAuthHeaders() });
+    fetchNotifications();
+    toast('All notifications marked as read.');
+  });
+
+  // ---------------- Academic Results & Marksheets ----------------
+  async function fetchPerformance() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/academics/performance', { headers: getAuthHeaders() });
+      if (res.ok) {
+        cachedPerformance = await res.json();
+        renderPerformance();
+      }
+    } catch (err) {
+      console.error('Performance fetch error:', err);
+    }
+  }
+
+  function renderPerformance() {
+    if (!cachedPerformance) return;
+    const p = cachedPerformance;
+
+    // KPI Cards
+    if ($('#marksheetCgpa')) $('#marksheetCgpa').innerHTML = `${p.cgpa}<small>/10</small>`;
+    if ($('#marksheetSgpa')) $('#marksheetSgpa').textContent = String(p.sgpa);
+    if ($('#marksheetStatus')) $('#marksheetStatus').textContent = p.overall_status;
+    if ($('#marksheetAsgnRate')) $('#marksheetAsgnRate').innerHTML = `${p.assignment_completion_rate}<small>%</small>`;
+
+    // Overview Float
+    if ($('#floatCgpa')) $('#floatCgpa').textContent = `${p.cgpa} / 10`;
+    if ($('#statCgpaValue')) $('#statCgpaValue').innerHTML = `${p.cgpa}<small class="muted"> / 10.0</small>`;
+
+    // Printable Marksheet Header
+    if ($('#msStudentName')) $('#msStudentName').textContent = p.student_name;
+    if ($('#msStudentId')) $('#msStudentId').textContent = p.student_id;
+    if ($('#msCourseBranch')) $('#msCourseBranch').textContent = `${p.course} (${p.branch})`;
+    if ($('#msSession')) $('#msSession').textContent = `${p.year_semester} (2025-2026)`;
+    if ($('#msVerificationRef')) $('#msVerificationRef').textContent = p.verification_ref;
+    if ($('#msFooterSgpa')) $('#msFooterSgpa').textContent = String(p.sgpa);
+    if ($('#msFooterCgpa')) $('#msFooterCgpa').textContent = String(p.cgpa);
+
+    // Marksheet Table
+    const tbody = $('#marksheetTableBody');
+    if (tbody && p.results) {
+      tbody.innerHTML = p.results.map(r => {
+        const gradeClass = r.letter_grade.includes('+') ? 'grade-aplus' : r.letter_grade === 'O' ? 'grade-o' : r.letter_grade === 'A' ? 'grade-a' : 'grade-bplus';
+
+        return `
+          <tr>
+            <td><b>${r.subject_code}</b></td>
+            <td>${r.subject_name}</td>
+            <td>${r.credits}</td>
+            <td>${r.internal_marks} / 40</td>
+            <td>${r.external_marks} / 60</td>
+            <td><b>${r.total_marks}</b></td>
+            <td><span class="grade-badge ${gradeClass}">${r.letter_grade}</span></td>
+            <td>${r.grade_point}</td>
+            <td><span class="good-pill">${r.pass_fail}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  $('#printMarksheetBtn')?.addEventListener('click', () => {
+    window.print();
+  });
+
+  // ---------------- Help Centre & Support Ticketing ----------------
+  async function fetchFaqs() {
+    try {
+      const res = await fetch('/api/help/faqs');
+      if (res.ok) {
+        const data = await res.json();
+        renderFaqs(data.faqs || []);
+      }
+    } catch (err) {
+      console.warn('FAQ fetch error:', err);
+    }
+  }
+
+  function renderFaqs(faqs) {
+    const container = $('#faqAccordionContainer');
+    if (!container) return;
+
+    container.innerHTML = faqs.map((f, i) => `
+      <details style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer">
+        <summary style="font:700 13px Manrope;color:var(--ink);outline:none">
+          ${f.question}
+        </summary>
+        <p style="margin:10px 0 0;font-size:12px;line-height:1.7;color:var(--muted)">
+          ${f.answer}
+        </p>
+      </details>
+    `).join('');
+  }
+
+  async function fetchTickets() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/help/tickets', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedTickets = data.tickets || [];
+        renderTickets();
+      }
+    } catch (err) {
+      console.warn('Tickets fetch error:', err);
+    }
+  }
+
+  function renderTickets() {
+    const container = $('#studentTicketsListContainer');
+    const openCountEl = $('#helpOpenTicketsCount');
+
+    const openCount = cachedTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+    if (openCountEl) openCountEl.textContent = `${openCount} Active`;
+
+    if (!container) return;
+    if (!cachedTickets.length) {
+      container.innerHTML = '<div class="empty">No support tickets submitted. Click "Raise Support Ticket +" to contact administration.</div>';
+      return;
+    }
+
+    container.innerHTML = cachedTickets.map(t => `
+      <div class="ticket-card" data-ticket-id="${t.id}">
+        <div class="ticket-meta-row">
+          <b style="font:800 13px Manrope">${t.ticket_number}: ${t.subject}</b>
+          <span class="ticket-status-pill status-${t.status}">${t.status.replace('_', ' ')}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);display:flex;justify-content:space-between">
+          <span>Category: ${t.category.toUpperCase()} · Priority: ${t.priority.toUpperCase()}</span>
+          <span>${t.message_count || 1} message(s) · View thread ↗</span>
+        </div>
+      </div>
+    `).join('');
+
+    $$('.ticket-card').forEach(card => {
+      card.addEventListener('click', () => {
+        openTicketDetailsModal(card.dataset.ticketId);
+      });
+    });
+  }
+
+  // Create Ticket Modal
+  const ticketBackdrop = $('#ticketBackdrop');
+  const createTicketForm = $('#createTicketForm');
+
+  function openCreateTicketModal() {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    ticketBackdrop?.classList.add('open');
+  }
+
+  function closeTicketModal() {
+    ticketBackdrop?.classList.remove('open');
+  }
+
+  $('#openCreateTicketBtn')?.addEventListener('click', openCreateTicketModal);
+  $('#closeTicketModal')?.addEventListener('click', closeTicketModal);
+  ticketBackdrop?.addEventListener('click', e => {
+    if (e.target === ticketBackdrop) closeTicketModal();
+  });
+
+  createTicketForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const subject = $('#ticketSubject').value.trim();
+    const category = $('#ticketCategory').value;
+    const priority = $('#ticketPriority').value;
+    const message = $('#ticketMessage').value.trim();
+
+    try {
+      const res = await fetch('/api/help/tickets', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ subject, category, priority, message })
+      });
+      if (!res.ok) throw new Error('Could not submit ticket.');
+      closeTicketModal();
+      createTicketForm.reset();
+      toast('Support ticket submitted successfully ✓');
+      fetchTickets();
+    } catch (err) {
+      toast('Error: ' + err.message);
+    }
+  });
+
+  // Ticket Conversation Thread Modal
+  const ticketDetailsBackdrop = $('#ticketDetailsBackdrop');
+  const tdReplyForm = $('#tdReplyForm');
+
+  async function openTicketDetailsModal(ticketId) {
+    try {
+      const res = await fetch(`/api/help/tickets/${ticketId}`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Could not load ticket details.');
+      const data = await res.json();
+      const ticket = data.ticket;
+
+      if ($('#tdSubject')) $('#tdSubject').textContent = ticket.subject;
+      if ($('#tdMeta')) $('#tdMeta').textContent = `${ticket.ticket_number} · Category: ${ticket.category} · Priority: ${ticket.priority}`;
+      if ($('#tdStatusPill')) {
+        $('#tdStatusPill').textContent = ticket.status.replace('_', ' ').toUpperCase();
+        $('#tdStatusPill').className = `ticket-status-pill status-${ticket.status}`;
+      }
+      if ($('#tdActiveTicketId')) $('#tdActiveTicketId').value = ticket.id;
+
+      const thread = $('#tdMessageThread');
+      if (thread && ticket.messages) {
+        thread.innerHTML = ticket.messages.map(m => {
+          const isUser = m.sender_role === 'student';
+          return `
+            <div class="ai-bubble ${isUser ? 'ai-bubble-user' : 'ai-bubble-assistant'}">
+              <small style="display:block;font-weight:700;margin-bottom:4px">${m.sender_name} (${m.sender_role.toUpperCase()})</small>
+              ${m.message}
+              <span class="ai-bubble-time">${m.created_at || ''}</span>
+            </div>
+          `;
+        }).join('');
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      ticketDetailsBackdrop?.classList.add('open');
+    } catch (err) {
+      toast('Error: ' + err.message);
+    }
+  }
+
+  function closeTicketDetailsModal() {
+    ticketDetailsBackdrop?.classList.remove('open');
+  }
+
+  $('#closeTicketDetailsModal')?.addEventListener('click', closeTicketDetailsModal);
+
+  tdReplyForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const ticketId = $('#tdActiveTicketId')?.value;
+    const msg = $('#tdReplyInput')?.value.trim();
+    if (!ticketId || !msg) return;
+
+    try {
+      const res = await fetch(`/api/help/tickets/${ticketId}/reply`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ message: msg })
+      });
+      if (!res.ok) throw new Error('Could not send reply.');
+      $('#tdReplyInput').value = '';
+      openTicketDetailsModal(ticketId);
+      fetchTickets();
+      toast('Reply sent ✓');
+    } catch (err) {
+      toast('Error: ' + err.message);
+    }
+  });
+
+  // ---------------- Staff Admin Console ----------------
+  async function loadAdminData() {
+    if (currentUser?.role !== 'admin' && currentUser?.role !== 'faculty') return;
+    try {
+      const [ticketsRes, logsRes] = await Promise.all([
+        fetch('/api/admin/tickets', { headers: getAuthHeaders() }),
+        fetch('/api/admin/audit-logs', { headers: getAuthHeaders() })
+      ]);
+
+      if (ticketsRes.ok) {
+        const data = await ticketsRes.json();
+        renderAdminTickets(data.tickets || []);
+      }
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        renderAdminLogs(data.audit_logs || []);
+      }
+    } catch (err) {
+      console.warn('Admin data load error:', err);
+    }
+  }
+
+  function renderAdminTickets(tickets) {
+    const container = $('#adminTicketsContainer');
+    if (!container) return;
+    if (!tickets.length) {
+      container.innerHTML = '<div class="empty">No tickets pending staff review.</div>';
+      return;
+    }
+
+    container.innerHTML = tickets.map(t => `
+      <div class="ticket-card">
+        <div class="ticket-meta-row">
+          <b>${t.ticket_number}: ${t.subject} (By: ${t.student_name} - ${t.student_code})</b>
+          <select class="form-select admin-status-select" data-id="${t.id}" style="width:130px;height:32px;font-size:11px">
+            <option value="open" ${t.status === 'open' ? 'selected' : ''}>Open</option>
+            <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+            <option value="awaiting_student" ${t.status === 'awaiting_student' ? 'selected' : ''}>Awaiting Student</option>
+            <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+            <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>Closed</option>
+          </select>
+        </div>
+      </div>
+    `).join('');
+
+    $$('.admin-status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const tId = sel.dataset.id;
+        const newStatus = sel.value;
+        await fetch(`/api/admin/tickets/${tId}/status?status_val=${newStatus}`, {
+          method: 'PATCH',
+          headers: getAuthHeaders()
+        });
+        toast(`Ticket status updated to ${newStatus}.`);
+        loadAdminData();
+      });
+    });
+  }
+
+  function renderAdminLogs(logs) {
+    const tbody = $('#adminAuditLogsBody');
+    if (!tbody) return;
+    tbody.innerHTML = logs.map(l => `
+      <tr>
+        <td><small>${l.created_at || 'Recent'}</small></td>
+        <td><b>${l.actor_email}</b></td>
+        <td><span class="ref-pill">${l.action}</span></td>
+        <td>${l.target_entity}</td>
+        <td><code>${l.target_id || '--'}</code></td>
+      </tr>
+    `).join('');
+  }
+
+  // ---------------- Base Campus Loaders ----------------
+  async function loadAllCampusData() {
+    await Promise.allSettled([
+      fetchDashboardSummary(),
+      fetchSuccessRadar(),
+      fetchStudyPlanner(),
+      fetchCareerRoadmap(),
+      fetchCampusNavigator(),
+      fetchNoticeIntelligence(),
+      fetchAcademics(),
+      fetchAttendance(),
+      fetchPerformance(),
+      fetchEvents(),
+      fetchFacilities(),
+      fetchAnnouncements(),
+      fetchNotifications(),
+      fetchFaqs(),
+      fetchTickets()
+    ]);
+    renderOverview();
+    if (currentUser?.role === 'admin' || currentUser?.role === 'faculty') {
+      loadAdminData();
+    }
+  }
+
+  // 1. Academics
+  async function fetchAcademics() {
+    try {
+      const res = await fetch('/api/academics/subjects', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedSubjects = data.subjects || [];
+        renderAcademics();
+      }
+    } catch (err) {
+      console.error('Fetch subjects error:', err);
+    }
+  }
+
+  function renderAcademics() {
+    const subjectsContainer = $('#subjects');
+    const subjectCountEl = $('#subjectCount');
+    const attSubjectSelect = $('#attSubjectSelect');
+    const asgnSubjectSelect = $('#asgnSubject');
+
+    if (!subjectsContainer) return;
+
+    if (subjectCountEl) subjectCountEl.textContent = `${cachedSubjects.length} subjects`;
+
+    if (attSubjectSelect) {
+      attSubjectSelect.innerHTML = cachedSubjects
+        .map(s => `<option value="${s.id}">${s.code} — ${s.name}</option>`)
+        .join('');
+    }
+    if (asgnSubjectSelect) {
+      asgnSubjectSelect.innerHTML = cachedSubjects
+        .map(s => `<option value="${s.id}">${s.code} — ${s.name}</option>`)
+        .join('');
+    }
+
+    if (!cachedSubjects.length) {
+      subjectsContainer.innerHTML = '<div class="empty">No courses found in catalog.</div>';
+      return;
+    }
+
+    subjectsContainer.innerHTML = cachedSubjects.map(sub => {
+      const iconBg = sub.category === 'CORE' ? 'blue-bg' : sub.category === 'PRACTICAL' ? 'purple-bg' : 'mint-bg';
+      const progressWidth = sub.category === 'CORE' ? '78%' : sub.category === 'PRACTICAL' ? '64%' : '86%';
+      const progressColor = sub.category === 'CORE' ? '' : sub.category === 'PRACTICAL' ? 'purple' : 'green';
+
+      return `
+        <article class="subject" data-search="${sub.code.toLowerCase()} ${sub.name.toLowerCase()} ${sub.instructor.toLowerCase()} ${sub.room.toLowerCase()}">
+          <div class="subject-icon ${iconBg}">⌘</div>
+          <label>${sub.category}</label>
+          <h3>${sub.name}</h3>
+          <p>${sub.instructor} · ${sub.room}</p>
+          <div class="meta">◷ ${sub.schedule_time.split('–')[0].trim()} <span>${sub.credits} credits</span></div>
+          <div class="progress ${progressColor}"><i style="width:${progressWidth}"></i></div>
+          <small>Course Progress <b>${progressWidth}</b></small>
+        </article>
+      `;
+    }).join('');
+  }
+
+  $('#classSearch')?.addEventListener('input', e => {
+    const query = e.target.value.toLowerCase().trim();
+    let count = 0;
+    $$('#subjects .subject').forEach(c => {
+      const ok = c.dataset.search.includes(query);
+      c.hidden = !ok;
+      if (ok) count++;
+    });
+    const countEl = $('#subjectCount');
+    if (countEl) countEl.textContent = `${count} subject${count === 1 ? '' : 's'}`;
+  });
+
+  // 2. Attendance
+  async function fetchAttendance() {
+    try {
+      const res = await fetch('/api/attendance', { headers: getAuthHeaders() });
+      if (res.ok) {
+        cachedAttendance = await res.json();
+        renderAttendance();
+      }
+    } catch (err) {
+      console.error('Fetch attendance error:', err);
+    }
+  }
+
+  function renderAttendance() {
+    if (!cachedAttendance) return;
+    const { overall_rate, overall_held, overall_attended, overall_absent, status_label, subjects } = cachedAttendance;
+
+    if ($('#attOverallRate')) $('#attOverallRate').innerHTML = `${overall_rate}<small>%</small>`;
+    if ($('#attPresentCount')) $('#attPresentCount').textContent = `${overall_attended} classes`;
+    if ($('#attAbsentCount')) $('#attAbsentCount').textContent = `${overall_absent} classes`;
+    if ($('#attHeading')) $('#attHeading').textContent = overall_rate >= 75 ? "You're doing great." : "Action required.";
+    if ($('#attSummaryText')) {
+      $('#attSummaryText').textContent = overall_rate >= 75
+        ? `You're safely above the institutional 75% threshold across ${subjects.length} subjects.`
+        : `Your overall attendance is below target. Prioritize upcoming sessions.`;
+    }
+    if ($('#attOverallPill')) {
+      $('#attOverallPill').textContent = status_label;
+      $('#attOverallPill').className = overall_rate >= 75 ? 'good-pill' : 'warn-pill';
+    }
+
+    if ($('#attRingGraphic')) {
+      $('#attRingGraphic').style.background = `conic-gradient(#8273f6 0% ${overall_rate}%, #eceaf8 ${overall_rate}% 100%)`;
+    }
+
+    const tbody = $('#attendanceRows');
+    if (tbody) {
+      tbody.innerHTML = subjects.map(sub => {
+        const actionNeeded = sub.attendance_rate < 75
+          ? `<span style="color:#d14b5f;font-weight:700">Attend next ${sub.needed_for_75} class(es)</span>`
+          : `<span style="color:#28a981">In compliance ✓</span>`;
+
+        return `
+          <tr data-rate="${sub.attendance_rate}">
+            <td><b>⌘ &nbsp; ${sub.name}</b><br><small style="color:var(--muted)">${sub.code} · ${sub.room}</small></td>
+            <td>${sub.classes_held}</td>
+            <td>${sub.classes_attended}</td>
+            <td><span class="rate">${sub.attendance_rate}% <i><em style="width:${Math.min(100, sub.attendance_rate)}%"></em></i></span></td>
+            <td><label class="${sub.status_class}">${sub.status_label}</label></td>
+            <td>${actionNeeded}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  $$('[data-att]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('[data-att]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const filter = btn.dataset.att;
+      $$('#attendanceRows tr').forEach(row => {
+        const rate = parseFloat(row.dataset.rate || '100');
+        row.hidden = filter !== 'all' && rate >= 75;
+      });
+    });
+  });
+
+  const logAttendanceBackdrop = $('#logAttendanceBackdrop');
+  const logAttendanceForm = $('#logAttendanceForm');
+
+  function openLogAttendanceModal() {
+    if ($('#attDateInput')) $('#attDateInput').value = new Date().toISOString().split('T')[0];
+    logAttendanceBackdrop?.classList.add('open');
+  }
+
+  function closeLogAttendanceModal() {
+    logAttendanceBackdrop?.classList.remove('open');
+  }
+
+  $('#openLogAttendanceBtn')?.addEventListener('click', openLogAttendanceModal);
+  $('#closeLogAttendanceModal')?.addEventListener('click', closeLogAttendanceModal);
+  logAttendanceBackdrop?.addEventListener('click', e => {
+    if (e.target === logAttendanceBackdrop) closeLogAttendanceModal();
+  });
+
+  logAttendanceForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const subjectId = $('#attSubjectSelect').value;
+    const date = $('#attDateInput').value;
+    const status = $('#attStatusSelect').value;
+
+    try {
+      const res = await fetch('/api/attendance/log', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ subject_id: subjectId, date, status })
+      });
+      if (!res.ok) throw new Error('Failed to log attendance');
+      closeLogAttendanceModal();
+      toast('Attendance record logged successfully ✓');
+      await fetchAttendance();
+      renderOverview();
+    } catch (err) {
+      toast('Error: ' + err.message);
+    }
+  });
+
+  // 3. Events
+  async function fetchEvents() {
+    try {
+      const res = await fetch('/api/events', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedEvents = data.events || [];
+        renderEvents();
+      }
+    } catch (err) {
+      console.error('Fetch events error:', err);
+    }
+  }
+
+  function renderEvents() {
+    const eventGrid = $('#eventGrid');
+    if (!eventGrid) return;
+
+    if ($('#navEventsBadge')) $('#navEventsBadge').textContent = cachedEvents.length;
+
+    const featured = cachedEvents.find(e => e.featured) || cachedEvents[0];
+    if (featured) {
+      if ($('#featuredEventTitle')) $('#featuredEventTitle').textContent = featured.title;
+      if ($('#featuredEventDesc')) $('#featuredEventDesc').textContent = featured.description;
+      if ($('#featuredEventMeta')) {
+        $('#featuredEventMeta').innerHTML = `▦ ${featured.event_date}<br>⌖ ${featured.location}<br>◷ ${featured.event_time}`;
+      }
+      const regBtn = $('#featuredRegisterBtn');
+      if (regBtn) {
+        const isReg = Boolean(featured.is_registered);
+        regBtn.textContent = isReg ? 'Registered ✓ (Click to cancel)' : 'Register interest ↗';
+        regBtn.style.background = isReg ? '#45cba4' : '';
+        regBtn.onclick = () => toggleEventRegistration(featured.id, isReg);
+      }
+    }
+
+    eventGrid.innerHTML = cachedEvents.map(ev => {
+      const isReg = Boolean(ev.is_registered);
+      const posterBg = ev.category === 'community' ? 'wellness' : ev.category === 'workshop' ? 'ai' : 'hack';
+      const posterText = ev.category === 'community' ? 'RESET.<br>REFRESH.' : ev.category === 'workshop' ? 'THINK<br>IN AI.' : 'BUILD<br>BEYOND.';
+
+      return `
+        <article class="event-card" data-kind="${ev.category}">
+          <div class="poster ${posterBg}">
+            <span>${posterText}</span>
+            <i>✦</i>
+          </div>
+          <div class="event-card-body">
+            <label>${ev.category.toUpperCase()} · ${ev.event_date}</label>
+            <h3>${ev.title}</h3>
+            <p>${ev.description}</p>
+            <div>
+              <span>◷ ${ev.event_time}</span>
+              <button type="button" class="event-rsvp-btn" data-event-id="${ev.id}" data-registered="${isReg}">
+                ${isReg ? 'Registered ✓' : "I'm interested ↗"}
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    $$('.event-rsvp-btn').forEach(b => {
+      b.onclick = () => {
+        const evId = b.dataset.eventId;
+        const isReg = b.dataset.registered === 'true';
+        toggleEventRegistration(evId, isReg);
+      };
+    });
+  }
+
+  async function toggleEventRegistration(eventId, currentlyRegistered) {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    try {
+      const method = currentlyRegistered ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/events/${eventId}/register`, {
+        method,
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) throw new Error('Registration update failed.');
+      toast(currentlyRegistered ? 'Event RSVP cancelled.' : 'RSVP confirmed! See you there ✦');
+      await fetchEvents();
+    } catch (err) {
+      toast('Failed: ' + err.message);
+    }
+  }
+
+  $$('.event-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.event-filter').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const kind = btn.dataset.event;
+      $$('#eventGrid .event-card').forEach(card => {
+        card.hidden = kind !== 'all' && card.dataset.kind !== kind;
+      });
+    });
+  });
+
+  // 4. Facilities
+  async function fetchFacilities() {
+    try {
+      const res = await fetch('/api/facilities', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedFacilities = data.facilities || [];
+        renderFacilities();
+      }
+    } catch (err) {
+      console.error('Fetch facilities error:', err);
+    }
+  }
+
+  function renderFacilities() {
+    const grid = $('#facilityGrid');
+    if (!grid) return;
+
+    let totalAvail = 0;
+    let totalCap = 0;
+
+    grid.innerHTML = cachedFacilities.map(f => {
+      const avail = Math.max(0, f.total_capacity - f.occupied_count);
+      totalAvail += avail;
+      totalCap += f.total_capacity;
+      const pct = Math.round((f.occupied_count / f.total_capacity) * 100);
+      const artClass = f.name.includes('Library') ? 'lib' : f.name.includes('Innovation') ? 'hub' : f.name.includes('Commons') ? 'commons' : 'garden';
+      const icon = f.name.includes('Library') ? '▤' : f.name.includes('Innovation') ? '✦' : f.name.includes('Commons') ? '☕' : '✿';
+
+      return `
+        <article class="facility-card" data-kind="${f.category}" data-search="${f.name.toLowerCase()} ${f.location.toLowerCase()}">
+          <div class="facility-art ${artClass}">
+            <span>${icon}</span>
+            <label>${f.category.toUpperCase()} ZONE</label>
+          </div>
+          <div class="facility-body">
+            <div>
+              <h3>${f.name}</h3>
+              <label class="${f.status === 'open' ? 'open' : 'busy'}">● ${f.status.toUpperCase()}</label>
+            </div>
+            <p>${f.description}</p>
+            <small>⌖ ${f.location}<br>◷ ${f.operating_hours}</small>
+            <div class="capacity">
+              Seat availability <b>${avail} / ${f.total_capacity}</b>
+              <i><em style="width:${pct}%"></em></i>
+            </div>
+            <button type="button" class="facility-book-btn" data-id="${f.id}" data-name="${f.name}" data-loc="${f.location}">
+              Reserve desk ↗
+            </button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    if ($('#facilitiesAvailableHero')) {
+      $('#facilitiesAvailableHero').innerHTML = `${totalAvail}<span>/${totalCap}</span>`;
+    }
+
+    $$('.facility-book-btn').forEach(btn => {
+      btn.onclick = () => openBookFacilityModal(btn.dataset.id, btn.dataset.name, btn.dataset.loc);
+    });
+  }
+
+  function filterFacilities() {
+    const q = ($('#facilitySearch')?.value || '').toLowerCase().trim();
+    const type = $('.facility-filter.selected')?.dataset.facility || 'all';
+    let count = 0;
+    $$('#facilityGrid .facility-card').forEach(c => {
+      const ok = (!q || c.dataset.search.includes(q)) && (type === 'all' || c.dataset.kind === type);
+      c.hidden = !ok;
+      if (ok) count++;
+    });
+  }
+
+  $('#facilitySearch')?.addEventListener('input', filterFacilities);
+  $$('.facility-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.facility-filter').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      filterFacilities();
+    });
+  });
+
+  const bookFacilityBackdrop = $('#bookFacilityBackdrop');
+  const bookFacilityForm = $('#bookFacilityForm');
+
+  function openBookFacilityModal(facilityId, facilityName, location) {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    if ($('#bookFacilityId')) $('#bookFacilityId').value = facilityId;
+    if ($('#bookFacilityTitle')) $('#bookFacilityTitle').textContent = `Reserve: ${facilityName}`;
+    if ($('#bookFacilityLocation')) $('#bookFacilityLocation').textContent = `Location: ${location}`;
+    if ($('#bookDateInput')) $('#bookDateInput').value = new Date().toISOString().split('T')[0];
+    bookFacilityBackdrop?.classList.add('open');
+  }
+
+  function closeBookFacilityModal() {
+    bookFacilityBackdrop?.classList.remove('open');
+  }
+
+  $('#closeBookFacilityModal')?.addEventListener('click', closeBookFacilityModal);
+  bookFacilityBackdrop?.addEventListener('click', e => {
+    if (e.target === bookFacilityBackdrop) closeBookFacilityModal();
+  });
+
+  bookFacilityForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const facilityId = $('#bookFacilityId').value;
+    const bookingDate = $('#bookDateInput').value;
+    const timeSlot = $('#bookSlotSelect').value;
+    const purpose = $('#bookPurposeInput').value;
+
+    try {
+      const res = await fetch(`/api/facilities/${facilityId}/book`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ booking_date: bookingDate, time_slot: timeSlot, purpose })
+      });
+      if (!res.ok) throw new Error('Space reservation failed.');
+      closeBookFacilityModal();
+      toast('Desk reservation confirmed! An email pass has been issued.');
+      await fetchFacilities();
+      renderOverview();
+    } catch (err) {
+      toast('Booking failed: ' + err.message);
+    }
+  });
+
+  // 5. Announcements
+  async function fetchAnnouncements() {
+    try {
+      const res = await fetch('/api/announcements');
+      if (res.ok) {
+        const data = await res.json();
+        cachedAnnouncements = data.announcements || [];
+        renderAnnouncements();
+      }
+    } catch (err) {
+      console.error('Fetch announcements error:', err);
+    }
+  }
+
+  function renderAnnouncements() {
+    const list = $('#overviewAnnouncementsList');
+    if (!list) return;
+    list.innerHTML = cachedAnnouncements.slice(0, 2).map(a => `
+      <div class="activity">
+        <span class="activity-icon ${a.priority === 'urgent' ? 'purple-bg' : 'mint-bg'}">✦</span>
+        <div>
+          <b>${a.title}</b>
+          <small>${a.author_role} · ${a.category}</small>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ====================================================================
+  // CampusIQ 2.0 Distinctive Features Controllers & Renderers
+  // ====================================================================
+
+  let cachedRadar = null;
+  let cachedPlanner = null;
+  let cachedCareer = null;
+  let cachedDirectory = [];
+  let cachedNoticeIntelligence = [];
+  let activeNoticePriority = 'all';
+  let onlySavedNotices = false;
+  let activeNavCategory = 'all';
+
+  // ---------------- 1. 12-Section Dashboard Cockpit Summary ----------------
+  async function fetchDashboardSummary() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/dashboard/summary', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const summary = await res.json();
+        renderCockpitSummary(summary);
+      }
+    } catch (err) {
+      console.warn('Dashboard summary error:', err);
+    }
+  }
+
+  function renderCockpitSummary(s) {
+    if (!s) return;
+
+    // CARD 1: Hero Welcome Banner
+    const p = s.student_profile || {};
+    if ($('#overviewWelcomeName')) {
+      const first = (p.full_name || 'Scholar').split(' ')[0];
+      $('#overviewWelcomeName').innerHTML = `Welcome back,<br><i>${first}.</i>`;
+    }
+    if ($('#overviewWelcomeDesc')) {
+      $('#overviewWelcomeDesc').textContent = `${p.year_semester || 'Year 3, Semester 5'} · ${p.department || 'Computer Science & Engineering'}`;
+    }
+
+    // CARD 2: Today's Schedule
+    const schedContainer = $('#overviewScheduleContainer');
+    if (schedContainer && s.today_classes) {
+      const dotColors = ['blue-dot', 'purple-dot', 'orange-dot', 'green-dot'];
+      const classClasses = ['cb', 'cp', 'co', 'cg'];
+      if (!s.today_classes.length) {
+        schedContainer.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:12px">No lectures scheduled for today. Enjoy your study block!</div>';
+      } else {
+        schedContainer.innerHTML = s.today_classes.map((cls, idx) => {
+          const startTime = (cls.schedule_time || '09:00 AM').split('–')[0].trim();
+          const mainTime = startTime.slice(0, 5);
+          const meridiem = startTime.slice(-2);
+          return `
+            <div class="schedule-row">
+              <time>${mainTime}<small>${meridiem}</small></time>
+              <i class="dot ${dotColors[idx % dotColors.length]}"></i>
+              <div class="class ${classClasses[idx % classClasses.length]}">
+                <label>${cls.category || 'CORE'}</label>
+                <h4>${cls.name}</h4>
+                <p>📍 ${cls.room} · ${cls.instructor}</p>
+                <small>${cls.schedule_time}</small>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // CARD 3: Academic Performance
+    const perf = s.academic_performance || {};
+    if ($('#cockpitCgpaValue')) $('#cockpitCgpaValue').textContent = perf.cgpa !== undefined ? perf.cgpa : '--';
+    if ($('#cockpitSemesterBadge')) $('#cockpitSemesterBadge').textContent = perf.semester || 'Semester 5';
+    if ($('#cockpitCreditsEarned')) $('#cockpitCreditsEarned').textContent = `${perf.credits_earned || 0} Credits Earned`;
+    if ($('#cockpitCgpaProgress')) {
+      const pct = Math.min(100, Math.round(((perf.cgpa || 0) / 10.0) * 100));
+      $('#cockpitCgpaProgress').style.width = `${pct}%`;
+    }
+    if ($('#floatCgpa')) $('#floatCgpa').textContent = `${perf.cgpa || '--'} / 10`;
+
+    // CARD 4: Attendance Velocity
+    const att = s.attendance_velocity || {};
+    if ($('#cockpitAttendanceRate')) $('#cockpitAttendanceRate').textContent = `${att.overall_rate || 0}%`;
+    if ($('#floatAttendance')) $('#floatAttendance').textContent = `${att.overall_rate || 0}%`;
+    if ($('#cockpitAttendanceProgress')) $('#cockpitAttendanceProgress').style.width = `${Math.min(100, att.overall_rate || 0)}%`;
+    if ($('#cockpitAttendanceSafety')) {
+      const safe = att.buffer_classes_remaining || 0;
+      $('#cockpitAttendanceSafety').innerHTML = safe > 0
+        ? `Safe buffer: You can miss up to <b>${safe} classes</b> and stay above the 75% cutoff.`
+        : `⚠️ Critical: Attendance is at threshold. No absences permitted.`;
+    }
+
+    // CARD 5: Deadlines & Countdown
+    const cd = s.deadlines_countdown || {};
+    if ($('#countdownMidterm')) $('#countdownMidterm').textContent = cd.days_to_midterm !== undefined ? `${cd.days_to_midterm}d` : '--';
+    if ($('#countdownAssignment')) $('#countdownAssignment').textContent = cd.days_to_assignment !== undefined ? `${cd.days_to_assignment}d` : '--';
+    if ($('#countdownEndterm')) $('#countdownEndterm').textContent = cd.days_to_endterm !== undefined ? `${cd.days_to_endterm}d` : '--';
+
+    // CARD 6: Assignments Progress
+    const asgns = s.assignment_progress || {};
+    if ($('#cockpitPendingAsgnCount')) $('#cockpitPendingAsgnCount').textContent = `${asgns.pending_count || 0} Pending`;
+    const asgnList = $('#cockpitAssignmentMiniList');
+    if (asgnList && asgns.upcoming_list) {
+      if (!asgns.upcoming_list.length) {
+        asgnList.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:6px">No pending coursework deadlines! 🎉</div>';
+      } else {
+        asgnList.innerHTML = asgns.upcoming_list.slice(0, 3).map(a => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:11px">
+            <div>
+              <b>${a.title}</b>
+              <small style="color:var(--muted);display:block">Due: ${a.due_date}</small>
+            </div>
+            <span class="badge ${a.priority === 'urgent' ? 'priority-urgent' : a.priority === 'high' ? 'priority-high' : 'priority-normal'}">${a.priority.toUpperCase()}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // CARD 7: Verified Campus Bulletins
+    const noticesList = $('#cockpitNoticesContainer');
+    if (noticesList && s.verified_notices) {
+      if (!s.verified_notices.length) {
+        noticesList.innerHTML = '<div style="color:var(--muted);font-size:11px">No recent notices published.</div>';
+      } else {
+        noticesList.innerHTML = s.verified_notices.slice(0, 3).map(n => `
+          <div class="notice-card-advanced ${n.priority === 'urgent' ? 'urgent-notice' : ''}" style="padding:10px 12px;margin:0">
+            <div class="notice-top-row">
+              <span class="notice-priority-badge priority-${n.priority}">${n.priority}</span>
+              <small style="color:var(--muted);font-size:9px">${n.category}</small>
+            </div>
+            <b style="font-size:11px;display:block;margin-bottom:3px">${n.title}</b>
+            <p style="font-size:10px;margin:0;color:var(--muted);line-height:1.4">${(n.content || '').slice(0, 85)}...</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    // CARD 8: AI Study Recommendations
+    const aiActions = $('#cockpitAiActionsList');
+    if (aiActions && s.ai_study_suggestions) {
+      if (!s.ai_study_suggestions.length) {
+        aiActions.innerHTML = '<div style="color:var(--muted);font-size:11px">All subjects performing above target! Keep up your study habits.</div>';
+      } else {
+        aiActions.innerHTML = s.ai_study_suggestions.slice(0, 3).map(rec => `
+          <div style="padding:10px;border-radius:10px;background:#f8f9fd;border:1px solid var(--line);font-size:11px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span class="badge" style="background:#e0e7ff;color:#4338ca;font-weight:700">${rec.subject}</span>
+              <small style="color:var(--muted)">Target Focus</small>
+            </div>
+            <b>${rec.action}</b>
+            <p style="margin:3px 0 0;font-size:10px;color:var(--muted)">${rec.reason}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    // CARD 10: Support Status
+    const supportBox = $('#cockpitSupportContainer');
+    if (supportBox && s.open_tickets !== undefined) {
+      supportBox.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#f8f9fd;border-radius:10px;border:1px solid var(--line)">
+          <div>
+            <strong style="font-size:13px">${s.open_tickets} Active Ticket${s.open_tickets === 1 ? '' : 's'}</strong>
+            <small style="color:var(--muted);display:block">Track issues submitted to Dean or IT Helpdesk</small>
+          </div>
+          <button class="primary" data-go="help" style="padding:6px 12px;font-size:11px">View Help Centre ↗</button>
+        </div>
+      `;
+    }
+
+    // CARD 11: Recent Activity Stream
+    const stream = $('#cockpitActivityStream');
+    if (stream && s.recent_activities) {
+      if (!s.recent_activities.length) {
+        stream.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px">No recent user activities recorded.</div>';
+      } else {
+        stream.innerHTML = s.recent_activities.slice(0, 4).map(act => `
+          <div class="activity-stream-item">
+            <div class="activity-stream-icon">⚡</div>
+            <div style="flex:1">
+              <b style="font-size:11px;display:block">${act.description}</b>
+              <small style="color:var(--muted);font-size:9px">${act.created_at || 'Just now'}</small>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // CARD 12: Facilities Occupancy
+    const facBox = $('#cockpitFacilitiesList');
+    if (facBox && s.facilities_occupancy) {
+      facBox.innerHTML = s.facilities_occupancy.slice(0, 3).map(f => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:11px">
+          <div>
+            <b>${f.name}</b>
+            <small style="display:block;color:var(--muted)">${f.available} seats free / ${f.capacity}</small>
+          </div>
+          <button class="link" data-go="facilities" style="font-size:10px">Book ↗</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Fallback Overview render for legacy sub-elements
+  function renderOverview() {
+    fetchDashboardSummary();
+  }
+
+  // ---------------- 2. Student Success Radar ----------------
+  async function fetchSuccessRadar() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/radar', { headers: getAuthHeaders() });
+      if (res.ok) {
+        cachedRadar = await res.json();
+        renderSuccessRadar(cachedRadar);
+      }
+    } catch (err) {
+      console.warn('Success radar fetch error:', err);
+    }
+  }
+
+  function renderSuccessRadar(data) {
+    if (!data) return;
+
+    if ($('#radarOverallScore')) $('#radarOverallScore').textContent = `${data.overall_score} / 100`;
+    if ($('#radarOverallAssessment')) $('#radarOverallAssessment').textContent = `Academic Standing: ${data.academic_health || 'Exemplary'}`;
+    if ($('#radarAttendanceVelocity')) {
+      const vel = data.attendance_velocity?.velocity_rate || 0;
+      $('#radarAttendanceVelocity').textContent = `Attendance: ${data.attendance_velocity?.current_rate || 0}% (${vel >= 0 ? '+' : ''}${vel}% velocity)`;
+    }
+    if ($('#radarAttCurrent')) $('#radarAttCurrent').textContent = `${data.attendance_velocity?.current_rate || 0}%`;
+    if ($('#radarAttBuffer')) {
+      const safe = data.attendance_velocity?.buffer_classes_remaining || 0;
+      $('#radarAttBuffer').textContent = `${safe} classes safe`;
+    }
+
+    // Strengths
+    const strengthsList = $('#radarStrengthsList');
+    if (strengthsList && data.subject_strengths) {
+      if (!data.subject_strengths.length) {
+        strengthsList.innerHTML = '<div style="color:var(--muted);font-size:11px">Evaluating subject telemetry...</div>';
+      } else {
+        strengthsList.innerHTML = data.subject_strengths.map(s => `
+          <div class="radar-subject-row">
+            <div>
+              <b style="font-size:12px">${s.name}</b>
+              <small style="color:var(--muted);display:block">${s.code} · ${s.category}</small>
+            </div>
+            <strong style="color:#047857">${s.average_mark}%</strong>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Weaknesses
+    const weakList = $('#radarWeaknessesList');
+    if (weakList && data.subject_weaknesses) {
+      if (!data.subject_weaknesses.length) {
+        weakList.innerHTML = '<div style="color:#047857;font-size:11px;padding:8px">All registered subjects are performing above threshold! 🌟</div>';
+      } else {
+        weakList.innerHTML = data.subject_weaknesses.map(w => `
+          <div class="radar-subject-row">
+            <div>
+              <b style="font-size:12px">${w.name}</b>
+              <small style="color:#b91c1c;display:block">${w.focus_reason}</small>
+            </div>
+            <strong style="color:#b91c1c">${w.current_level}</strong>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Recommendations
+    const recContainer = $('#radarRecommendationsContainer');
+    if (recContainer && data.recommended_actions) {
+      recContainer.innerHTML = data.recommended_actions.map(r => `
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-weight:700;margin-bottom:6px">${r.category.toUpperCase()} · ${r.subject}</span>
+            <h4 style="margin:4px 0;font:700 13px Manrope">${r.action}</h4>
+            <p style="margin:0;font-size:11px;color:var(--muted)">${r.reason}</p>
+          </div>
+          <button class="primary" data-go="planner" style="padding:8px 14px;font-size:11px">Schedule Revision ↗</button>
+        </div>
+      `).join('');
+    }
+
+    // Rationale text
+    if ($('#radarRationaleText') && data.calculation_rationale) {
+      $('#radarRationaleText').textContent = data.calculation_rationale;
+    }
+  }
+
+  // ---------------- 3. AI Study Planner ----------------
+  async function fetchStudyPlanner() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/study-planner', { headers: getAuthHeaders() });
+      if (res.ok) {
+        cachedPlanner = await res.json();
+        renderStudyPlanner(cachedPlanner);
+      }
+    } catch (err) {
+      console.warn('Study planner fetch error:', err);
+    }
+  }
+
+  function renderStudyPlanner(p) {
+    if (!p) return;
+
+    if ($('#plannerTitle')) $('#plannerTitle').textContent = p.title || 'Active Semester Revision Plan';
+    if ($('#plannerExamTarget')) $('#plannerExamTarget').textContent = `Target Exam: ${p.exam_target || 'End-Term Examinations 2026'}`;
+
+    const total = p.total_sessions || 0;
+    const completed = p.completed_sessions || 0;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    if ($('#plannerProgressBar')) $('#plannerProgressBar').style.width = `${pct}%`;
+    if ($('#plannerCompletionRing')) $('#plannerCompletionRing').innerHTML = `${pct}<small>%</small>`;
+    if ($('#plannerStatsText')) {
+      $('#plannerStatsText').textContent = `Daily Target: ${p.daily_target_hours || 3.0} hrs/day · ${completed} of ${total} sessions completed`;
+    }
+    if ($('#plannerSessionSummary')) {
+      $('#plannerSessionSummary').textContent = `${total} Sessions Scheduled (${completed} Completed)`;
+    }
+
+    const grid = $('#plannerSessionsGrid');
+    if (grid && p.sessions) {
+      if (!p.sessions.length) {
+        grid.innerHTML = '<div style="color:var(--muted);padding:24px;grid-column:1/-1;text-align:center">No revision sessions scheduled yet. Click "Add Study Session" above to create your timetable.</div>';
+        return;
+      }
+      grid.innerHTML = p.sessions.map(s => `
+        <article class="study-session-item ${s.status === 'completed' ? 'completed' : ''}" data-session-id="${s.id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span class="session-status-pill session-status-${s.status}">${s.status}</span>
+            <small style="color:var(--muted)">⏱ ${s.duration_minutes} mins</small>
+          </div>
+          <h4 style="margin:0 0 4px;font:700 13px Manrope">${s.subject_name}</h4>
+          <p style="margin:0 0 10px;font-size:11px;color:var(--muted)">${s.topic}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;border-top:1px solid var(--line);padding-top:8px">
+            <span>📅 ${s.session_date} · ${s.start_time}</span>
+            <div style="display:flex;gap:6px">
+              <button class="toggle-session-btn" data-id="${s.id}" data-current="${s.status}" style="background:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px" title="Toggle completion">
+                ${s.status === 'completed' ? '↩ Reopen' : '✓ Done'}
+              </button>
+              <button class="delete-session-btn" data-id="${s.id}" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px" title="Delete session">×</button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      $$('.toggle-session-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const nextStatus = btn.dataset.current === 'completed' ? 'pending' : 'completed';
+          await fetch(`/api/study-planner/session/${id}`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status: nextStatus })
+          });
+          toast(`Session marked as ${nextStatus} ✓`);
+          fetchStudyPlanner();
+          fetchDashboardSummary();
+        });
+      });
+
+      $$('.delete-session-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm('Delete this scheduled revision session?')) {
+            await fetch(`/api/study-planner/session/${id}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+            toast('Session deleted.');
+            fetchStudyPlanner();
+            fetchDashboardSummary();
+          }
+        });
+      });
+    }
+  }
+
+  // Add Session Modal Handlers
+  const addSessionBackdrop = $('#addSessionBackdrop');
+  const addSessionForm = $('#addSessionForm');
+
+  function openAddSessionModal() {
+    if (!currentUser) { openAuth('signin'); return; }
+    if ($('#sessDateInput')) $('#sessDateInput').value = new Date().toISOString().split('T')[0];
+    addSessionBackdrop?.classList.add('open');
+  }
+
+  function closeAddSessionModal() {
+    addSessionBackdrop?.classList.remove('open');
+  }
+
+  $('#openAddSessionBtn')?.addEventListener('click', openAddSessionModal);
+  $('#closeAddSessionModal')?.addEventListener('click', closeAddSessionModal);
+  addSessionBackdrop?.addEventListener('click', e => {
+    if (e.target === addSessionBackdrop) closeAddSessionModal();
+  });
+
+  addSessionForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const subject = $('#sessSubjectInput').value.trim();
+    const topic = $('#sessTopicInput').value.trim();
+    const date = $('#sessDateInput').value;
+    const time = $('#sessTimeInput').value;
+    const duration = parseInt($('#sessDurationInput').value, 10) || 60;
+
+    try {
+      const res = await fetch('/api/study-planner/session', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          subject_name: subject,
+          topic: topic,
+          session_date: date,
+          start_time: time,
+          duration_minutes: duration
+        })
+      });
+      if (!res.ok) throw new Error('Could not schedule session.');
+      addSessionForm.reset();
+      closeAddSessionModal();
+      toast('Revision session scheduled ✓');
+      fetchStudyPlanner();
+      fetchDashboardSummary();
+    } catch (err) {
+      toast('Failed: ' + err.message);
+    }
+  });
+
+  // ---------------- 4. Skill & Career Roadmap ----------------
+  async function fetchCareerRoadmap() {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/career-roadmap', { headers: getAuthHeaders() });
+      if (res.ok) {
+        cachedCareer = await res.json();
+        renderCareerRoadmap(cachedCareer);
+      }
+    } catch (err) {
+      console.warn('Career roadmap fetch error:', err);
+    }
+  }
+
+  function renderCareerRoadmap(data) {
+    if (!data) return;
+    const container = $('#careerGoalsContainer');
+    const goals = data.goals || [];
+
+    if ($('#careerGoalsSummary')) {
+      $('#careerGoalsSummary').textContent = `${data.total_goals || goals.length} Active Goals · Real-Time Progress`;
+    }
+
+    if (!container) return;
+    if (!goals.length) {
+      container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px">No roadmap goals set yet. Click "Add Career Goal" to track skill and internship milestones.</div>';
+      return;
+    }
+
+    container.innerHTML = goals.map(g => {
+      const pct = g.completion_percentage || 0;
+      return `
+        <article class="career-goal-card" data-goal-id="${g.id}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-weight:700;text-transform:uppercase">${g.category}</span>
+              <h3 style="margin:6px 0 2px;font:700 15px Manrope">${g.title}</h3>
+              <small style="color:var(--muted)">Target: ${g.target_date || 'Ongoing'} · ${g.completed_milestones} of ${g.total_milestones} milestones completed (${pct}%)</small>
+            </div>
+            <button class="delete-goal-btn" data-id="${g.id}" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px" title="Delete goal">×</button>
+          </div>
+
+          <div class="progress purple" style="margin:12px 0 14px">
+            <i style="width:${pct}%"></i>
+          </div>
+
+          <ul class="milestone-check-list">
+            ${(g.milestones || []).map(m => `
+              <li class="milestone-item ${m.completed ? 'done' : ''}" data-milestone-id="${m.id}">
+                <input type="checkbox" ${m.completed ? 'checked' : ''} data-id="${m.id}" class="milestone-checkbox">
+                <span>${m.title}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </article>
+      `;
+    }).join('');
+
+    $$('.milestone-checkbox').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        const id = cb.dataset.id;
+        await fetch(`/api/career-roadmap/milestone/${id}`, {
+          method: 'PATCH',
+          headers: getAuthHeaders()
+        });
+        toast('Milestone progress updated ✓');
+        fetchCareerRoadmap();
+        fetchDashboardSummary();
+      });
+    });
+
+    $$('.delete-goal-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (confirm('Delete this career roadmap goal?')) {
+          await fetch(`/api/career-roadmap/goal/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          toast('Career goal removed.');
+          fetchCareerRoadmap();
+          fetchDashboardSummary();
+        }
+      });
+    });
+  }
+
+  // Add Goal Modal Handlers
+  const addGoalBackdrop = $('#addGoalBackdrop');
+  const addGoalForm = $('#addGoalForm');
+
+  function openAddGoalModal() {
+    if (!currentUser) { openAuth('signin'); return; }
+    addGoalBackdrop?.classList.add('open');
+  }
+
+  function closeAddGoalModal() {
+    addGoalBackdrop?.classList.remove('open');
+  }
+
+  $('#openAddGoalBtn')?.addEventListener('click', openAddGoalModal);
+  $('#closeAddGoalModal')?.addEventListener('click', closeAddGoalModal);
+  addGoalBackdrop?.addEventListener('click', e => {
+    if (e.target === addGoalBackdrop) closeAddGoalModal();
+  });
+
+  addGoalForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = $('#goalTitleInput').value.trim();
+    const category = $('#goalCategorySelect').value;
+    const targetDate = $('#goalTargetDateInput').value || null;
+    const rawMilestones = $('#goalMilestonesInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+    try {
+      const res = await fetch('/api/career-roadmap/goal', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          title: title,
+          category: category,
+          target_date: targetDate,
+          milestones: rawMilestones
+        })
+      });
+      if (!res.ok) throw new Error('Could not create career goal.');
+      addGoalForm.reset();
+      closeAddGoalModal();
+      toast('Roadmap goal created ✓');
+      fetchCareerRoadmap();
+      fetchDashboardSummary();
+    } catch (err) {
+      toast('Failed: ' + err.message);
+    }
+  });
+
+  // ---------------- 5. Campus Navigator Directory ----------------
+  async function fetchCampusNavigator(category = null, search = null) {
+    try {
+      let url = '/api/navigator/directory?';
+      if (category && category !== 'all') url += `category=${encodeURIComponent(category)}&`;
+      if (search) url += `search=${encodeURIComponent(search)}&`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        cachedDirectory = data.directory || [];
+        renderCampusNavigator(cachedDirectory);
+      }
+    } catch (err) {
+      console.warn('Campus directory fetch error:', err);
+    }
+  }
+
+  function renderCampusNavigator(items) {
+    const grid = $('#navigatorDirectoryGrid');
+    if (!grid) return;
+    if (!items.length) {
+      grid.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px;grid-column:1/-1">No locations match your search criteria.</div>';
+      return;
+    }
+
+    grid.innerHTML = items.map(d => `
+      <article class="directory-card ${d.emergency_contact ? 'emergency-card' : ''}">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span class="dir-cat-badge">${d.category}</span>
+            <small style="color:var(--muted)">◷ ${d.operating_hours}</small>
+          </div>
+          <h3 style="margin:0 0 4px;font:700 15px Manrope">${d.name}</h3>
+          <p style="margin:0 0 8px;font-size:12px;color:var(--muted)">📍 ${d.building} · ${d.floor_room}</p>
+          <div style="font-size:11px;background:#f8f9fd;padding:8px 10px;border-radius:8px;border:1px solid var(--line);margin-bottom:10px">
+            <b>Walking Directions:</b> ${d.walking_directions || 'Main university quadrangle.'}
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+          <div>
+            ${d.contact_phone ? `<span style="display:block">📞 <b>${d.contact_phone}</b></span>` : ''}
+            ${d.contact_email ? `<small style="color:var(--muted)">✉ ${d.contact_email}</small>` : ''}
+          </div>
+          ${d.emergency_contact
+            ? `<a href="tel:${d.contact_phone}" class="primary" style="background:#ef4444;color:#fff;padding:6px 12px;font-size:10px;text-decoration:none">Emergency Call</a>`
+            : `<button class="link" onclick="toast('Directions copied to clipboard!')">Copy Map Pin ↗</button>`}
+        </div>
+      </article>
+    `).join('');
+  }
+
+  $('#navigatorSearchInput')?.addEventListener('input', e => {
+    const q = e.target.value.trim();
+    fetchCampusNavigator(activeNavCategory, q);
+  });
+
+  $$('#navigatorFilters button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#navigatorFilters button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      activeNavCategory = btn.dataset.cat || 'all';
+      const q = $('#navigatorSearchInput')?.value.trim() || null;
+      fetchCampusNavigator(activeNavCategory, q);
+    });
+  });
+
+  // ---------------- 6. Campus Notice Intelligence ----------------
+  async function fetchNoticeIntelligence() {
+    try {
+      let url = `/api/announcements/intelligence?only_saved=${onlySavedNotices}&`;
+      if (activeNoticePriority && activeNoticePriority !== 'all') {
+        url += `priority=${encodeURIComponent(activeNoticePriority)}&`;
+      }
+      const q = $('#noticesSearchInput')?.value.trim();
+      if (q) url += `search=${encodeURIComponent(q)}&`;
+
+      const res = await fetch(url, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        cachedNoticeIntelligence = data.announcements || [];
+        renderNoticeIntelligence(cachedNoticeIntelligence);
+      }
+    } catch (err) {
+      console.warn('Notice intelligence fetch error:', err);
+    }
+  }
+
+  function renderNoticeIntelligence(notices) {
+    const container = $('#noticesIntelligenceContainer');
+    if (!container) return;
+    if (!notices.length) {
+      container.innerHTML = '<div style="color:var(--muted);text-align:center;padding:32px">No bulletins found for this filter.</div>';
+      return;
+    }
+
+    container.innerHTML = notices.map(n => `
+      <article class="notice-card-advanced ${!n.is_read ? 'unread-notice' : ''} ${n.priority === 'urgent' ? 'urgent-notice' : ''}" data-id="${n.id}">
+        <div class="notice-top-row">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="notice-priority-badge priority-${n.priority}">${n.priority}</span>
+            <span class="badge" style="background:#f3f4f6;color:#374151;font-weight:700">${n.category}</span>
+            ${n.is_pinned ? '<span style="color:#f59e0b;font-size:11px">📌 Pinned</span>' : ''}
+          </div>
+          <button class="bookmark-btn ${n.is_saved ? 'saved' : ''}" data-id="${n.id}" title="${n.is_saved ? 'Remove bookmark' : 'Bookmark notice'}">
+            ${n.is_saved ? '★' : '☆'}
+          </button>
+        </div>
+
+        <h3 style="margin:4px 0 6px;font:700 15px Manrope">${n.title}</h3>
+        <p style="margin:0 0 10px;font-size:12px;color:var(--muted);line-height:1.6">${n.content}</p>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px">
+          <span>By: <b>${n.author_role || 'Dean of Student Affairs'}</b> · Published: ${n.published_at || 'Recent'}</span>
+          <div style="display:flex;gap:12px;align-items:center">
+            ${n.expiry_date ? `<span>Expires: <b>${n.expiry_date}</b></span>` : ''}
+            <button class="mark-read-btn" data-id="${n.id}" style="border:none;background:none;color:var(--indigo-primary);cursor:pointer;font-weight:700;font-size:11px">
+              ${n.is_read ? '✓ Read' : 'Mark as Read'}
+            </button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+
+    $$('.bookmark-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const res = await fetch(`/api/announcements/${id}/save`, { method: 'POST', headers: getAuthHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          toast(data.is_saved ? 'Announcement bookmarked ★' : 'Bookmark removed ☆');
+          fetchNoticeIntelligence();
+          fetchDashboardSummary();
+        }
+      });
+    });
+
+    $$('.mark-read-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        await fetch(`/api/announcements/${id}/read`, { method: 'POST', headers: getAuthHeaders() });
+        toast('Marked bulletin as read ✓');
+        fetchNoticeIntelligence();
+      });
+    });
+  }
+
+  $('#noticesSearchInput')?.addEventListener('input', () => {
+    fetchNoticeIntelligence();
+  });
+
+  $$('#noticesFilters button[data-priority]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#noticesFilters button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      activeNoticePriority = btn.dataset.priority;
+      onlySavedNotices = false;
+      fetchNoticeIntelligence();
+    });
+  });
+
+  $('#filterSavedNoticesBtn')?.addEventListener('click', () => {
+    $$('#noticesFilters button').forEach(b => b.classList.remove('selected'));
+    $('#filterSavedNoticesBtn')?.classList.add('selected');
+    onlySavedNotices = true;
+    activeNoticePriority = 'all';
+    fetchNoticeIntelligence();
+  });
+
+  // Card 6 mini button to open full assignments modal
+  $('#cardOpenAsgnBtn')?.addEventListener('click', () => {
+    loadAssignments();
+    $('#assignmentsBackdrop')?.classList.add('open');
+  });
+
+  // ---------------- AI Co-Pilot & Insights ----------------
+  const aiChatForm = $('#aiChatForm');
+  const aiQueryInput = $('#aiQueryInput');
+  const aiChatMessages = $('#aiChatMessages');
+  const generateDailyBriefBtn = $('#generate');
+
+  generateDailyBriefBtn?.addEventListener('click', async () => {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+
+    generateDailyBriefBtn.disabled = true;
+    generateDailyBriefBtn.textContent = 'Generating real AI brief…';
+
+    try {
+      const res = await fetch('/api/ai/brief', { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Could not retrieve brief');
+      const data = await res.json();
+      renderDailyBrief(data.cards || []);
+      toast('Fresh personalized brief prepared ✦');
+    } catch (err) {
+      toast('Brief error: ' + err.message);
+    } finally {
+      generateDailyBriefBtn.disabled = false;
+      generateDailyBriefBtn.textContent = 'Generate another brief ✦';
+    }
+  });
+
+  function renderDailyBrief(cards) {
+    const grid = $('#insightGrid');
+    if (!grid || !cards.length) return;
+
+    grid.innerHTML = cards.map(c => `
+      <article class="insight-card ${c.pill_class}">
+        <label>✦ &nbsp; ${c.category}</label>
+        <h3>${c.title}</h3>
+        <p>${c.description}</p>
+        <button data-go="${c.action_target}">${c.action_text}</button>
+      </article>
+    `).join('');
+  }
+
+  aiChatForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const query = aiQueryInput?.value.trim();
+    if (!query) return;
+
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+
+    appendChatMessage('user', query);
+    aiQueryInput.value = '';
+
+    const typingEl = document.createElement('div');
+    typingEl.className = 'ai-typing';
+    typingEl.id = 'aiTypingIndicator';
+    typingEl.innerHTML = 'CampusIQ Co-Pilot is thinking <span></span><span></span><span></span>';
+    aiChatMessages?.append(typingEl);
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ message: query })
+      });
+
+      typingEl.remove();
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'AI Assistant service unavailable.');
+      }
+
+      const data = await res.json();
+      appendChatMessage('assistant', data.reply);
+    } catch (err) {
+      typingEl?.remove();
+      appendChatMessage(
+        'assistant',
+        `⚠️ **Notice**: Unable to reach AI provider (${err.message}). You can retry your question, or review your schedule under Academics.`
+      );
+    }
+  });
+
+  function appendChatMessage(sender, content) {
+    if (!aiChatMessages) return;
+    const bubble = document.createElement('div');
+    bubble.className = `ai-bubble ai-bubble-${sender}`;
+
+    const formatted = content
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>')
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+    bubble.innerHTML = formatted + `<span class="ai-bubble-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
+    aiChatMessages.append(bubble);
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+  }
+
+  $('#clearAiChatBtn')?.addEventListener('click', async () => {
+    if (confirm('Clear your conversation history with CampusIQ Co-Pilot?')) {
+      await fetch('/api/ai/history', { method: 'DELETE', headers: getAuthHeaders() });
+      if (aiChatMessages) {
+        aiChatMessages.innerHTML = `
+          <div class="ai-bubble ai-bubble-assistant">
+            Conversation cleared. How can I assist with your courses, attendance, or marksheets today?
+            <span class="ai-bubble-time">Just now</span>
+          </div>
+        `;
+      }
+      toast('Chat history cleared.');
+    }
+  });
+
+  $$('.ai-pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (aiQueryInput) {
+        aiQueryInput.value = btn.dataset.prompt;
+        aiChatForm?.dispatchEvent(new Event('submit'));
+      }
+    });
+  });
+
+  // ---------------- Learning Shortcuts Modals ----------------
+  const assignmentsBackdrop = $('#assignmentsBackdrop');
+  const addAssignmentForm = $('#addAssignmentForm');
+
+  async function openAssignmentsModal() {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    assignmentsBackdrop?.classList.add('open');
+    await loadAssignments();
+  }
+
+  function closeAssignmentsModal() {
+    assignmentsBackdrop?.classList.remove('open');
+  }
+
+  $('#openAssignmentsBtn')?.addEventListener('click', openAssignmentsModal);
+  $('#closeAssignmentsModal')?.addEventListener('click', closeAssignmentsModal);
+  assignmentsBackdrop?.addEventListener('click', e => {
+    if (e.target === assignmentsBackdrop) closeAssignmentsModal();
+  });
+
+  async function loadAssignments() {
+    const list = $('#assignmentListContainer');
+    if (!list) return;
+
+    try {
+      const res = await fetch('/api/academics/assignments', { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Could not fetch assignments');
+      const data = await res.json();
+      const assignments = data.assignments || [];
+
+      if ($('#assignmentCountBadge')) {
+        $('#assignmentCountBadge').textContent = `${assignments.length} tasks`;
+      }
+
+      if (!assignments.length) {
+        list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">No pending coursework tasks. Add an assignment below!</div>';
+        return;
+      }
+
+      list.innerHTML = assignments.map(a => {
+        const isDone = a.status === 'completed';
+        const prioClass = `prio-${a.priority}`;
+
+        return `
+          <div class="task-item ${isDone ? 'done' : ''}">
+            <input type="checkbox" ${isDone ? 'checked' : ''} data-id="${a.id}">
+            <div class="task-details">
+              <b>${a.title}</b>
+              <small>${a.subject_code || 'General'} · Due: ${a.due_date}</small>
+            </div>
+            <span class="badge-priority ${prioClass}">${a.priority}</span>
+            <button class="task-del-btn" data-del-id="${a.id}" title="Delete task">×</button>
+          </div>
+        `;
+      }).join('');
+
+      $$('.task-item input[type=checkbox]').forEach(cb => {
+        cb.onchange = async () => {
+          const newStatus = cb.checked ? 'completed' : 'pending';
+          await fetch(`/api/academics/assignments/${cb.dataset.id}/status`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status: newStatus })
+          });
+          toast(cb.checked ? 'Task marked complete ✓' : 'Task restored to pending.');
+          loadAssignments();
+        };
+      });
+
+      $$('.task-del-btn').forEach(btn => {
+        btn.onclick = async () => {
+          await fetch(`/api/academics/assignments/${btn.dataset.delId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          toast('Task removed.');
+          loadAssignments();
+        };
+      });
+    } catch (err) {
+      list.innerHTML = `<div style="color:#d14b5f;padding:16px">${err.message}</div>`;
+    }
+  }
+
+  addAssignmentForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = $('#asgnTitle').value.trim();
+    const subjectId = $('#asgnSubject').value;
+    const dueDate = $('#asgnDueDate').value;
+    const priority = $('#asgnPriority').value;
+
+    try {
+      const res = await fetch('/api/academics/assignments', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title, subject_id: subjectId, due_date: dueDate, priority })
+      });
+      if (!res.ok) throw new Error('Failed to create assignment');
+      addAssignmentForm.reset();
+      toast('Assignment added successfully ✓');
+      loadAssignments();
+    } catch (err) {
+      toast('Error: ' + err.message);
+    }
+  });
+
+  // Pomodoro Focus Timer
+  const plannerBackdrop = $('#plannerBackdrop');
+
+  function openPlannerModal() {
+    plannerBackdrop?.classList.add('open');
+  }
+
+  function closePlannerModal() {
+    plannerBackdrop?.classList.remove('open');
+  }
+
+  $('#openPlannerBtn')?.addEventListener('click', openPlannerModal);
+  $('#closePlannerModal')?.addEventListener('click', closePlannerModal);
+  plannerBackdrop?.addEventListener('click', e => {
+    if (e.target === plannerBackdrop) closePlannerModal();
+  });
+
+  function updateTimerDisplay() {
+    const mins = Math.floor(timerSeconds / 60);
+    const secs = timerSeconds % 60;
+    if ($('#timerDisplay')) {
+      $('#timerDisplay').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  }
+
+  $('#timerToggleBtn')?.addEventListener('click', () => {
+    if (timerRunning) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      $('#timerToggleBtn').textContent = 'Resume ▶';
+    } else {
+      timerRunning = true;
+      $('#timerToggleBtn').textContent = 'Pause ❚❚';
+      timerInterval = setInterval(() => {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          updateTimerDisplay();
+        } else {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          $('#timerToggleBtn').textContent = 'Start Session ▶';
+          toast('🎉 Pomodoro session finished! Take a 5-minute break.');
+        }
+      }, 1000);
+    }
+  });
+
+  $('#timerResetBtn')?.addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSeconds = 25 * 60;
+    updateTimerDisplay();
+    if ($('#timerToggleBtn')) $('#timerToggleBtn').textContent = 'Start Session ▶';
+  });
+
+  // Course Resources
+  const resourcesBackdrop = $('#resourcesBackdrop');
+
+  async function openResourcesModal() {
+    resourcesBackdrop?.classList.add('open');
+    const container = $('#resourcesListContainer');
+    if (!container) return;
+
+    container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:24px">Loading curriculum notes and past papers...</p>';
+
+    try {
+      const res = await fetch('/api/academics/resources', { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Could not fetch resources');
+      const data = await res.json();
+      const resources = data.resources || [];
+
+      if (!resources.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px">No resources published yet.</div>';
+        return;
+      }
+
+      container.innerHTML = resources.map(r => `
+        <div class="res-item">
+          <div class="res-item-info">
+            <b>${r.title}</b>
+            <small>${r.subject_code} — ${r.subject_name} · Type: ${r.resource_type.toUpperCase()}</small>
+          </div>
+          <a class="res-download-btn" href="${r.link_url}" target="_blank" rel="noopener">Access Resource ↗</a>
+        </div>
+      `).join('');
+    } catch (err) {
+      container.innerHTML = `<div style="color:#d14b5f;padding:16px">${err.message}</div>`;
+    }
+  }
+
+  function closeResourcesModal() {
+    resourcesBackdrop?.classList.remove('open');
+  }
+
+  $('#openResourcesBtn')?.addEventListener('click', openResourcesModal);
+  $('#closeResourcesModal')?.addEventListener('click', closeResourcesModal);
+  resourcesBackdrop?.addEventListener('click', e => {
+    if (e.target === resourcesBackdrop) closeResourcesModal();
+  });
+
+  // IQ Tip Cycling
+  const tips = [
+    ['Consistency beats cramming.', 'Try a 25-minute focus session before your next class. Daily incremental progress beats all-nighters.'],
+    ['Make tomorrow easier.', 'Spend two minutes checking your next day’s timetable and room numbers before logging off.'],
+    ['Active recall works.', 'Explaining one core concept aloud to a peer is proven to boost long-term retention by 70%.'],
+    ['Schedule cognitive resets.', 'A brief 10-minute walk between lectures clears mental fatigue and sharpens focus.']
+  ];
+
+  $('#newTip')?.addEventListener('click', () => {
+    tipIndex = (tipIndex + 1) % tips.length;
+    if ($('#tipTitle')) $('#tipTitle').textContent = tips[tipIndex][0];
+    if ($('#tipText')) $('#tipText').textContent = tips[tipIndex][1];
+    toast('Fresh CampusIQ tip prepared ✦');
+  });
+
+  // ---------------- Boot Initialization ----------------
+  const hash = window.location.hash.slice(1);
+  if (pages.includes(hash)) {
+    navigateTo(hash);
+  }
+
+  checkSession();
+
 })();

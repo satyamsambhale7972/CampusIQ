@@ -1,0 +1,5 @@
+# Netlify & Cloudflare Pages SPA Routing Rules
+# Redirects all frontend routes to index.html with HTTP 200 to prevent 404 errors
+
+/api/*  /api/:splat  200
+/*      /index.html  200
