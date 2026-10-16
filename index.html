@@ -88,6 +88,26 @@
       </div>
     </header>
 
+    <!-- Real-Time Security Email Dispatch Notice -->
+    <div class="email-dispatch-banner" id="emailDispatchAlert" style="display:none">
+      <div class="edb-left">
+        <span class="edb-icon">📧</span>
+        <div class="edb-info">
+          <strong>Real-Time Security Sign-In Alert Sent:</strong>
+          <span>A verification notice was dispatched to your Gmail (<b id="alertTargetEmail">user@gmail.com</b>)</span>
+        </div>
+      </div>
+      <div class="edb-actions">
+        <a href="https://mail.google.com/mail/u/0/#search/CampusIQ" target="_blank" rel="noopener" class="edb-btn gmail-btn" id="openGmailBtn" title="Open Gmail inbox in new tab">
+          <span>📬</span> Open Gmail Inbox ↗
+        </a>
+        <button type="button" class="edb-btn resend-btn" id="resendEmailNoticeBtn" title="Resend Security Notice">
+          <span>↻</span> Resend
+        </button>
+        <button type="button" class="edb-close" id="dismissEmailNoticeBtn" title="Dismiss Alert">✕</button>
+      </div>
+    </div>
+
     <!-- PAGE 1: OVERVIEW (3D DIMENSION COCKPIT) -->
     <section class="page active" id="page-overview">
       
@@ -1227,6 +1247,12 @@
             <input class="form-input" id="otpPhoneNumber" type="tel" placeholder="9876543210" maxlength="15" autofocus>
           </div>
         </div>
+        <div id="otpSendStatusBox" style="display:none;margin-bottom:12px">
+          <div class="otp-status-pill">
+            <span class="status-indicator-dot dot-amber" id="otpSendDot"></span>
+            <span id="otpSendStatusText">Sending… Dispatching to carrier network</span>
+          </div>
+        </div>
         <p class="auth-error" id="otpSendError" role="alert"></p>
         <div class="btn-row">
           <button class="primary" id="sendOtpBtn" type="button" style="width:100%">Send Verification OTP ↗</button>
@@ -1234,17 +1260,21 @@
       </div>
 
       <div id="otpStepVerify" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Code generated for <b id="otpTargetDisplay">--</b></p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Verification target: <b id="otpTargetDisplay">--</b></p>
         
-        <!-- Live Instant OTP Banner (100% Glitch-Free) -->
-        <div class="otp-banner" id="otpLiveBanner">
-          <div class="otp-banner-header">
-            <small>✦ INSTANT VERIFICATION CODE</small>
-            <span class="good-pill" style="font-size:10px;padding:2px 8px">Valid for 5 min</span>
+        <!-- Real-Time Carrier & Provider Delivery Lifecycle Status -->
+        <div class="otp-lifecycle-card" id="otpLifecycleCard">
+          <div class="otp-status-badge-row">
+            <div class="otp-status-pill" id="otpStatusPill">
+              <span class="status-indicator-dot dot-blue" id="otpStatusDot"></span>
+              <span id="otpStatusLabel">Request accepted</span>
+            </div>
+            <span class="otp-timer-badge" id="otpExpiryBadge">Valid: 5 min</span>
           </div>
-          <div class="otp-code-highlight" id="otpCodeDisplay">------</div>
-          <button type="button" class="btn-autofill" id="autoFillOtpBtn">⚡ Click to Auto-fill Code</button>
-          <div style="font-size:11px;color:var(--muted);margin-top:8px">Instant verification active. Use this code to verify your phone number immediately.</div>
+          <div class="otp-gateway-info">
+            <div class="otp-gateway-title" id="otpGatewayTitle">SMS Carrier Gateway</div>
+            <p class="otp-gateway-desc" id="otpGatewayDesc">Request accepted by SMS provider queue. Enter the 6-digit verification code received on your phone.</p>
+          </div>
         </div>
 
         <div class="otp-box-row">
@@ -1256,6 +1286,63 @@
           <button class="primary" id="confirmOtpBtn" type="button" style="width:100%">Verify Code ✓</button>
           <button class="btn-secondary" id="resendOtpBtn" type="button" disabled style="width:100%">Resend OTP</button>
           <button type="button" class="change-number-link" id="changeNumberBtn">← Change mobile number</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Verification Modal -->
+  <div class="backdrop" id="emailVerifyBackdrop">
+    <div class="modal">
+      <button id="closeEmailVerifyModal" aria-label="Close email verification">×</button>
+      <span>✉️</span>
+      <label>SECURITY VERIFICATION</label>
+      <h2>Verify Student Email</h2>
+      <p>Confirm your registered email address to receive official institutional notices.</p>
+
+      <div id="emailVerifyStepSend">
+        <div class="form-group" style="text-align:left">
+          <label>Registered Student Email</label>
+          <input class="form-input" id="emailVerifyInput" type="email" readonly>
+        </div>
+        <div id="emailSendStatusBox" style="display:none;margin-bottom:12px">
+          <div class="otp-status-pill">
+            <span class="status-indicator-dot dot-amber" id="emailSendDot"></span>
+            <span id="emailSendStatusText">Sending… Connecting to SMTP gateway</span>
+          </div>
+        </div>
+        <p class="auth-error" id="emailVerifySendError" role="alert"></p>
+        <div class="btn-row">
+          <button class="primary" id="sendEmailVerifyBtn" type="button" style="width:100%">Send Verification Email ↗</button>
+        </div>
+      </div>
+
+      <div id="emailVerifyStepConfirm" style="display:none">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Code dispatched to <b id="emailVerifyTargetDisplay">--</b></p>
+
+        <!-- Real-Time SMTP Delivery Lifecycle Status -->
+        <div class="otp-lifecycle-card">
+          <div class="otp-status-badge-row">
+            <div class="otp-status-pill">
+              <span class="status-indicator-dot dot-blue" id="emailStatusDot"></span>
+              <span id="emailStatusLabel">Request accepted</span>
+            </div>
+            <span class="otp-timer-badge">Valid: 15 min</span>
+          </div>
+          <div class="otp-gateway-info">
+            <div class="otp-gateway-title">SMTP Mail Gateway</div>
+            <p class="otp-gateway-desc" id="emailDeliveryDesc">Verification email accepted by SMTP server. Check your Gmail inbox for the 6-digit code.</p>
+          </div>
+        </div>
+
+        <div class="otp-box-row">
+          <input class="otp-input" id="emailInputCode" type="text" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+        </div>
+        <div class="cooldown-text" id="emailCooldownText">Resend email in <span id="emailCooldownSec">60</span>s</div>
+        <p class="auth-error" id="emailVerifyConfirmError" role="alert"></p>
+        <div class="btn-row" style="flex-direction:column;gap:8px">
+          <button class="primary" id="confirmEmailVerifyBtn" type="button" style="width:100%">Verify Email Code ✓</button>
+          <button class="btn-secondary" id="resendEmailVerifyBtn" type="button" disabled style="width:100%">Resend Email</button>
         </div>
       </div>
     </div>
@@ -1281,6 +1368,7 @@
             <b id="profileDisplayNameLarge" style="font:800 17px Manrope;display:block">Satyam Sambhale</b>
             <div style="display:flex;gap:8px;align-items:center;margin:4px 0 10px;flex-wrap:wrap">
               <small id="profilePhoneStatus" style="font-size:12px;color:#10b981">● Phone Verified (+91)</small>
+              <small id="profileEmailStatus" style="font-size:12px;color:#10b981">● Email Verified</small>
               <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:10px" id="profileBranchBadge">Computer Science & Engineering</span>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1290,9 +1378,11 @@
               </label>
               <button class="btn-secondary" id="profilePhotoRemoveBtn" type="button" style="font-size:11px;padding:6px 12px;color:var(--danger)">✕ Remove Photo</button>
               <button class="btn-secondary" id="openOtpFromProfileBtn" type="button" style="font-size:11px;padding:6px 12px">Update Mobile 📱</button>
+              <button class="btn-secondary" id="openEmailVerifyBtn" type="button" style="font-size:11px;padding:6px 12px">Verify Email ✉️</button>
             </div>
           </div>
         </div>
+
 
         <form id="profileForm">
           <div class="form-grid-2">

@@ -50,6 +50,16 @@ SMTP_HOST = os.getenv("SMTP_HOST", "")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM = os.getenv("SMTP_FROM", "noreply@campusiq.edu")
+SMTP_FROM = os.getenv("SMTP_FROM", "CampusIQ Security <security@campusiq.edu>")
 SMTP_SECURE = os.getenv("SMTP_SECURE", "true").lower() in ("true", "1", "yes")
+SMTP_TIMEOUT = float(os.getenv("SMTP_TIMEOUT", "10.0"))
+
+# SMS Gateway Settings for Real Phone OTP Delivery (Twilio, Fast2SMS)
+SMS_PROVIDER = os.getenv("SMS_PROVIDER", "none").lower() # 'twilio', 'fast2sms', or 'none'
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
+FAST2SMS_API_KEY = os.getenv("FAST2SMS_API_KEY", "")
+SMS_REQUEST_TIMEOUT = float(os.getenv("SMS_REQUEST_TIMEOUT", "8.0"))
+
 

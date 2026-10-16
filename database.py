@@ -5,6 +5,8 @@ Assignments, Facilities, Events, Support Tickets, Notifications, FAQs, and Audit
 """
 import sqlite3
 import hashlib
+import hmac
+import secrets
 import json
 import logging
 import uuid
@@ -73,6 +75,7 @@ class Database:
                     ("phone_number", "TEXT", "NULL"),
                     ("country_code", "TEXT", "'+91'"),
                     ("phone_verified", "INTEGER", "0"),
+                    ("email_verified", "INTEGER", "0"),
                     ("course", "TEXT", "'B.Tech'"),
                     ("branch", "TEXT", "'Computer Science & Engineering'"),
                     ("date_of_joining", "TEXT", "'2024-08-01'"),
@@ -95,9 +98,40 @@ class Database:
                     expires_at TEXT NOT NULL,
                     cooldown_until TEXT NOT NULL,
                     verified INTEGER NOT NULL DEFAULT 0,
+                    provider TEXT NOT NULL DEFAULT 'none',
+                    provider_sid TEXT,
+                    delivery_status TEXT NOT NULL DEFAULT 'pending',
                     created_at TEXT NOT NULL DEFAULT (datetime('now'))
                 );
                 """)
+
+                # Dynamic column migrations for existing phone_verifications table
+                existing_pv_cols = [r[1] for r in conn.execute("PRAGMA table_info(phone_verifications)").fetchall()]
+                for col_name, col_type, default_val in [
+                    ("provider", "TEXT", "'none'"),
+                    ("provider_sid", "TEXT", "NULL"),
+                    ("delivery_status", "TEXT", "'pending'")
+                ]:
+                    if col_name not in existing_pv_cols:
+                        conn.execute(f"ALTER TABLE phone_verifications ADD COLUMN {col_name} {col_type} DEFAULT {default_val}")
+
+                # 2B. Email Verifications
+                conn.execute("""
+                CREATE TABLE IF NOT EXISTS email_verifications (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    email TEXT NOT NULL,
+                    code_hash TEXT NOT NULL,
+                    token_hash TEXT,
+                    verification_type TEXT NOT NULL DEFAULT 'signup',
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    expires_at TEXT NOT NULL,
+                    cooldown_until TEXT NOT NULL,
+                    verified INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                """)
+
 
                 # 3. Subjects
                 conn.execute("""
@@ -622,7 +656,18 @@ class Database:
         finally:
             conn.close()
 
+    def get_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves profile record by user_id."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                row = conn.execute("SELECT * FROM profiles WHERE id = ?", (user_id,)).fetchone()
+                return dict(row) if row else None
+        finally:
+            conn.close()
+
     def update_profile(self, user_id: str, full_name: str, department: str, year_semester: str, branch: str = "Computer Science & Engineering") -> Dict[str, Any]:
+
         conn = self.get_connection()
         try:
             with conn:
@@ -663,9 +708,13 @@ class Database:
         finally:
             conn.close()
 
-    # ---------------- Phone OTP Verification ----------------
+    # ---------------- Phone OTP & Gateway Verification ----------------
     def request_phone_otp(self, user_id: str, phone_number: str, country_code: str = "+91") -> Dict[str, Any]:
-        """Creates or updates OTP record with cooldown and 5-minute expiry."""
+        """
+        Creates or updates OTP record with 60s cooldown and 5-minute expiry.
+        Generates cryptographically secure 6-digit OTP and stores only its SHA-256 hash.
+        Returns raw_otp strictly for internal SMS gateway transmission.
+        """
         conn = self.get_connection()
         try:
             with conn:
@@ -681,12 +730,16 @@ class Database:
                     cooldown = datetime.fromisoformat(existing["cooldown_until"])
                     if now < cooldown:
                         wait_seconds = int((cooldown - now).total_seconds())
-                        return {"success": False, "cooldown": True, "wait_seconds": wait_seconds, "message": f"Please wait {wait_seconds}s before requesting a new OTP."}
+                        return {
+                            "success": False,
+                            "status": "failed",
+                            "cooldown": True,
+                            "wait_seconds": wait_seconds,
+                            "message": f"Please wait {wait_seconds}s before requesting a new OTP."
+                        }
 
-                # Generate secure 6-digit OTP
-                # For testing and deterministic evaluation, use cryptographic seed based on phone + timestamp
-                import random
-                otp = f"{random.randint(100000, 999999)}"
+                # Cryptographically secure 6-digit OTP
+                otp = f"{secrets.randbelow(900000) + 100000}"
                 otp_hash = hashlib.sha256(otp.encode()).hexdigest()
 
                 expires_at = (now + timedelta(minutes=5)).isoformat()
@@ -694,26 +747,42 @@ class Database:
                 verif_id = str(uuid.uuid4())
 
                 conn.execute("""
-                INSERT INTO phone_verifications (id, user_id, phone_number, country_code, otp_hash, attempts, expires_at, cooldown_until, verified)
-                VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0)
+                INSERT INTO phone_verifications (id, user_id, phone_number, country_code, otp_hash, attempts, expires_at, cooldown_until, verified, provider, delivery_status)
+                VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 'pending', 'dispatching')
                 """, (verif_id, user_id, phone_number, country_code, otp_hash, expires_at, cooldown_until))
 
-                logger.info(f"OTP generated for {country_code}{phone_number}: [PROTECTED]. Verification ID: {verif_id}")
-                
-                # Return verification details and OTP code so interface can display it instantly without SMS gateway dependency
+                logger.info(f"Cryptographic OTP registered for {country_code}{phone_number} (ID: {verif_id})")
+
                 return {
                     "success": True,
+                    "status": "request_accepted",
                     "verification_id": verif_id,
                     "expires_in_seconds": 300,
                     "cooldown_seconds": 60,
-                    "dev_otp": otp,
-                    "otp": otp,
-                    "message": f"OTP generated for {country_code} {phone_number}."
+                    "raw_otp": otp,  # Strictly consumed by internal SMS dispatcher; stripped before client response
+                    "message": f"OTP verification request accepted for {country_code} {phone_number}."
                 }
         finally:
             conn.close()
 
+    def update_phone_verification_provider(self, verif_id: str, provider: str, provider_sid: Optional[str], status: str):
+        """Updates provider dispatch metadata on verification record."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                conn.execute("""
+                UPDATE phone_verifications
+                SET provider = ?, provider_sid = ?, delivery_status = ?
+                WHERE id = ?
+                """, (provider, provider_sid, status, verif_id))
+        finally:
+            conn.close()
+
     def verify_phone_otp(self, user_id: str, phone_number: str, country_code: str, otp: str) -> Dict[str, Any]:
+        """
+        Verifies student-submitted OTP code against SHA-256 hash using constant-time comparison.
+        Enforces 5-attempt brute-force protection and 5-minute expiry.
+        """
         conn = self.get_connection()
         try:
             with conn:
@@ -724,38 +793,59 @@ class Database:
                 """, (phone_number, country_code)).fetchone()
 
                 if not record:
-                    return {"success": False, "message": "No active verification request found. Please request a new OTP."}
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "message": "No active verification request found for this number. Please request a new OTP."
+                    }
 
                 now = datetime.utcnow()
                 expires_at = datetime.fromisoformat(record["expires_at"])
                 if now > expires_at:
-                    return {"success": False, "expired": True, "message": "OTP has expired. Please request a new code."}
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "expired": True,
+                        "message": "OTP has expired (validity is 5 minutes). Please request a new code."
+                    }
 
                 if record["attempts"] >= 5:
-                    return {"success": False, "message": "Maximum verification attempts exceeded. Please request a new OTP."}
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "message": "Maximum verification attempts (5) exceeded. Please request a new OTP."
+                    }
 
                 input_hash = hashlib.sha256(otp.strip().encode()).hexdigest()
-                if input_hash != record["otp_hash"]:
+                if not hmac.compare_digest(input_hash, record["otp_hash"]):
+                    attempts_made = record["attempts"] + 1
                     conn.execute("UPDATE phone_verifications SET attempts = attempts + 1 WHERE id = ?", (record["id"],))
-                    return {"success": False, "message": f"Incorrect OTP. {4 - record['attempts']} attempts remaining."}
+                    remaining = max(0, 5 - attempts_made)
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "attempts_remaining": remaining,
+                        "message": f"Incorrect code. {remaining} attempt(s) remaining."
+                    }
 
-                # Mark verified
-                conn.execute("UPDATE phone_verifications SET verified = 1 WHERE id = ?", (record["id"],))
+                # Mark record verified
+                conn.execute("UPDATE phone_verifications SET verified = 1, delivery_status = 'verified' WHERE id = ?", (record["id"],))
                 conn.execute("""
                 UPDATE profiles
                 SET phone_number = ?, country_code = ?, phone_verified = 1, updated_at = datetime('now')
                 WHERE id = ?
                 """, (phone_number, country_code, user_id))
 
-                # Insert notification
+                # Insert institutional notification
                 notif_id = str(uuid.uuid4())
                 conn.execute("""
                 INSERT INTO notifications (id, user_id, title, message, category, link_target)
                 VALUES (?, ?, 'Mobile Number Verified ✓', ?, 'security', '/#overview')
-                """, (notif_id, user_id, f"Your mobile number {country_code} {phone_number} is now officially verified for exam and security alerts."))
+                """, (notif_id, user_id, f"Your mobile number {country_code} {phone_number} is officially verified for exam and security alerts."))
 
                 return {
                     "success": True,
+                    "status": "verified",
                     "message": "Mobile number successfully verified ✓",
                     "phone_number": phone_number,
                     "country_code": country_code,
@@ -763,6 +853,131 @@ class Database:
                 }
         finally:
             conn.close()
+
+    # ---------------- Email Verification & Custom SMTP ----------------
+    def request_email_verification(self, user_id: str, email: str, verification_type: str = "signup") -> Dict[str, Any]:
+        """
+        Creates or updates email verification record with 60s cooldown and 15-minute expiry.
+        Generates 6-digit code and secure 32-byte URL verification token.
+        """
+        conn = self.get_connection()
+        try:
+            with conn:
+                existing = conn.execute("""
+                SELECT * FROM email_verifications
+                WHERE email = ? AND verification_type = ?
+                ORDER BY created_at DESC LIMIT 1
+                """, (email, verification_type)).fetchone()
+
+                now = datetime.utcnow()
+                if existing:
+                    cooldown = datetime.fromisoformat(existing["cooldown_until"])
+                    if now < cooldown:
+                        wait_seconds = int((cooldown - now).total_seconds())
+                        return {
+                            "success": False,
+                            "status": "failed",
+                            "cooldown": True,
+                            "wait_seconds": wait_seconds,
+                            "message": f"Please wait {wait_seconds}s before requesting a new verification email."
+                        }
+
+                code = f"{secrets.randbelow(900000) + 100000}"
+                token = secrets.token_urlsafe(32)
+                code_hash = hashlib.sha256(code.encode()).hexdigest()
+                token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+                expires_at = (now + timedelta(minutes=15)).isoformat()
+                cooldown_until = (now + timedelta(seconds=60)).isoformat()
+                verif_id = str(uuid.uuid4())
+
+                conn.execute("""
+                INSERT INTO email_verifications (id, user_id, email, code_hash, token_hash, verification_type, attempts, expires_at, cooldown_until, verified)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 0)
+                """, (verif_id, user_id, email, code_hash, token_hash, verification_type, expires_at, cooldown_until))
+
+                return {
+                    "success": True,
+                    "status": "request_accepted",
+                    "verification_id": verif_id,
+                    "raw_code": code,
+                    "raw_token": token,
+                    "expires_in_seconds": 900,
+                    "cooldown_seconds": 60,
+                    "message": f"Verification email request registered for {email}."
+                }
+        finally:
+            conn.close()
+
+    def verify_email_code(self, email: str, code_or_token: str, verification_type: str = "signup") -> Dict[str, Any]:
+        """
+        Validates email verification code or URL token against SHA-256 hash.
+        Updates student profile to email_verified = 1.
+        """
+        conn = self.get_connection()
+        try:
+            with conn:
+                record = conn.execute("""
+                SELECT * FROM email_verifications
+                WHERE email = ? AND verification_type = ? AND verified = 0
+                ORDER BY created_at DESC LIMIT 1
+                """, (email, verification_type)).fetchone()
+
+                if not record:
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "message": "No active email verification request found. Please request a new verification email."
+                    }
+
+                now = datetime.utcnow()
+                expires_at = datetime.fromisoformat(record["expires_at"])
+                if now > expires_at:
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "expired": True,
+                        "message": "Verification code has expired. Please request a new verification email."
+                    }
+
+                if record["attempts"] >= 5:
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "message": "Maximum verification attempts exceeded. Please request a new verification email."
+                    }
+
+                candidate_hash = hashlib.sha256(code_or_token.strip().encode()).hexdigest()
+                matches_code = hmac.compare_digest(candidate_hash, record["code_hash"])
+                matches_token = record["token_hash"] and hmac.compare_digest(candidate_hash, record["token_hash"])
+
+                if not (matches_code or matches_token):
+                    conn.execute("UPDATE email_verifications SET attempts = attempts + 1 WHERE id = ?", (record["id"],))
+                    remaining = max(0, 5 - (record["attempts"] + 1))
+                    return {
+                        "success": False,
+                        "status": "failed",
+                        "attempts_remaining": remaining,
+                        "message": f"Invalid verification code. {remaining} attempt(s) remaining."
+                    }
+
+                # Mark verified
+                conn.execute("UPDATE email_verifications SET verified = 1 WHERE id = ?", (record["id"],))
+                conn.execute("""
+                UPDATE profiles
+                SET email_verified = 1, updated_at = datetime('now')
+                WHERE email = ?
+                """, (email,))
+
+                return {
+                    "success": True,
+                    "status": "verified",
+                    "email": email,
+                    "message": "Email address verified successfully ✓"
+                }
+        finally:
+            conn.close()
+
 
     # ---------------- Student Records & Attendance ----------------
     def _seed_student_records(self, conn: sqlite3.Connection, student_id: str):

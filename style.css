@@ -825,54 +825,83 @@ body.dark .ref-pill {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
   outline: none;
 }
-.otp-banner {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(45, 212, 191, 0.08));
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: 12px;
-  padding: 14px 16px;
+.otp-lifecycle-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
   margin: 14px 0;
-  text-align: center;
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
-.otp-banner-header {
+.otp-status-badge-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
-.otp-banner-header small {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--indigo-primary);
-  letter-spacing: 0.5px;
-}
-.otp-code-highlight {
-  font: 800 28px/1.2 Manrope, monospace;
-  letter-spacing: 6px;
-  color: var(--ink);
-  margin: 8px 0;
-  user-select: all;
-}
-.btn-autofill {
+.otp-status-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--indigo-primary);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  gap: 8px;
+  background: var(--card-alt, #f8fafc);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 20px;
   font: 700 12px Manrope;
-  cursor: pointer;
-  transition: transform .15s, background .15s;
-  width: 100%;
-  max-width: 240px;
+  color: var(--ink);
 }
-.btn-autofill:hover {
-  background: #4f46e5;
-  transform: translateY(-1px);
+.status-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }
+.status-indicator-dot.dot-amber {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+  animation: dotPulse 1.5s infinite;
+}
+.status-indicator-dot.dot-blue {
+  background: #0284c7;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.6);
+}
+.status-indicator-dot.dot-purple {
+  background: #8b5cf6;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+}
+.status-indicator-dot.dot-green {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+}
+.status-indicator-dot.dot-red {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+.otp-timer-badge {
+  font: 600 11px Manrope;
+  color: var(--muted);
+  background: var(--line);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.otp-gateway-info {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.otp-gateway-title {
+  font: 700 13px Manrope;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.otp-gateway-desc {
+  font: 500 12px Manrope;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .change-number-link {
   background: none;
   border: none;
@@ -2373,5 +2402,122 @@ body.dark .badge-branch {
   transform: scale(1.15);
   border-color: var(--purple);
 }
+
+/* Real Security Email Dispatch Notice Banner */
+.email-dispatch-banner {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 8px 25px rgba(2, 6, 23, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(12px);
+  animation: slideDownFade 0.3s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 5;
+}
+
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.edb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.edb-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 0 6px #38bdf8);
+}
+.edb-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.35;
+}
+.edb-info strong {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 700;
+}
+.edb-info span {
+  font-size: 12px;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.edb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.edb-btn {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+}
+.edb-btn.gmail-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+.edb-btn.gmail-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.6);
+}
+
+.edb-btn.resend-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+.edb-btn.resend-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.edb-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.edb-close:hover {
+  color: #ffffff;
+}
+
+@media (max-width: 650px) {
+  .email-dispatch-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 14px;
+  }
+  .edb-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+}
+
 
 

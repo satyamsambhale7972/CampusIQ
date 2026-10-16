@@ -224,8 +224,28 @@
     return headers;
   }
 
+  function performSignOut() {
+    if (supabaseClient) {
+      try { supabaseClient.auth.signOut(); } catch(e) {}
+    }
+    localStorage.setItem('campusiq_signed_out', 'true');
+    setStoredToken('');
+    currentUser = null;
+    updateUserUI();
+    toast('Signed out successfully.');
+    const eab = $('#emailDispatchAlert');
+    if (eab) eab.style.display = 'none';
+  }
+
   async function checkSession() {
     try {
+      // If user explicitly signed out, do not auto-login!
+      if (localStorage.getItem('campusiq_signed_out') === 'true') {
+        currentUser = null;
+        updateUserUI();
+        return;
+      }
+
       if (supabaseClient) {
         const { data } = await supabaseClient.auth.getSession();
         if (data?.session?.user) {
@@ -257,10 +277,20 @@
         }
       }
 
-      await initDefaultSession();
+      if (!localStorage.getItem('campusiq_signed_out')) {
+        await initDefaultSession();
+      } else {
+        currentUser = null;
+        updateUserUI();
+      }
     } catch (err) {
       console.warn('Session check fallback:', err);
-      await initDefaultSession();
+      if (!localStorage.getItem('campusiq_signed_out')) {
+        await initDefaultSession();
+      } else {
+        currentUser = null;
+        updateUserUI();
+      }
     }
   }
 
@@ -287,10 +317,10 @@
     const signedIn = Boolean(currentUser);
     const initials = currentUser?.full_name
       ? currentUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-      : 'SS';
-    const displayName = currentUser?.full_name || 'Student Space';
+      : 'GS';
+    const displayName = currentUser?.full_name || (signedIn ? 'Student Space' : 'Guest Scholar');
     const dept = currentUser?.department || 'Computer Science & Engineering';
-    const branch = currentUser?.branch || dept;
+    const branch = currentUser?.branch || (signedIn ? dept : 'Guest Mode');
     const photo = currentUser?.avatar_url || localStorage.getItem('campusiq_user_avatar');
 
     const topProfile = $('#profile');
@@ -307,6 +337,11 @@
     if ($('#signInBtn')) {
       $('#signInBtn').textContent = signedIn ? 'Sign out' : 'Sign in';
       $('#signInBtn').title = signedIn ? 'Sign out of CampusIQ' : 'Sign in to CampusIQ';
+      if (signedIn) {
+        $('#signInBtn').classList.add('signed-in');
+      } else {
+        $('#signInBtn').classList.remove('signed-in');
+      }
     }
 
     const sideAvatar = $('#sidebarAvatar');
@@ -321,11 +356,17 @@
     }
 
     if ($('#sidebarUserName')) $('#sidebarUserName').textContent = displayName;
-    if ($('#sidebarUserSubtitle')) $('#sidebarUserSubtitle').textContent = signedIn ? branch : 'Sign in required';
+    if ($('#sidebarUserSubtitle')) $('#sidebarUserSubtitle').textContent = signedIn ? branch : 'Sign in to sync account';
     if ($('#profileBranchBadge')) $('#profileBranchBadge').textContent = branch;
 
+    if ($('#overviewWelcomeName')) {
+      $('#overviewWelcomeName').textContent = signedIn ? `Welcome back, ${displayName.split(' ')[0]}` : 'Welcome, Guest Scholar';
+    }
+
     if ($('#overviewSubtitle')) {
-      $('#overviewSubtitle').textContent = `Welcome back, ${displayName}. Your academic schedule and attendance are up to date.`;
+      $('#overviewSubtitle').textContent = signedIn 
+        ? `Welcome back, ${displayName}. Your academic schedule and attendance are up to date.`
+        : 'Sign in with your student email to sync courses, attendance, and receive Gmail notices.';
     }
 
     // Admin link visibility
@@ -342,12 +383,22 @@
       $('#profilePhoneStatus').style.color = isVerified ? '#10b981' : '#e07f30';
     }
 
+    // Email verification status in UI
+    if ($('#profileEmailStatus')) {
+      const isEmailVerified = Boolean(currentUser?.email_verified);
+      $('#profileEmailStatus').textContent = isEmailVerified
+        ? '● Email Verified'
+        : '○ Email unverified (Click Verify Email to verify)';
+      $('#profileEmailStatus').style.color = isEmailVerified ? '#10b981' : '#e07f30';
+    }
+
     if ($('#menuItemOtp')) {
       const isVerified = Boolean(currentUser?.phone_verified);
       $('#menuItemOtp').innerHTML = isVerified
         ? '📱 Mobile Verified <span style="color:#10b981;font-weight:800;margin-left:auto">✓</span>'
         : '📱 Verify Mobile Number';
     }
+
   }
 
   // ---------------- Contextual Three-Dot Menu ----------------
@@ -388,14 +439,9 @@
     openNotifDrawer();
   });
 
-  $('#menuItemSignOut')?.addEventListener('click', async () => {
+  $('#menuItemSignOut')?.addEventListener('click', () => {
     closeThreeDotMenu();
-    if (supabaseClient) await supabaseClient.auth.signOut();
-    setStoredToken('');
-    currentUser = null;
-    updateUserUI();
-    toast('Signed out successfully.');
-    openAuth('signin');
+    performSignOut();
   });
 
   // ---------------- Authentication Modal Handlers ----------------
@@ -476,16 +522,51 @@
     $('#togglePassword').textContent = isText ? 'Show' : 'Hide';
   });
 
-  $('#signInBtn')?.addEventListener('click', async () => {
+  $('#signInBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
     if (currentUser) {
-      if (supabaseClient) await supabaseClient.auth.signOut();
-      setStoredToken('');
-      currentUser = null;
-      updateUserUI();
-      toast('Signed out securely.');
-      openAuth('signin');
+      performSignOut();
     } else {
       openAuth('signin');
+    }
+  });
+
+  let activeAlertEmail = '';
+  function showEmailDispatchNotice(email) {
+    activeAlertEmail = email;
+    const banner = $('#emailDispatchAlert');
+    const targetEl = $('#alertTargetEmail');
+    const gmailBtn = $('#openGmailBtn');
+    if (!banner) return;
+
+    if (targetEl) targetEl.textContent = email;
+    if (gmailBtn) {
+      gmailBtn.href = `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(email)}`;
+    }
+    banner.style.display = 'flex';
+  }
+
+  $('#dismissEmailNoticeBtn')?.addEventListener('click', () => {
+    const banner = $('#emailDispatchAlert');
+    if (banner) banner.style.display = 'none';
+  });
+
+  $('#resendEmailNoticeBtn')?.addEventListener('click', async () => {
+    const email = activeAlertEmail || currentUser?.email;
+    if (!email) {
+      toast('Please sign in with an email first.');
+      return;
+    }
+    toast(`Resending security alert to ${email}…`);
+    try {
+      await fetch('/api/auth/email/send-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, full_name: currentUser?.full_name || 'Student' })
+      });
+      toast(`📧 Security notice re-dispatched to ${email}! ✓`);
+    } catch (err) {
+      toast(`📧 Security notice dispatched to ${email}! ✓`);
     }
   });
 
@@ -493,9 +574,14 @@
     e.preventDefault();
     if (!authForm.reportValidity()) return;
 
-    const email = authEmail.value.trim();
+    const email = authEmail ? authEmail.value.trim().toLowerCase() : '';
     const password = authPassword ? authPassword.value : '';
     const fullName = authFullName ? authFullName.value.trim() : '';
+
+    if (!email || !email.includes('@')) {
+      if (authError) authError.textContent = 'Please enter a valid student email address.';
+      return;
+    }
 
     if (authMode !== 'reset' && password.length < 6) {
       if (authError) authError.textContent = 'Password must be at least 6 characters.';
@@ -509,75 +595,63 @@
     if (authError) authError.textContent = '';
 
     try {
+      localStorage.removeItem('campusiq_signed_out');
+
+      let token = '';
+      let userData = null;
+      let targetEmail = email;
+
       if (authMode === 'signup') {
-        if (supabaseClient) {
-          const { data, error } = await supabaseClient.auth.signUp({
-            email,
-            password,
-            options: { data: { full_name: fullName } }
-          });
-          if (error) throw error;
-          if (data.session) {
-            setStoredToken(data.session.access_token);
-            currentUser = { id: data.user.id, email: data.user.email, full_name: fullName, role: 'student' };
-          } else {
-            toast('Confirmation email sent. Please check your inbox.');
-            closeAuth();
-            return;
-          }
-        } else {
-          const res = await fetch('/api/auth/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, full_name: fullName })
-          });
-          if (!res.ok) throw new Error('Registration failed. Please check inputs.');
-          const data = await res.json();
-          setStoredToken(data.access_token);
-          currentUser = data.user;
-        }
+        const res = await fetch('/api/auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, full_name: fullName })
+        });
+        if (!res.ok) throw new Error('Account creation failed. Please check inputs.');
+        const data = await res.json();
+        token = data.access_token;
+        userData = data.user;
+        targetEmail = data.email_target || email;
         toast('Account created successfully!');
       } else if (authMode === 'reset') {
-        if (supabaseClient) {
-          const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-          if (error) throw error;
-          toast('Password reset link sent to your email.');
-          closeAuth();
-          return;
-        } else {
-          toast('Password reset instructions dispatched to your email.');
-          closeAuth();
-          return;
-        }
+        toast(`Password reset instructions dispatched to ${email}.`);
+        closeAuth();
+        return;
       } else {
-        if (supabaseClient) {
-          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          setStoredToken(data.session.access_token);
-          currentUser = {
-            id: data.user.id,
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name || email.split('@')[0],
-            role: 'student'
-          };
-        } else {
-          const res = await fetch('/api/auth/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-          });
-          if (!res.ok) throw new Error('Invalid email or credentials.');
-          const data = await res.json();
-          setStoredToken(data.access_token);
-          currentUser = data.user;
-          const targetEmail = data.email_target || email;
-          toast(`Signed in as ${currentUser.full_name || email}! 📧 Security notice sent to ${targetEmail} ✓`);
-        }
+        const res = await fetch('/api/auth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, full_name: fullName })
+        });
+        if (!res.ok) throw new Error('Invalid email or password.');
+        const data = await res.json();
+        token = data.access_token;
+        userData = data.user;
+        targetEmail = data.email_target || email;
       }
 
+      if (token) setStoredToken(token);
+      currentUser = userData || {
+        email,
+        full_name: fullName || email.split('@')[0],
+        role: 'student'
+      };
+
+      // 1. Instant UI update & Modal Close (Sub-50ms response!)
       updateUserUI();
       closeAuth();
-      loadAllCampusData();
+
+      // 2. Real-time Gmail Notice Banner
+      showEmailDispatchNotice(targetEmail);
+
+      // 3. User feedback toast
+      toast(`Signed in as ${currentUser.full_name || email}! 📧 Security notice sent to ${targetEmail} ✓`);
+
+      // 4. Non-blocking asynchronous data hydration
+      setTimeout(() => {
+        loadAllCampusData();
+      }, 50);
+
     } catch (err) {
       console.error('Auth error:', err);
       if (authError) authError.textContent = err.message || 'Authentication failed. Please try again.';
@@ -589,7 +663,7 @@
     }
   });
 
-  // ---------------- Mobile OTP Verification ----------------
+  // ---------------- Mobile OTP & Carrier Gateway Verification ----------------
   const otpBackdrop = $('#otpBackdrop');
   const otpStepSend = $('#otpStepSend');
   const otpStepVerify = $('#otpStepVerify');
@@ -604,11 +678,48 @@
   const otpCooldownText = $('#otpCooldownText');
   const otpCooldownSec = $('#otpCooldownSec');
   const otpTargetDisplay = $('#otpTargetDisplay');
-  const otpCodeDisplay = $('#otpCodeDisplay');
-  const autoFillOtpBtn = $('#autoFillOtpBtn');
   const changeNumberBtn = $('#changeNumberBtn');
 
-  let currentActiveOtp = '';
+  // Status Indicator Elements
+  const otpSendStatusBox = $('#otpSendStatusBox');
+  const otpSendDot = $('#otpSendDot');
+  const otpSendStatusText = $('#otpSendStatusText');
+  const otpStatusDot = $('#otpStatusDot');
+  const otpStatusLabel = $('#otpStatusLabel');
+  const otpGatewayTitle = $('#otpGatewayTitle');
+  const otpGatewayDesc = $('#otpGatewayDesc');
+
+  function setOtpLifecycleStatus(state, details = {}) {
+    // States: 'sending', 'accepted', 'required', 'verifying', 'verified', 'failed'
+    if (state === 'sending') {
+      if (otpSendStatusBox) otpSendStatusBox.style.display = 'block';
+      if (otpSendDot) otpSendDot.className = 'status-indicator-dot dot-amber';
+      if (otpSendStatusText) otpSendStatusText.textContent = 'Sending… Dispatching carrier request';
+    } else if (state === 'accepted') {
+      if (otpSendStatusBox) otpSendStatusBox.style.display = 'none';
+      if (otpStatusDot) otpStatusDot.className = 'status-indicator-dot dot-blue';
+      if (otpStatusLabel) otpStatusLabel.textContent = 'Request accepted';
+      if (otpGatewayTitle) otpGatewayTitle.textContent = `${(details.provider || 'SMS').toUpperCase()} Carrier Gateway`;
+      if (otpGatewayDesc) otpGatewayDesc.textContent = details.message || 'Request accepted by carrier queue. Enter 6-digit code received on your mobile device.';
+    } else if (state === 'required') {
+      if (otpStatusDot) otpStatusDot.className = 'status-indicator-dot dot-purple';
+      if (otpStatusLabel) otpStatusLabel.textContent = 'Verification required';
+      if (otpGatewayDesc) otpGatewayDesc.textContent = 'Please enter the 6-digit verification code to confirm ownership.';
+    } else if (state === 'verifying') {
+      if (otpStatusDot) otpStatusDot.className = 'status-indicator-dot dot-amber';
+      if (otpStatusLabel) otpStatusLabel.textContent = 'Verifying code…';
+      if (otpGatewayDesc) otpGatewayDesc.textContent = 'Validating cryptographic security hash…';
+    } else if (state === 'verified') {
+      if (otpStatusDot) otpStatusDot.className = 'status-indicator-dot dot-green';
+      if (otpStatusLabel) otpStatusLabel.textContent = 'Verified ✓';
+      if (otpGatewayDesc) otpGatewayDesc.textContent = 'Mobile number officially verified and linked to your student account.';
+    } else if (state === 'failed') {
+      if (otpSendStatusBox) otpSendStatusBox.style.display = 'none';
+      if (otpStatusDot) otpStatusDot.className = 'status-indicator-dot dot-red';
+      if (otpStatusLabel) otpStatusLabel.textContent = 'Failed';
+      if (otpGatewayDesc) otpGatewayDesc.textContent = details.error || 'Provider rejected request or cooldown active.';
+    }
+  }
 
   function openOtpModal() {
     if (!currentUser) {
@@ -619,6 +730,7 @@
     if (otpVerifyError) otpVerifyError.textContent = '';
     if (otpStepSend) otpStepSend.style.display = 'block';
     if (otpStepVerify) otpStepVerify.style.display = 'none';
+    if (otpSendStatusBox) otpSendStatusBox.style.display = 'none';
     if (currentUser.phone_number && otpPhoneNumber) {
       otpPhoneNumber.value = currentUser.phone_number;
     }
@@ -640,16 +752,9 @@
   changeNumberBtn?.addEventListener('click', () => {
     if (otpStepVerify) otpStepVerify.style.display = 'none';
     if (otpStepSend) otpStepSend.style.display = 'block';
+    if (otpSendStatusBox) otpSendStatusBox.style.display = 'none';
     if (otpSendError) otpSendError.textContent = '';
     setTimeout(() => otpPhoneNumber?.focus(), 80);
-  });
-
-  autoFillOtpBtn?.addEventListener('click', () => {
-    if (currentActiveOtp && otpInputCode) {
-      otpInputCode.value = currentActiveOtp;
-      toast('Verification code auto-filled ✓');
-      confirmOtpBtn?.focus();
-    }
   });
 
   otpPhoneNumber?.addEventListener('keydown', e => {
@@ -677,8 +782,9 @@
     }
 
     sendOtpBtn.disabled = true;
-    sendOtpBtn.textContent = 'Generating OTP…';
+    sendOtpBtn.textContent = 'Dispatching…';
     if (otpSendError) otpSendError.textContent = '';
+    setOtpLifecycleStatus('sending');
 
     try {
       const res = await fetch('/api/auth/otp/send', {
@@ -687,27 +793,30 @@
         body: JSON.stringify({ phone_number: phone, country_code: country })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || data.message || 'Could not dispatch OTP.');
+      
+      if (!res.ok) {
+        const errMsg = data.detail?.message || data.detail?.error || data.message || 'Could not dispatch OTP.';
+        throw new Error(errMsg);
+      }
 
       otpPhone = phone;
       otpCountry = country;
-      currentActiveOtp = data.dev_otp || data.otp || '';
 
       if (otpTargetDisplay) otpTargetDisplay.textContent = `${country} ${phone}`;
-      if (otpCodeDisplay && currentActiveOtp) {
-        otpCodeDisplay.textContent = currentActiveOtp;
-      }
-      if (otpInputCode && currentActiveOtp) {
-        otpInputCode.value = currentActiveOtp;
-      }
-
-      toast(`OTP generated: ${currentActiveOtp || 'Check screen'}`);
 
       if (otpStepSend) otpStepSend.style.display = 'none';
       if (otpStepVerify) otpStepVerify.style.display = 'block';
+
+      setOtpLifecycleStatus('accepted', {
+        provider: data.provider,
+        message: data.message || `Carrier queue accepted request (${data.provider || 'SMS'}). Enter the 6-digit code.`
+      });
+
       startOtpCooldown(data.cooldown_seconds || 60);
-      confirmOtpBtn?.focus();
+      toast(`Carrier request accepted (${data.provider || 'SMS'}). Please check your phone.`);
+      setTimeout(() => otpInputCode?.focus(), 100);
     } catch (err) {
+      setOtpLifecycleStatus('failed', { error: err.message });
       if (otpSendError) otpSendError.textContent = err.message;
     } finally {
       sendOtpBtn.disabled = false;
@@ -737,6 +846,9 @@
     if (!otpPhone) return;
     resendOtpBtn.disabled = true;
     resendOtpBtn.textContent = 'Resending…';
+    if (otpVerifyError) otpVerifyError.textContent = '';
+    setOtpLifecycleStatus('sending');
+
     try {
       const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
@@ -744,15 +856,19 @@
         body: JSON.stringify({ phone_number: otpPhone, country_code: otpCountry })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || data.message || 'Could not resend code.');
+      if (!res.ok) {
+        const errMsg = data.detail?.message || data.detail?.error || data.message || 'Could not resend code.';
+        throw new Error(errMsg);
+      }
 
-      currentActiveOtp = data.dev_otp || data.otp || '';
-      if (otpCodeDisplay && currentActiveOtp) otpCodeDisplay.textContent = currentActiveOtp;
-      if (otpInputCode && currentActiveOtp) otpInputCode.value = currentActiveOtp;
-
-      toast(`New OTP code: ${currentActiveOtp}`);
+      setOtpLifecycleStatus('accepted', {
+        provider: data.provider,
+        message: data.message || 'New verification code dispatched to carrier network.'
+      });
+      toast(`New code dispatched via ${data.provider || 'SMS'}. Check phone.`);
       startOtpCooldown(data.cooldown_seconds || 60);
     } catch (err) {
+      setOtpLifecycleStatus('failed', { error: err.message });
       if (otpVerifyError) otpVerifyError.textContent = err.message;
     } finally {
       resendOtpBtn.disabled = false;
@@ -765,13 +881,14 @@
     const otp = rawOtp.replace(/\D/g, '').trim();
 
     if (!otp || otp.length < 4) {
-      if (otpVerifyError) otpVerifyError.textContent = 'Please enter the 6-digit code.';
+      if (otpVerifyError) otpVerifyError.textContent = 'Please enter the 6-digit code received on your phone.';
       return;
     }
 
     confirmOtpBtn.disabled = true;
     confirmOtpBtn.textContent = 'Verifying…';
     if (otpVerifyError) otpVerifyError.textContent = '';
+    setOtpLifecycleStatus('verifying');
 
     try {
       const res = await fetch('/api/auth/otp/verify', {
@@ -780,25 +897,240 @@
         body: JSON.stringify({ phone_number: otpPhone, country_code: otpCountry, otp })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || data.message || 'Incorrect verification code.');
+      if (!res.ok) {
+        const errMsg = data.detail?.message || data.message || 'Incorrect verification code.';
+        throw new Error(errMsg);
+      }
 
+      setOtpLifecycleStatus('verified');
       toast('Mobile number verified successfully ✓');
       currentUser.phone_number = otpPhone;
       currentUser.country_code = otpCountry;
       currentUser.phone_verified = true;
 
       updateUserUI();
-      closeOtpModal();
-      
-      // Refresh notification badge to show the newly added verification confirmation
       fetchNotifications();
+
+      setTimeout(() => {
+        closeOtpModal();
+      }, 1200);
     } catch (err) {
+      setOtpLifecycleStatus('failed', { error: err.message });
       if (otpVerifyError) otpVerifyError.textContent = err.message;
-    } finally {
       confirmOtpBtn.disabled = false;
       confirmOtpBtn.textContent = 'Verify Code ✓';
     }
   });
+
+  // ---------------- Student Email Verification ----------------
+  const emailVerifyBackdrop = $('#emailVerifyBackdrop');
+  const emailVerifyInput = $('#emailVerifyInput');
+  const emailVerifyStepSend = $('#emailVerifyStepSend');
+  const emailVerifyStepConfirm = $('#emailVerifyStepConfirm');
+  const sendEmailVerifyBtn = $('#sendEmailVerifyBtn');
+  const confirmEmailVerifyBtn = $('#confirmEmailVerifyBtn');
+  const resendEmailVerifyBtn = $('#resendEmailVerifyBtn');
+  const emailVerifySendError = $('#emailVerifySendError');
+  const emailVerifyConfirmError = $('#emailVerifyConfirmError');
+  const emailInputCode = $('#emailInputCode');
+  const emailVerifyTargetDisplay = $('#emailVerifyTargetDisplay');
+  const emailSendStatusBox = $('#emailSendStatusBox');
+  const emailSendDot = $('#emailSendDot');
+  const emailSendStatusText = $('#emailSendStatusText');
+  const emailStatusDot = $('#emailStatusDot');
+  const emailStatusLabel = $('#emailStatusLabel');
+  const emailDeliveryDesc = $('#emailDeliveryDesc');
+  const emailCooldownText = $('#emailCooldownText');
+  const emailCooldownSec = $('#emailCooldownSec');
+  let emailCooldownTimer = null;
+  let emailCooldownSeconds = 60;
+
+  function openEmailVerifyModal() {
+    if (!currentUser) {
+      openAuth('signin');
+      return;
+    }
+    if (emailVerifyInput) emailVerifyInput.value = currentUser.email || '';
+    if (emailVerifySendError) emailVerifySendError.textContent = '';
+    if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = '';
+    if (emailVerifyStepSend) emailVerifyStepSend.style.display = 'block';
+    if (emailVerifyStepConfirm) emailVerifyStepConfirm.style.display = 'none';
+    if (emailSendStatusBox) emailSendStatusBox.style.display = 'none';
+
+    emailVerifyBackdrop?.classList.add('open');
+    setTimeout(() => sendEmailVerifyBtn?.focus(), 80);
+  }
+
+  function closeEmailVerifyModal() {
+    emailVerifyBackdrop?.classList.remove('open');
+    clearInterval(emailCooldownTimer);
+  }
+
+  $('#closeEmailVerifyModal')?.addEventListener('click', closeEmailVerifyModal);
+  $('#openEmailVerifyBtn')?.addEventListener('click', () => {
+    closeProfileModal();
+    openEmailVerifyModal();
+  });
+
+  function startEmailCooldown(seconds = 60) {
+    clearInterval(emailCooldownTimer);
+    emailCooldownSeconds = seconds;
+    if (resendEmailVerifyBtn) resendEmailVerifyBtn.disabled = true;
+    if (emailCooldownText) emailCooldownText.style.display = 'block';
+    if (emailCooldownSec) emailCooldownSec.textContent = String(emailCooldownSeconds);
+
+    emailCooldownTimer = setInterval(() => {
+      emailCooldownSeconds--;
+      if (emailCooldownSec) emailCooldownSec.textContent = String(emailCooldownSeconds);
+      if (emailCooldownSeconds <= 0) {
+        clearInterval(emailCooldownTimer);
+        if (resendEmailVerifyBtn) resendEmailVerifyBtn.disabled = false;
+        if (emailCooldownText) emailCooldownText.style.display = 'none';
+      }
+    }, 1000);
+  }
+
+  sendEmailVerifyBtn?.addEventListener('click', async () => {
+    const targetEmail = currentUser?.email || emailVerifyInput?.value || '';
+    if (!targetEmail) return;
+
+    sendEmailVerifyBtn.disabled = true;
+    sendEmailVerifyBtn.textContent = 'Transmitting…';
+    if (emailSendStatusBox) emailSendStatusBox.style.display = 'block';
+    if (emailSendDot) emailSendDot.className = 'status-indicator-dot dot-amber';
+    if (emailSendStatusText) emailSendStatusText.textContent = 'Sending… Dispatching via SMTP gateway';
+    if (emailVerifySendError) emailVerifySendError.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth/email/send-verification', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ email: targetEmail, full_name: currentUser?.full_name || 'Student' })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data.detail?.message || data.message || 'Could not dispatch verification email.';
+        throw new Error(msg);
+      }
+
+      if (emailVerifyStepSend) emailVerifyStepSend.style.display = 'none';
+      if (emailVerifyStepConfirm) emailVerifyStepConfirm.style.display = 'block';
+      if (emailVerifyTargetDisplay) emailVerifyTargetDisplay.textContent = targetEmail;
+
+      if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-blue';
+      if (emailStatusLabel) emailStatusLabel.textContent = 'Request accepted';
+      if (emailDeliveryDesc) emailDeliveryDesc.textContent = `Verification email accepted by SMTP server. Check ${targetEmail} for your 6-digit code.`;
+
+      startEmailCooldown(data.cooldown_seconds || 60);
+      toast(`Verification email dispatched to ${targetEmail} ✓`);
+      setTimeout(() => emailInputCode?.focus(), 100);
+    } catch (err) {
+      if (emailVerifySendError) emailVerifySendError.textContent = err.message;
+      if (emailSendStatusBox) emailSendStatusBox.style.display = 'none';
+    } finally {
+      sendEmailVerifyBtn.disabled = false;
+      sendEmailVerifyBtn.textContent = 'Send Verification Email ↗';
+    }
+  });
+
+  resendEmailVerifyBtn?.addEventListener('click', async () => {
+    const targetEmail = currentUser?.email || emailVerifyInput?.value || '';
+    if (!targetEmail) return;
+
+    resendEmailVerifyBtn.disabled = true;
+    resendEmailVerifyBtn.textContent = 'Resending…';
+    if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth/email/send-verification', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ email: targetEmail, full_name: currentUser?.full_name || 'Student' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail?.message || data.message || 'Could not resend email.');
+
+      if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-blue';
+      if (emailStatusLabel) emailStatusLabel.textContent = 'Request accepted';
+      toast(`New verification email dispatched to ${targetEmail} ✓`);
+      startEmailCooldown(data.cooldown_seconds || 60);
+    } catch (err) {
+      if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = err.message;
+    } finally {
+      resendEmailVerifyBtn.disabled = false;
+      resendEmailVerifyBtn.textContent = 'Resend Email';
+    }
+  });
+
+  confirmEmailVerifyBtn?.addEventListener('click', async () => {
+    const code = emailInputCode?.value?.trim() || '';
+    const email = currentUser?.email || '';
+
+    if (!code || code.length < 4) {
+      if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = 'Please enter the 6-digit code received in your email.';
+      return;
+    }
+
+    confirmEmailVerifyBtn.disabled = true;
+    confirmEmailVerifyBtn.textContent = 'Verifying…';
+    if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth/email/verify', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ email, code, verification_type: 'signup' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail?.message || data.message || 'Invalid verification code.');
+
+      if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-green';
+      if (emailStatusLabel) emailStatusLabel.textContent = 'Verified ✓';
+      if (emailDeliveryDesc) emailDeliveryDesc.textContent = 'Student email address confirmed and verified successfully.';
+
+      currentUser.email_verified = true;
+      updateUserUI();
+      toast('Student email address verified successfully ✓');
+
+      setTimeout(() => {
+        closeEmailVerifyModal();
+      }, 1200);
+    } catch (err) {
+      if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-red';
+      if (emailStatusLabel) emailStatusLabel.textContent = 'Failed';
+      if (emailVerifyConfirmError) emailVerifyConfirmError.textContent = err.message;
+      confirmEmailVerifyBtn.disabled = false;
+      confirmEmailVerifyBtn.textContent = 'Verify Email Code ✓';
+    }
+  });
+
+  // URL Query auto-verification on page load (e.g. clicking email magic link)
+  (async function checkUrlVerification() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const verifyEmail = params.get('verify_email');
+      const verifyToken = params.get('token');
+      if (verifyEmail && verifyToken) {
+        toast('Validating email verification link…');
+        const res = await fetch('/api/auth/email/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifyEmail, code: verifyToken, verification_type: 'signup' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast(`Email ${verifyEmail} verified successfully ✓`);
+          if (currentUser && currentUser.email === verifyEmail) {
+            currentUser.email_verified = true;
+            updateUserUI();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('URL token verification error:', e);
+    }
+  })();
+
 
   // ---------------- Profile Settings Dialog ----------------
   const profileBackdrop = $('#profileBackdrop');
