@@ -1,0 +1,319 @@
+"""
+CampusIQ AI Assistant & Academic Co-Pilot Service
+Connects to Google Gemini API (or OpenAI) using server-side credentials with
+bounded retries, strict grounding in authorized campus data, and a transparent fallback engine.
+"""
+import logging
+import re
+from typing import Dict, Any, List, Optional
+import httpx
+
+import config
+
+logger = logging.getLogger("campusiq.ai")
+
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+class AIService:
+    def __init__(self):
+        self.gemini_key = config.GEMINI_API_KEY
+        self.openai_key = config.OPENAI_API_KEY
+        self.timeout = config.AI_REQUEST_TIMEOUT
+        self.max_retries = config.AI_MAX_RETRIES
+
+    def is_provider_configured(self) -> bool:
+        """Returns True if an external LLM provider API key is configured."""
+        return bool(self.gemini_key or self.openai_key)
+
+    async def generate_response(
+        self,
+        prompt: str,
+        student_profile: Dict[str, Any],
+        academic_summary: Dict[str, Any],
+        pending_assignments: List[Dict[str, Any]],
+        facilities_catalog: List[Dict[str, Any]],
+        chat_history: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """
+        Generates an authentic AI assistant answer grounded in authorized student records
+        and official campus facts.
+        """
+        # Build grounded context
+        context_text = self._build_grounded_context(
+            student_profile, academic_summary, pending_assignments, facilities_catalog
+        )
+
+        # If Gemini API key is configured, call Gemini
+        if self.gemini_key:
+            try:
+                gemini_reply = await self._call_gemini_api(prompt, context_text, chat_history)
+                return {
+                    "source": "gemini",
+                    "reply": gemini_reply,
+                    "provider_configured": True
+                }
+            except Exception as e:
+                logger.error(f"Gemini API request failed: {e}")
+                fallback_reply = self._rule_based_fallback(prompt, student_profile, academic_summary, pending_assignments, facilities_catalog)
+                return {
+                    "source": "campus_engine_fallback",
+                    "reply": f"{fallback_reply}\n\n*(Notice: External AI provider encountered an issue; answered via CampusIQ local reasoning engine.)*",
+                    "provider_configured": True
+                }
+
+        # If no external provider key is configured, provide honest rule-based answer
+        fallback_reply = self._rule_based_fallback(prompt, student_profile, academic_summary, pending_assignments, facilities_catalog)
+        return {
+            "source": "campus_engine",
+            "reply": (
+                f"{fallback_reply}\n\n"
+                f"*(Notice: Operating via CampusIQ Knowledge Engine. To enable generative language modeling, "
+                f"configure GEMINI_API_KEY in the server environment.)*"
+            ),
+            "provider_configured": False
+        }
+
+    async def _call_gemini_api(self, user_query: str, context: str, chat_history: Optional[List[Dict[str, Any]]]) -> str:
+        """Executes server-side call to Google Gemini with bounded retries."""
+        system_instruction = (
+            "You are the CampusIQ Academic Co-Pilot, an intelligent, helpful, and concise assistant for university students.\n"
+            "CRITICAL RULES:\n"
+            "1. Ground all answers strictly in the provided Student and Campus Context. Do NOT fabricate grades, dates, courses, or room numbers.\n"
+            "2. If you do not have specific information requested by the student, clearly state that you do not know and advise them where to check.\n"
+            "3. Be encouraging, concise, and structured in your guidance.\n"
+            "4. Keep responses under 180 words unless the student asks for detailed step-by-step help.\n"
+        )
+
+        contents = []
+        # Add history if available
+        if chat_history:
+            for msg in chat_history[-6:]:
+                role = "user" if msg.get("sender") == "user" else "model"
+                contents.append({
+                    "role": role,
+                    "parts": [{"text": msg.get("content", "")}]
+                })
+
+        # Add current query with context
+        full_user_prompt = f"### Verified Student & Campus Context:\n{context}\n\n### Student Question:\n{user_query}"
+        contents.append({
+            "role": "user",
+            "parts": [{"text": full_user_prompt}]
+        })
+
+        payload = {
+            "contents": contents,
+            "systemInstruction": {
+                "parts": [{"text": system_instruction}]
+            },
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 600
+            }
+        }
+
+        url = f"{GEMINI_ENDPOINT}?key={self.gemini_key}"
+        
+        last_error = None
+        for attempt in range(self.max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates and "content" in candidates[0]:
+                            parts = candidates[0]["content"].get("parts", [])
+                            if parts:
+                                return parts[0].get("text", "").strip()
+                    else:
+                        last_error = f"HTTP {resp.status_code}: {resp.text}"
+            except httpx.TimeoutException:
+                last_error = "Request to AI provider timed out."
+            except Exception as e:
+                last_error = str(e)
+
+        raise RuntimeError(f"AI Provider failed after {self.max_retries} attempts: {last_error}")
+
+    def _build_grounded_context(
+        self,
+        profile: Dict[str, Any],
+        academic_summary: Dict[str, Any],
+        assignments: List[Dict[str, Any]],
+        facilities: List[Dict[str, Any]]
+    ) -> str:
+        """Formats authenticated student facts into a safe context block."""
+        name = profile.get("full_name") or "Student"
+        dept = profile.get("department", "Computer Science")
+        semester = profile.get("year_semester", "Year 3")
+        overall_att = academic_summary.get("overall_rate", 0)
+
+        subjects_lines = []
+        for s in academic_summary.get("subjects", []):
+            subjects_lines.append(
+                f"- {s['code']}: {s['name']} | Instructor: {s['instructor']} | Room: {s['room']} | "
+                f"Schedule: {s.get('classes_held', 0)} classes held, {s.get('classes_attended', 0)} attended ({s.get('attendance_rate', 0)}%)"
+            )
+
+        assignments_lines = []
+        for a in assignments:
+            assignments_lines.append(
+                f"- {a.get('title')} ({a.get('subject_code', 'General')}) | Due: {a.get('due_date')} | Status: {a.get('status')}"
+            )
+        if not assignments_lines:
+            assignments_lines.append("No pending assignments.")
+
+        facilities_lines = []
+        for f in facilities:
+            facilities_lines.append(
+                f"- {f['name']} ({f['category']}): {f['status']} | Hours: {f['operating_hours']} | Location: {f['location']}"
+            )
+
+        return (
+            f"Student Name: {name}\n"
+            f"Department: {dept} ({semester})\n"
+            f"Overall Attendance: {overall_att}%\n"
+            f"Enrolled Courses & Records:\n" + "\n".join(subjects_lines) + "\n"
+            f"Pending Assignments:\n" + "\n".join(assignments_lines) + "\n"
+            f"Campus Facilities:\n" + "\n".join(facilities_lines)
+        )
+
+    def _rule_based_fallback(
+        self,
+        query: str,
+        profile: Dict[str, Any],
+        academic_summary: Dict[str, Any],
+        assignments: List[Dict[str, Any]],
+        facilities: List[Dict[str, Any]]
+    ) -> str:
+        """Deterministic reasoning engine for campus knowledge queries."""
+        q = query.lower()
+        name = profile.get("full_name") or "there"
+
+        # 1. Attendance queries
+        if any(w in q for w in ["attendance", "present", "absent", "missed", "75"]):
+            overall = academic_summary.get("overall_rate", 0)
+            low_subjects = [s for s in academic_summary.get("subjects", []) if s.get("attendance_rate", 0) < 75]
+            if low_subjects:
+                subs_text = ", ".join([f"{s['name']} ({s['attendance_rate']}%, need {s['needed_for_75']} classes)" for s in low_subjects])
+                return (
+                    f"Hi {name}, your overall attendance is currently **{overall}%**. "
+                    f"However, the following subject(s) are below the mandatory 75% requirement:\n"
+                    f"• {subs_text}.\n\n"
+                    f"**Action Plan**: Prioritize attending the upcoming sessions for these courses to return to safe standing."
+                )
+            else:
+                return (
+                    f"Hi {name}, your overall attendance is in great shape at **{overall}%** across all registered subjects! "
+                    f"Every course is currently above the 75% institutional target."
+                )
+
+        # 2. Schedule or Room queries
+        if any(w in q for w in ["room", "where", "class", "schedule", "timetable", "lecture"]):
+            lines = []
+            for s in academic_summary.get("subjects", []):
+                lines.append(f"• **{s['name']}** ({s['code']}): {s['room']} with {s['instructor']}")
+            return (
+                f"Here is your official course locations and faculty schedule:\n" +
+                "\n".join(lines) +
+                "\n\nYou can also view the full daily timeline under the **Academics** tab."
+            )
+
+        # 3. Assignment / Homework queries
+        if any(w in q for w in ["assignment", "homework", "task", "due", "submission"]):
+            pending = [a for a in assignments if a.get("status") != "completed"]
+            if not pending:
+                return f"Great news, {name}! You currently have no pending assignments on your board. Check with your instructors for upcoming tasks."
+            lines = [f"• **{a['title']}** — Due: {a['due_date']} (Priority: {a.get('priority', 'medium').capitalize()})" for a in pending]
+            return f"You have **{len(pending)} pending assignment(s)**:\n" + "\n".join(lines)
+
+        # 4. Facilities / Library queries
+        if any(w in q for w in ["library", "facility", "study", "seat", "open", "quiet", "commons"]):
+            lines = []
+            for f in facilities:
+                status_icon = "🟢" if f["status"] == "open" else "🟡"
+                lines.append(f"• **{f['name']}** {status_icon}: {f['status'].upper()} ({f['operating_hours']}) in {f['location']}")
+            return "Here is the live status of campus facilities:\n" + "\n".join(lines)
+
+        # 5. Default helpful greeting & prompt guide
+        return (
+            f"Hello {name}! I am your CampusIQ Academic Co-Pilot. I can answer questions about your:\n"
+            f"1. **Attendance Records** (e.g., 'What is my attendance?' or 'Do I have any subjects below 75%?')\n"
+            f"2. **Timetable & Classrooms** (e.g., 'Where is Dr. Sharma's lecture?' or 'What is my schedule?')\n"
+            f"3. **Coursework & Tasks** (e.g., 'What assignments are due?')\n"
+            f"4. **Campus Facilities** (e.g., 'Is Central Library open right now?')"
+        )
+
+    def generate_daily_brief(
+        self,
+        profile: Dict[str, Any],
+        academic_summary: Dict[str, Any],
+        assignments: List[Dict[str, Any]],
+        facilities: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Generates 3 personalized, realistic daily recommendations for the student."""
+        name = profile.get("full_name") or "Student"
+        overall_att = academic_summary.get("overall_rate", 92.4)
+        subjects = academic_summary.get("subjects", [])
+        
+        # 1. Academic focus card
+        low_att_sub = next((s for s in subjects if s.get("attendance_rate", 100) < 75), None)
+        if low_att_sub:
+            card1 = {
+                "category": "ACADEMIC RECOVERY",
+                "pill_class": "peach",
+                "title": f"Prioritize {low_att_sub['code']}: {low_att_sub['name']}",
+                "description": f"Your current attendance in {low_att_sub['name']} is {low_att_sub['attendance_rate']}%. Attend the next {low_att_sub['needed_for_75']} class(es) in {low_att_sub['room']} to exceed the 75% institutional threshold.",
+                "action_target": "attendance",
+                "action_text": "Review attendance ↗"
+            }
+        else:
+            first_sub = subjects[0] if subjects else {"code": "CS301", "name": "Data Structures & Algorithms", "room": "Room A-204"}
+            card1 = {
+                "category": "TODAY'S LECTURE",
+                "pill_class": "lavender",
+                "title": f"Next Session: {first_sub['name']}",
+                "description": f"Scheduled in {first_sub['room']} with {first_sub.get('instructor', 'Faculty')}. Review recent notes 15 minutes before the session to boost retention.",
+                "action_target": "academics",
+                "action_text": "Open timetable ↗"
+            }
+
+        # 2. Facility / Space card
+        open_facility = next((f for f in facilities if f.get("status") == "open"), None)
+        fac_name = open_facility["name"] if open_facility else "Central Library"
+        fac_loc = open_facility["location"] if open_facility else "Block A · Floor 2"
+        card2 = {
+            "category": "CAMPUS SPACES",
+            "pill_class": "mint",
+            "title": f"Deep Work at {fac_name}",
+            "description": f"{fac_name} is currently open with available seats ({fac_loc}). Ideal for uninterrupted focus or project teamwork between classes.",
+            "action_target": "facilities",
+            "action_text": "Find study space ↗"
+        }
+
+        # 3. Tasks or Events card
+        pending_tasks = [a for a in assignments if a.get("status") != "completed"]
+        if pending_tasks:
+            top_task = pending_tasks[0]
+            card3 = {
+                "category": "COURSEWORK FOCUS",
+                "pill_class": "peach",
+                "title": f"Due Soon: {top_task['title']}",
+                "description": f"Due date scheduled for {top_task.get('due_date')}. Allocate a 25-minute Pomodoro focus block today to make steady progress.",
+                "action_target": "academics",
+                "action_text": "View assignments ↗"
+            }
+        else:
+            card3 = {
+                "category": "CAMPUS LIFE",
+                "pill_class": "peach",
+                "title": "Innovation Day 2026 Spotlight",
+                "description": "Explore upcoming project showcases and hackathon teams on the campus calendar. Connecting with peers enhances your learning journey.",
+                "action_target": "events",
+                "action_text": "Explore events ↗"
+            }
+
+        return [card1, card2, card3]
+
+# Singleton instance
+ai_service = AIService()

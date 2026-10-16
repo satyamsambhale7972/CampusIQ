@@ -7,7 +7,7 @@
   <title>CampusIQ — Smart Student Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=7.0">
 </head>
 <body>
 
@@ -77,6 +77,9 @@
       </div>
       
       <div class="actions">
+        <a class="download-zip-pill" href="CampusIQ_Website.zip" download="CampusIQ_Website.zip" title="Download Complete Website ZIP">
+          <span>⬇</span>&nbsp;<b>Download ZIP</b>
+        </a>
         <span class="status" id="campusStatus"><i></i> Campus status <b id="campusStatusText">Online</b></span>
         <button class="icon-btn" id="theme" title="Toggle light/dark mode" aria-label="Toggle theme">◐</button>
         <button class="icon-btn" id="notify" title="Notifications" aria-label="Notifications">♧<sup id="notifySup" style="display:none"></sup></button>
@@ -85,55 +88,105 @@
       </div>
     </header>
 
-    <!-- PAGE 1: OVERVIEW (12-SECTION STUDENT COCKPIT) -->
+    <!-- PAGE 1: OVERVIEW (3D DIMENSION COCKPIT) -->
     <section class="page active" id="page-overview">
-      <div class="intro-row">
-        <div>
-          <p class="eyebrow">✦ &nbsp; CAMPUSIQ 2.0 STUDENT OPERATING SYSTEM</p>
-          <h1>Campus <span class="gradient">Cockpit.</span></h1>
-          <p class="subtitle" id="overviewSubtitle">Real-time academic telemetry, verified records, and AI assistance.</p>
-        </div>
-        <div class="date">
-          <span>▦</span>
-          <div>
-            <small>TODAY</small>
-            <b id="today">Loading date...</b>
+      
+      <!-- TOP SECTION: OVERVIEW CATEGORY 3D DIMENSION SHOWCASE & KEY POINTS -->
+      <div class="overview-3d-dimension-banner" id="overviewHeroCard">
+        <div class="banner-3d-header">
+          <div class="banner-badge-group">
+            <span class="banner-badge badge-indigo">✦ OVERVIEW CATEGORY</span>
+            <span class="banner-badge badge-cyan">🌐 3D CAMPUS INTELLIGENCE</span>
+            <span class="banner-badge badge-amber">★ 9.8 / 10.0 RATING</span>
+            <span class="banner-badge badge-emerald"><i class="live-dot-pulse"></i> LIVE 24×7 TELEMETRY</span>
           </div>
-        </div>
-      </div>
 
-      <!-- CARD 1: Hero Welcome & Academic Identity Banner -->
-      <div class="hero" id="overviewHeroCard">
-        <div class="hero-copy">
-          <span class="pill" id="overviewPill">✦ VERIFIED STUDENT SPACE</span>
-          <h2 id="overviewWelcomeName">Welcome to<br><i>CampusIQ 2.0.</i></h2>
-          <p id="overviewWelcomeDesc">Your academic life, attendance velocity, and revision planner in one synchronized cockpit.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="primary" data-go="radar">Open Success Radar <b>↗</b></button>
-            <button class="quick-action-pill" data-go="planner" style="color:#fff;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2)">Study Timetable 📅</button>
+          <h1 class="banner-title">Smart Campus &nbsp;<span class="gradient-text-3d">3D Holographic Cockpit</span></h1>
+          
+          <div class="banner-meta-pills">
+            <span class="meta-pill meta-user" id="overviewWelcomeName">Welcome, Scholar</span>
+            <span class="meta-sep">•</span>
+            <span class="meta-pill meta-sem" id="overviewSemesterChip">Year 3, Semester 5</span>
+            <span class="meta-sep">•</span>
+            <span class="meta-pill meta-dept" id="overviewDeptChip">Computer Science &amp; Engineering</span>
           </div>
         </div>
-        <div class="hero-art">
-          <div class="orbit o1"></div>
-          <div class="orbit o2"></div>
-          <div class="orbit o3"></div>
-          <div class="core">
-            <img src="campusiq-logo.svg" alt="CampusIQ logo" aria-hidden="true">
+
+        <!-- 3D Dimension Interactive Stage -->
+        <div class="banner-3d-stage-wrapper" id="hero3dStage">
+          <canvas id="campus3dCanvas" class="campus-3d-main-canvas"></canvas>
+          
+          <div class="stage-hologram-center" id="hero3dHologram">
+            <div class="hologram-gyro-mesh">
+              <div class="gyro-ring ring-outer-cyan"></div>
+              <div class="gyro-ring ring-mid-purple"></div>
+              <div class="gyro-ring ring-inner-emerald"></div>
+              <div class="gyro-quantum-core">
+                <img src="campusiq-logo.svg" alt="CampusIQ Core Logo" class="gyro-core-logo">
+                <div class="quantum-beacon-pulse"></div>
+              </div>
+            </div>
           </div>
-          <div class="float f1">
-            <span class="ficon mint">◷</span>
-            <div><small>ATTENDANCE</small><b id="floatAttendance">92.4%</b></div>
-            <strong>↗</strong>
+        </div>
+
+        <!-- 4 Distinct Key Point Metric Cards (Upper-Side Key Point Showcase with Best Color Combination) -->
+        <div class="keypoints-grid-4">
+          
+          <!-- Key Point 1: Attendance Velocity (Mint Neon Accent) -->
+          <div class="keypoint-card card-mint">
+            <div class="kp-top">
+              <span class="kp-icon-box mint">⏱</span>
+              <span class="kp-badge mint">SAFE ZONE</span>
+            </div>
+            <div class="kp-label">ATTENDANCE VELOCITY</div>
+            <div class="kp-value" id="floatAttendance">86.4% Recorded</div>
+            <div class="kp-desc">Above 75% requirement &bull; Safe buffer margin</div>
           </div>
-          <div class="float f2">
-            <span class="ficon lilac">🏅</span>
-            <div><small>CGPA STANDING</small><b id="floatCgpa">8.88 / 10</b></div>
+
+          <!-- Key Point 2: CGPA Standing (Royal Lilac Accent) -->
+          <div class="keypoint-card card-lilac">
+            <div class="kp-top">
+              <span class="kp-icon-box lilac">🏅</span>
+              <span class="kp-badge lilac">TOP 5% TIER</span>
+            </div>
+            <div class="kp-label">ACADEMIC STANDING</div>
+            <div class="kp-value" id="floatCgpa">8.64 / 10.0 CGPA</div>
+            <div class="kp-desc">Verified official exam record &bull; Honors tier</div>
           </div>
-          <div class="float f3">
-            <span class="ficon peach">✦</span>
-            <div><small>STUDY TARGET</small><b id="floatStudyTarget">3.0 hrs/day</b></div>
+
+          <!-- Key Point 3: AI Co-Pilot Neural Core (Electric Cyan Accent) -->
+          <div class="keypoint-card card-cyan">
+            <div class="kp-top">
+              <span class="kp-icon-box cyan">✦</span>
+              <span class="kp-badge cyan">ACTIVE &bull; 24×7</span>
+            </div>
+            <div class="kp-label">AI NEURAL CO-PILOT</div>
+            <div class="kp-value" id="floatStudyTarget">Online Assistance</div>
+            <div class="kp-desc">Realtime timetable advisor &bull; Exam predictor</div>
           </div>
-          <span class="spark">✧</span>
+
+          <!-- Key Point 4: Institutional Security (Golden Amber Accent) -->
+          <div class="keypoint-card card-amber">
+            <div class="kp-top">
+              <span class="kp-icon-box amber">🛡</span>
+              <span class="kp-badge amber">VERIFIED STUDENT</span>
+            </div>
+            <div class="kp-label">IDENTITY &amp; SECURITY</div>
+            <div class="kp-value">Institutional Access</div>
+            <div class="kp-desc">Full access &bull; 1000+ Concurrent student capacity</div>
+          </div>
+
+        </div>
+
+        <!-- Action Command Bar with Direct Download Option -->
+        <div class="banner-actions-dock">
+          <a class="banner-btn download-highlight-btn" href="CampusIQ_Website.zip" download="CampusIQ_Website.zip" title="Download Complete Website ZIP (GitHub Ready)">
+            <span>⬇</span> &nbsp;<b>Download Website ZIP</b> <small style="opacity:0.85;font-size:10px">(GitHub Ready)</small>
+          </a>
+          <button class="banner-btn primary-glow" data-go="radar">Open Success Radar ↗</button>
+          <button class="banner-btn glass-pill" data-go="planner">Study Timetable 📅</button>
+          <button class="banner-btn glass-pill" data-go="insights">Launch AI Co-Pilot ✦</button>
+          <button class="banner-btn glass-pill" data-go="performance">Digital Marksheet 🏅</button>
         </div>
       </div>
 
@@ -1218,13 +1271,27 @@
       </div>
 
       <div class="modal-scrollable">
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:#f7f7fc;border-radius:12px">
-          <span class="avatar" id="profileAvatarLarge" style="width:56px;height:56px;font-size:18px">SS</span>
-          <div>
-            <b id="profileDisplayNameLarge" style="font:800 16px Manrope;display:block">Satyam Sambhale</b>
-            <small id="profilePhoneStatus" style="font-size:12px;color:#28a981">● Phone Verified (+91)</small>
+        <!-- Profile Photo & Identity Box -->
+        <div class="profile-photo-card" style="display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:18px;background:var(--card);border:1px solid var(--line);border-radius:16px;flex-wrap:wrap">
+          <div style="position:relative;width:72px;height:72px;flex-shrink:0">
+            <span class="avatar" id="profileAvatarLarge" style="width:72px;height:72px;font-size:24px;border-radius:50%;display:grid;place-items:center">SS</span>
+            <img id="profileAvatarImg" alt="Profile photo" style="display:none;width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--purple)">
           </div>
-          <button class="btn-secondary" id="openOtpFromProfileBtn" type="button" style="margin-left:auto;font-size:11px">Update Mobile 📱</button>
+          <div style="flex:1;min-width:200px">
+            <b id="profileDisplayNameLarge" style="font:800 17px Manrope;display:block">Satyam Sambhale</b>
+            <div style="display:flex;gap:8px;align-items:center;margin:4px 0 10px;flex-wrap:wrap">
+              <small id="profilePhoneStatus" style="font-size:12px;color:#10b981">● Phone Verified (+91)</small>
+              <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:10px" id="profileBranchBadge">Computer Science & Engineering</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <label class="btn-secondary" for="profilePhotoFileInput" style="cursor:pointer;font-size:11px;padding:6px 12px;margin:0;display:inline-flex;align-items:center;gap:4px">
+                📷 Change Photo
+                <input type="file" id="profilePhotoFileInput" accept="image/*" style="display:none">
+              </label>
+              <button class="btn-secondary" id="profilePhotoRemoveBtn" type="button" style="font-size:11px;padding:6px 12px;color:var(--danger)">✕ Remove Photo</button>
+              <button class="btn-secondary" id="openOtpFromProfileBtn" type="button" style="font-size:11px;padding:6px 12px">Update Mobile 📱</button>
+            </div>
+          </div>
         </div>
 
         <form id="profileForm">
@@ -1241,7 +1308,7 @@
 
           <div class="form-grid-2">
             <div class="form-group">
-              <label for="profileEmailInput">Registered Email</label>
+              <label for="profileEmailInput">Registered Email (Security Notices Sent Here)</label>
               <input class="form-input" id="profileEmailInput" type="email" readonly>
             </div>
             <div class="form-group">
@@ -1250,13 +1317,25 @@
             </div>
           </div>
 
-          <div class="form-grid-2">
+          <div class="form-grid-3" style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px">
             <div class="form-group">
-              <label for="profileDeptInput">Department / Course</label>
+              <label for="profileBranchInput">Branch / Specialization</label>
+              <select class="form-select" id="profileBranchInput">
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                <option value="AI & Data Science">AI & Data Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="General Engineering">General Engineering</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="profileDeptInput">Department</label>
               <input class="form-input" id="profileDeptInput" type="text" required>
             </div>
             <div class="form-group">
-              <label for="profileSemesterInput">Academic Year & Semester</label>
+              <label for="profileSemesterInput">Academic Semester</label>
               <input class="form-input" id="profileSemesterInput" type="text" required>
             </div>
           </div>
@@ -1388,18 +1467,37 @@
                 <input class="form-input" id="asgnTitle" placeholder="e.g. Implement Dijkstra's Algorithm" required>
               </div>
               <div class="form-group">
-                <label for="asgnSubject">Course</label>
+                <label for="asgnSubject">Course / Subject</label>
                 <select class="form-select" id="asgnSubject">
                   <!-- Populated from subjects -->
                 </select>
               </div>
             </div>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3" style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="form-group">
+                <label for="asgnBranch">Department / Branch</label>
+                <select class="form-select" id="asgnBranch">
+                  <option value="Computer Science & Engineering" selected>CSE - Computer Science</option>
+                  <option value="Information Technology">IT - Information Technology</option>
+                  <option value="AI & Data Science">AI & Data Science</option>
+                  <option value="Electronics & Communication">ECE - Electronics</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                  <option value="General Engineering">General Engineering</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label for="asgnDueDate">Due Date</label>
                 <input class="form-input" id="asgnDueDate" type="date" required>
               </div>
+              <div class="form-group">
+                <label for="asgnDueTime">Due Time</label>
+                <input class="form-input" id="asgnDueTime" type="time" value="23:59" required>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
               <div class="form-group">
                 <label for="asgnPriority">Priority</label>
                 <select class="form-select" id="asgnPriority">
@@ -1409,10 +1507,14 @@
                   <option value="urgent">Urgent</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label for="asgnMaxMarks">Max Points (Marks)</label>
+                <input class="form-input" id="asgnMaxMarks" type="number" value="100" min="10" max="100">
+              </div>
             </div>
 
-            <div class="btn-row">
-              <button class="primary" type="submit">Add Assignment +</button>
+            <div class="btn-row" style="margin-top:14px">
+              <button class="primary" type="submit" style="width:100%">Add Assignment +</button>
             </div>
           </form>
         </div>
@@ -1628,10 +1730,19 @@
   </div>
 
 
+  <!-- Floating Direct Download Widget (Always Accessible on Desktop and Mobile) -->
+  <a class="floating-download-fab" href="CampusIQ_Website.zip" download="CampusIQ_Website.zip" id="floatingZipFab" title="Download Complete Website ZIP to Deploy on GitHub">
+    <span class="fab-icon">⬇</span>
+    <span class="fab-content">
+      <b>Download Website ZIP</b>
+      <small>GitHub Ready Package</small>
+    </span>
+  </a>
+
   <!-- External Supabase SDK (optional client-side auth) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="campus-mock-engine.js"></script>
-  <script src="script.js"></script>
+  <script src="campus-mock-engine.js?v=7.0"></script>
+  <script src="script.js?v=7.0"></script>
 </body>
 </html>

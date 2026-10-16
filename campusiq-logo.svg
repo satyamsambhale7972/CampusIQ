@@ -1,14 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
-<title id="title">CampusIQ logo</title>
-<defs>
-  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b7bff"/><stop offset=".55" stop-color="#6556e8"/><stop offset="1" stop-color="#35cfa8"/></linearGradient>
-  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".02"/></linearGradient>
-</defs>
-<rect x="5" y="5" width="110" height="110" rx="31" fill="#17172f"/>
-<rect x="9" y="9" width="102" height="102" rx="27" fill="url(#g)"/>
-<path d="M9 36Q9 9 36 9H84Q111 9 111 36V45Q60 70 9 45Z" fill="url(#shine)"/>
-<path d="M69 35a27 27 0 1 0 0 50" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
-<path d="M72 45h20M72 60h15M72 75h20" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-<path d="m88 19 3.5 7.5L100 30l-8.5 3.5L88 42l-3.5-8.5L76 30l8.5-3.5Z" fill="#fff1b7"/>
-<circle cx="92" cy="91" r="5" fill="#b8ffe9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%" role="img" aria-labelledby="ciqLogoTitle">
+  <title id="ciqLogoTitle">CampusIQ 2.0 Smart Campus Operating System</title>
+  <defs>
+    <!-- Background Squircle Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e1126"/>
+      <stop offset="50%" stop-color="#181a3d"/>
+      <stop offset="100%" stop-color="#090a18"/>
+    </linearGradient>
+
+    <!-- Vibrant Quantum Indigo-Cyan Gradient -->
+    <linearGradient id="quantumGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+
+    <!-- Academic Cap / Crest Gradient -->
+    <linearGradient id="crestGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+
+    <!-- Star / Beacon Accent -->
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <!-- Subtle Glass Rim Lighting -->
+    <linearGradient id="glassRim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <filter id="glowDrop" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Shadow / Glow Plate -->
+  <rect x="10" y="10" width="140" height="140" rx="36" fill="url(#bgGrad)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="2"/>
+  <rect x="11" y="11" width="138" height="70" rx="35" fill="url(#glassRim)"/>
+
+  <!-- Orbital Cybernetic Ring (3D Ellipse) -->
+  <ellipse cx="80" cy="84" rx="48" ry="18" fill="none" stroke="rgba(56, 189, 248, 0.35)" stroke-width="3" stroke-dasharray="6 4" transform="rotate(-15 80 84)"/>
+
+  <!-- Academic Mortarboard Rhombus (Smart Campus Shield) -->
+  <path d="M80 34 L122 55 L80 76 L38 55 Z" fill="url(#quantumGlow)" filter="url(#glowDrop)"/>
+  
+  <!-- Crest Cap Underlayer -->
+  <path d="M50 63 L80 78 L110 63 L110 77 C110 93 80 102 80 102 C80 102 50 93 50 77 Z" fill="#1e1b4b" stroke="url(#quantumGlow)" stroke-width="2.5"/>
+
+  <!-- Modern IQ Interconnect Geometry (Central Core Pulse) -->
+  <circle cx="80" cy="85" r="9" fill="#0c0f24" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="80" cy="85" r="4.5" fill="#38bdf8"/>
+
+  <!-- Neural Telemetry Nodes -->
+  <circle cx="62" cy="83" r="3" fill="#818cf8"/>
+  <circle cx="98" cy="83" r="3" fill="#818cf8"/>
+  <line x1="65" y1="83" x2="71" y2="84" stroke="rgba(129, 140, 248, 0.7)" stroke-width="2"/>
+  <line x1="89" y1="84" x2="95" y2="83" stroke="rgba(129, 140, 248, 0.7)" stroke-width="2"/>
+
+  <!-- Academic Tassel Ribbon -->
+  <path d="M122 55 C124 66 120 78 126 90" fill="none" stroke="url(#starGrad)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="126" cy="92" r="3.5" fill="url(#starGrad)"/>
+
+  <!-- Guiding North Star (AI Intelligence Spark) -->
+  <path d="M80 20 L82.5 28 L90 30.5 L82.5 33 L80 41 L77.5 33 L70 30.5 L77.5 28 Z" fill="url(#starGrad)"/>
 </svg>
