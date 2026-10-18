@@ -7,7 +7,7 @@
   <title>CampusIQ — Smart Student Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.0">
+  <link rel="stylesheet" href="style.css?v=8.0">
 </head>
 <body>
 
@@ -84,26 +84,6 @@
         <button class="avatar top-avatar" id="profile" aria-label="Open profile">SS</button>
       </div>
     </header>
-
-    <!-- Real-Time Security Email Dispatch Notice -->
-    <div class="email-dispatch-banner" id="emailDispatchAlert" style="display:none">
-      <div class="edb-left">
-        <span class="edb-icon">📧</span>
-        <div class="edb-info">
-          <strong>Real-Time Security Sign-In Alert Sent:</strong>
-          <span>A verification notice was dispatched to your Gmail (<b id="alertTargetEmail">user@gmail.com</b>)</span>
-        </div>
-      </div>
-      <div class="edb-actions">
-        <a href="https://mail.google.com/mail/u/0/#search/CampusIQ" target="_blank" rel="noopener" class="edb-btn gmail-btn" id="openGmailBtn" title="Open Gmail inbox in new tab">
-          <span>📬</span> Open Gmail Inbox ↗
-        </a>
-        <button type="button" class="edb-btn resend-btn" id="resendEmailNoticeBtn" title="Resend Security Notice">
-          <span>↻</span> Resend
-        </button>
-        <button type="button" class="edb-close" id="dismissEmailNoticeBtn" title="Dismiss Alert">✕</button>
-      </div>
-    </div>
 
     <!-- PAGE 1: OVERVIEW (3D DIMENSION COCKPIT) -->
     <section class="page active" id="page-overview">
@@ -1237,7 +1217,7 @@
               <option value="+44">🇬🇧 +44 (UK)</option>
               <option value="+971">🇦🇪 +971 (UAE)</option>
             </select>
-            <input class="form-input" id="otpPhoneNumber" type="tel" placeholder="9876543210" maxlength="15" autofocus>
+            <input class="form-input" id="otpPhoneNumber" type="tel" placeholder="Enter 10-digit mobile number" maxlength="15" autocomplete="off" value="" autofocus>
           </div>
         </div>
         <div id="otpSendStatusBox" style="display:none;margin-bottom:12px">
@@ -1271,7 +1251,7 @@
         </div>
 
         <div class="otp-box-row">
-          <input class="otp-input" id="otpInputCode" type="text" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+          <input class="otp-input" id="otpInputCode" type="text" maxlength="6" placeholder="Enter 6-digit OTP" autocomplete="off" value="" spellcheck="false" name="campusiq_otp_code">
         </div>
         <div class="cooldown-text" id="otpCooldownText">Resend code in <span id="otpCooldownSec">60</span>s</div>
         <p class="auth-error" id="otpVerifyError" role="alert"></p>
@@ -1329,7 +1309,7 @@
         </div>
 
         <div class="otp-box-row">
-          <input class="otp-input" id="emailInputCode" type="text" maxlength="6" placeholder="••••••" autocomplete="one-time-code">
+          <input class="otp-input" id="emailInputCode" type="text" maxlength="6" placeholder="Enter 6-digit code" autocomplete="off" value="" spellcheck="false" name="campusiq_email_code">
         </div>
         <div class="cooldown-text" id="emailCooldownText">Resend email in <span id="emailCooldownSec">60</span>s</div>
         <p class="auth-error" id="emailVerifyConfirmError" role="alert"></p>
@@ -1818,7 +1798,7 @@
   <!-- External Supabase SDK (optional client-side auth) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="campus-mock-engine.js?v=7.0"></script>
-  <script src="script.js?v=7.0"></script>
+  <script src="campus-mock-engine.js?v=8.0"></script>
+  <script src="script.js?v=8.0"></script>
 </body>
 </html>

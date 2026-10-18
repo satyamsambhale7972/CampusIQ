@@ -1138,6 +1138,13 @@ class Database:
         conn = self.get_connection()
         try:
             with conn:
+                prof = conn.execute("SELECT id FROM profiles WHERE id = ?", (student_id,)).fetchone()
+                if not prof:
+                    self.get_or_create_profile(student_id, f"{student_id}@campusiq.edu")
+
+                s_row = conn.execute("SELECT id FROM subjects WHERE id = ? OR code = ? OR name = ?", (subject_id, subject_id, subject_id)).fetchone()
+                valid_subj_id = s_row[0] if s_row else subject_id
+
                 rec_id = str(uuid.uuid4())
                 conn.execute("""
                 INSERT INTO attendance_records (id, student_id, subject_id, date, status, notes)
@@ -1145,8 +1152,8 @@ class Database:
                 ON CONFLICT(student_id, subject_id, date) DO UPDATE SET
                     status = EXCLUDED.status,
                     notes = EXCLUDED.notes
-                """, (rec_id, student_id, subject_id, record_date, status, notes))
-                return {"success": True, "date": record_date, "status": status}
+                """, (rec_id, student_id, valid_subj_id, record_date, status, notes))
+                return {"success": True, "message": "Attendance record logged successfully ✓", "date": record_date, "status": status, "subject_id": valid_subj_id}
         finally:
             conn.close()
 
