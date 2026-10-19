@@ -5,6 +5,7 @@ and enforces authorization boundaries.
 """
 import logging
 import time
+import secrets
 from typing import Optional, Dict, Any
 import jwt
 from fastapi import Header, HTTPException, status, Depends
@@ -26,6 +27,7 @@ def create_access_token(user_id: str, email: str, role: str = "student", expires
         "role": role,
         "iat": now,
         "exp": now + expires_in_seconds,
+        "jti": secrets.token_hex(12),
         "iss": "campusiq-auth"
     }
     return jwt.encode(payload, INTERNAL_SECRET, algorithm=JWT_ALGORITHM)
@@ -99,6 +101,14 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session invalid or expired. Please sign in again."
+        )
+
+    # Check database session persistence & revocation status
+    db_session = db.get_session_by_token(token)
+    if db_session and db_session.get("status") == "revoked":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session has been signed out. Please sign in again."
         )
 
     profile = db.get_or_create_profile(

@@ -4,6 +4,7 @@ High-performance asynchronous application with rate limiting, security headers,
 CORS policies, Pydantic v2 schemas, database migrations, and static assets.
 """
 import time
+from datetime import datetime
 import logging
 from typing import Optional, List, Dict, Any
 from pathlib import Path
@@ -273,6 +274,20 @@ class PasswordResetConfirmRequest(BaseModel):
     code: str = Field(..., min_length=4, max_length=64)
     new_password: str = Field(..., min_length=6, max_length=120)
 
+class SignUpRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=120)
+    password: str = Field(..., min_length=6, max_length=120)
+    full_name: Optional[str] = ""
+    role: Optional[str] = "student"
+
+class SignInRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=120)
+    password: str = Field(..., min_length=6, max_length=120)
+    full_name: Optional[str] = ""
+
+class SignOutRequest(BaseModel):
+    token: Optional[str] = None
+
 
 # ----------------- System & Health Endpoints -----------------
 @app.get("/api/health", tags=["System"])
@@ -316,16 +331,35 @@ async def issue_local_token(request: Request):
     email = body.get("email", "").strip().lower()
     full_name = body.get("full_name", "").strip()
     role = body.get("role", "student")
+    password = body.get("password")
     
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="A valid student email address is required.")
         
     user_id = f"user-{abs(hash(email)) % 900000 + 100000}"
     profile = db.get_or_create_profile(user_id=user_id, email=email, full_name=full_name, role=role)
+    if password and len(password) >= 6:
+        if db.has_user_credentials(email):
+            if not db.verify_user_credentials(email, password):
+                raise HTTPException(status_code=401, detail="Incorrect password. Please verify your student credentials.")
+        else:
+            db.register_user_credentials(user_id=profile["id"], email=email, password=password)
+
     token = create_access_token(user_id=profile["id"], email=profile["email"], role=profile["role"])
 
-    # Security Email Dispatch (sends actual email if SMTP configured, plus logs to notification tray)
+    # Security Email Dispatch
     client_ip = request.client.host if request.client else "127.0.0.1"
+    user_agent = request.headers.get("user-agent", "")
+
+    # Persist session in database
+    db_session = db.record_sign_in(
+        user_id=profile["id"],
+        email=profile["email"],
+        token=token,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
+
     send_login_notification_email(
         email=profile["email"],
         full_name=profile.get("full_name", full_name),
@@ -336,10 +370,153 @@ async def issue_local_token(request: Request):
         "access_token": token,
         "token_type": "bearer",
         "user": profile,
+        "session": db_session,
         "email_notification_sent": True,
         "email_target": profile["email"],
         "gmail_inbox_url": f"https://mail.google.com/mail/u/0/#search/CampusIQ",
         "message": f"Security sign-in confirmation dispatched to {profile['email']}."
+    }
+
+@app.post("/api/auth/signup", tags=["Auth"])
+async def auth_signup(data: SignUpRequest, request: Request):
+    email = data.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid student email address is required.")
+
+    if db.has_user_credentials(email):
+        raise HTTPException(status_code=400, detail="An account with this student email already exists. Please sign in instead.")
+
+    full_name = data.full_name.strip() if data.full_name else email.split("@")[0].replace(".", " ").title()
+    user_id = f"user-{abs(hash(email)) % 900000 + 100000}"
+    profile = db.get_or_create_profile(user_id=user_id, email=email, full_name=full_name, role=data.role or "student")
+
+    # Persist password hash & salt in database
+    db.register_user_credentials(user_id=profile["id"], email=email, password=data.password)
+
+    token = create_access_token(user_id=profile["id"], email=profile["email"], role=profile["role"])
+
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    user_agent = request.headers.get("user-agent", "")
+
+    # Persist active session in database
+    db_session = db.record_sign_in(
+        user_id=profile["id"],
+        email=profile["email"],
+        token=token,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
+
+    send_login_notification_email(
+        email=profile["email"],
+        full_name=profile.get("full_name", full_name),
+        client_ip=client_ip
+    )
+
+    return {
+        "success": True,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": profile,
+        "session": db_session,
+        "email_notification_sent": True,
+        "email_target": profile["email"],
+        "gmail_inbox_url": "https://mail.google.com/mail/u/0/#search/CampusIQ",
+        "message": f"Account created and session registered in database for {profile['email']}."
+    }
+
+@app.post("/api/auth/signin", tags=["Auth"])
+async def auth_signin(data: SignInRequest, request: Request):
+    email = data.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid student email address is required.")
+
+    # Check credentials against real database
+    if not db.has_user_credentials(email):
+        raise HTTPException(
+            status_code=401,
+            detail="Account not found with this student email. Please click 'Create account' to register."
+        )
+
+    verified = db.verify_user_credentials(email, data.password)
+    if not verified:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect password. Please verify your student credentials."
+        )
+
+    # Fetch real user profile from database
+    profile = db.get_profile_by_email(email)
+    if not profile:
+        user_id = verified.get("user_id", f"user-{abs(hash(email)) % 900000 + 100000}")
+        profile = db.get_or_create_profile(user_id=user_id, email=email, full_name=data.full_name or "")
+
+    token = create_access_token(user_id=profile["id"], email=profile["email"], role=profile["role"])
+
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    user_agent = request.headers.get("user-agent", "")
+
+    # Persist session in database
+    db_session = db.record_sign_in(
+        user_id=profile["id"],
+        email=profile["email"],
+        token=token,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
+
+    send_login_notification_email(
+        email=profile["email"],
+        full_name=profile.get("full_name", data.full_name or "Student"),
+        client_ip=client_ip
+    )
+
+    return {
+        "success": True,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": profile,
+        "session": db_session,
+        "email_notification_sent": True,
+        "email_target": profile["email"],
+        "gmail_inbox_url": "https://mail.google.com/mail/u/0/#search/CampusIQ",
+        "message": f"Signed in successfully and session registered in database for {profile['email']}."
+    }
+
+@app.post("/api/auth/signout", tags=["Auth"])
+async def auth_signout(request: Request, current_user: Optional[Dict[str, Any]] = Depends(get_optional_user)):
+    auth_header = request.headers.get("Authorization", "")
+    token = ""
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+
+    try:
+        body = await request.json()
+        if not token and body.get("token"):
+            token = body.get("token").strip()
+    except Exception:
+        pass
+
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    user_id = current_user.get("id") if current_user else None
+
+    # Revoke session in database
+    db.record_sign_out(token=token, user_id=user_id, ip_address=client_ip)
+
+    return {
+        "success": True,
+        "message": "Signed out successfully and session revoked in database.",
+        "revoked_at": datetime.utcnow().isoformat()
+    }
+
+@app.get("/api/auth/sessions", tags=["Auth"])
+async def list_user_sessions(current_user: Dict[str, Any] = Depends(get_current_user)):
+    sessions = db.get_user_sessions(current_user["id"])
+    return {
+        "user_id": current_user["id"],
+        "email": current_user["email"],
+        "sessions": sessions,
+        "count": len(sessions)
     }
 
 @app.post("/api/auth/email/send-live", tags=["Email"])
@@ -1239,15 +1416,17 @@ BASE_PATH = Path(__file__).resolve().parent
 async def download_website_zip_endpoint():
     """Direct one-click download for complete website deployment package."""
     zip_candidates = [
-        BASE_PATH / "CampusIQ_Website.zip",
-        Path(r"C:\Users\satyam sambhale\Downloads\CampusIQ_Live_Website_For_GitHub.zip")
+        Path(r"C:\Users\satyam sambhale\Downloads\CampusIQ_Live_Website_For_GitHub.zip"),
+        BASE_PATH / "CampusIQ_Live_Website_For_GitHub.zip",
+        BASE_PATH / "CampusIQ_Website.zip"
     ]
     for z in zip_candidates:
         if z.exists():
             return FileResponse(
                 path=str(z),
-                filename="CampusIQ_Live_Website.zip",
-                media_type="application/zip"
+                filename="CampusIQ_Live_Website_For_GitHub.zip",
+                media_type="application/zip",
+                headers={"Content-Disposition": 'attachment; filename="CampusIQ_Live_Website_For_GitHub.zip"'}
             )
     raise HTTPException(status_code=404, detail="Website ZIP package file not found.")
 

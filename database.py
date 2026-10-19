@@ -3,6 +3,8 @@ CampusIQ Complete Database Implementation
 Supports Profiles, OTP Verification, Academics, Attendance, Results/Marksheets,
 Assignments, Facilities, Events, Support Tickets, Notifications, FAQs, and Audit Logs.
 """
+import os
+import shutil
 import sqlite3
 import hashlib
 import hmac
@@ -22,13 +24,28 @@ class Database:
     def __init__(self, db_url: str = config.DATABASE_URL):
         self.db_url = db_url
         self.is_sqlite = db_url.startswith("sqlite:///")
+        self.is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
         if self.is_sqlite:
-            self.sqlite_path = Path(db_url.replace("sqlite:///", ""))
+            raw_path = Path(db_url.replace("sqlite:///", ""))
+            if self.is_serverless:
+                # Serverless (Vercel/Lambda) read-only root workaround: use /tmp
+                tmp_dir = Path("/tmp")
+                target_sqlite = tmp_dir / "campusiq.db"
+                if not target_sqlite.exists() and raw_path.exists():
+                    try:
+                        shutil.copy2(raw_path, target_sqlite)
+                    except Exception as e:
+                        logger.warning(f"Could not copy seed database to /tmp: {e}")
+                self.sqlite_path = target_sqlite
+            else:
+                self.sqlite_path = raw_path
         else:
             self.sqlite_path = None
 
     def get_connection(self) -> sqlite3.Connection:
         if self.is_sqlite:
+            if self.sqlite_path and not self.sqlite_path.parent.exists():
+                self.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
             conn = sqlite3.connect(
                 self.sqlite_path,
                 timeout=20.0,
@@ -36,7 +53,13 @@ class Database:
             )
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA foreign_keys = ON;")
-            conn.execute("PRAGMA journal_mode = WAL;")
+            if getattr(self, "is_serverless", False):
+                conn.execute("PRAGMA journal_mode = MEMORY;")
+            else:
+                try:
+                    conn.execute("PRAGMA journal_mode = WAL;")
+                except Exception:
+                    conn.execute("PRAGMA journal_mode = DELETE;")
             return conn
         else:
             raise NotImplementedError("PostgreSQL adapter active via connection pooler.")
@@ -132,6 +155,35 @@ class Database:
                 );
                 """)
 
+                # 2C. User Credentials (Persistent Passwords & Cryptographic Salts)
+                conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_credentials (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    password_salt TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                """)
+
+                # 2D. Auth Sessions (Database Persistence for Sign In, Active Sessions & Explicit Sign Out)
+                conn.execute("""
+                CREATE TABLE IF NOT EXISTS auth_sessions (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    email TEXT NOT NULL,
+                    token_hash TEXT UNIQUE NOT NULL,
+                    token TEXT NOT NULL,
+                    ip_address TEXT DEFAULT '127.0.0.1',
+                    user_agent TEXT DEFAULT '',
+                    status TEXT NOT NULL DEFAULT 'active',
+                    signed_in_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    signed_out_at TEXT,
+                    expires_at TEXT NOT NULL
+                );
+                """)
 
                 # 3. Subjects
                 conn.execute("""
@@ -502,6 +554,10 @@ class Database:
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_career_goals_student ON career_goals(student_id)")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_event_reg_student ON event_registrations(student_id)")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_facility_book_student ON facility_bookings(student_id)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_auth_sessions_token_hash ON auth_sessions(token_hash)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_auth_sessions_status ON auth_sessions(status)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_user_credentials_email ON user_credentials(email)")
 
             # Seed base catalog & FAQs
             self._seed_baseline_catalog(conn)
@@ -613,6 +669,28 @@ class Database:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, batch)
 
+            # Baseline Verified Student Accounts with Salted PBKDF2 Database Credentials
+            baseline_users = [
+                ("usr-satyam-7972", "satyam@campusiq.edu", "Satyam Sambhale", "STU-2026-7972", "CampusIQ@2026"),
+                ("usr-satyam-demo", "student@campusiq.edu", "Satyam Sambhale", "STU-2026-0001", "password123")
+            ]
+            for u_id, u_email, u_name, u_roll, u_pwd in baseline_users:
+                cursor.execute("""
+                INSERT OR IGNORE INTO profiles (id, email, full_name, student_id, role, course, branch, department, year_semester, date_of_joining, phone_verified)
+                VALUES (?, ?, ?, ?, 'student', 'B.Tech', 'Artificial Intelligence & Machine Learning', 'Computer Science & Engineering', 'Year 3, Semester 5', '2024-08-01', 1)
+                """, (u_id, u_email, u_name, u_roll))
+                
+                # Check user_credentials table
+                cred_exists = cursor.execute("SELECT id FROM user_credentials WHERE lower(email) = ?", (u_email,)).fetchone()
+                if not cred_exists:
+                    p_row = cursor.execute("SELECT id FROM profiles WHERE lower(email) = ?", (u_email,)).fetchone()
+                    prof_id = p_row[0] if p_row else u_id
+                    pwd_hash, salt = self.hash_password(u_pwd)
+                    cursor.execute("""
+                    INSERT OR IGNORE INTO user_credentials (id, user_id, email, password_hash, password_salt)
+                    VALUES (?, ?, ?, ?, ?)
+                    """, (str(uuid.uuid4()), prof_id, u_email, pwd_hash, salt))
+
     # ---------------- Profile Operations ----------------
     def get_or_create_profile(self, user_id: str, email: str, full_name: str = "", role: str = "student") -> Dict[str, Any]:
         conn = self.get_connection()
@@ -666,6 +744,17 @@ class Database:
         finally:
             conn.close()
 
+    def get_profile_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Retrieves profile record by email address."""
+        clean_email = email.lower().strip()
+        conn = self.get_connection()
+        try:
+            with conn:
+                row = conn.execute("SELECT * FROM profiles WHERE lower(email) = ?", (clean_email,)).fetchone()
+                return dict(row) if row else None
+        finally:
+            conn.close()
+
     def update_profile(self, user_id: str, full_name: str, department: str, year_semester: str, branch: str = "Computer Science & Engineering") -> Dict[str, Any]:
 
         conn = self.get_connection()
@@ -705,6 +794,202 @@ class Database:
             with conn:
                 conn.execute("DELETE FROM profiles WHERE id = ?", (user_id,))
                 return True
+        finally:
+            conn.close()
+
+    # ---------------- User Credentials & Password Security ----------------
+    @staticmethod
+    def hash_password(password: str, salt: Optional[str] = None) -> tuple:
+        """Derives a PBKDF2-HMAC-SHA256 password hash using a secure cryptographically random salt."""
+        if not salt:
+            salt = secrets.token_hex(16)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+        return dk.hex(), salt
+
+    @staticmethod
+    def verify_password(password: str, password_hash: str, salt: str) -> bool:
+        """Constant-time verification of password against stored PBKDF2 hash."""
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+        return hmac.compare_digest(dk.hex(), password_hash)
+
+    def register_user_credentials(self, user_id: str, email: str, password: str) -> Dict[str, Any]:
+        """Saves or updates salted password hash in the user_credentials table."""
+        pwd_hash, salt = self.hash_password(password)
+        clean_email = email.lower().strip()
+        conn = self.get_connection()
+        try:
+            with conn:
+                existing = conn.execute("SELECT id FROM user_credentials WHERE email = ?", (clean_email,)).fetchone()
+                if existing:
+                    conn.execute("""
+                    UPDATE user_credentials
+                    SET password_hash = ?, password_salt = ?, updated_at = datetime('now')
+                    WHERE email = ?
+                    """, (pwd_hash, salt, clean_email))
+                    cred_id = existing["id"]
+                else:
+                    cred_id = str(uuid.uuid4())
+                    conn.execute("""
+                    INSERT INTO user_credentials (id, user_id, email, password_hash, password_salt)
+                    VALUES (?, ?, ?, ?, ?)
+                    """, (cred_id, user_id, clean_email, pwd_hash, salt))
+                return {"id": cred_id, "user_id": user_id, "email": clean_email}
+        finally:
+            conn.close()
+
+    def verify_user_credentials(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+        """Validates credentials against user_credentials table. Returns dict if valid, else None."""
+        clean_email = email.lower().strip()
+        conn = self.get_connection()
+        try:
+            row = conn.execute("SELECT * FROM user_credentials WHERE email = ?", (clean_email,)).fetchone()
+            if not row:
+                return None
+            if self.verify_password(password, row["password_hash"], row["password_salt"]):
+                return dict(row)
+            return None
+        finally:
+            conn.close()
+
+    def has_user_credentials(self, email: str) -> bool:
+        """Checks if user has registered credentials in the database."""
+        clean_email = email.lower().strip()
+        conn = self.get_connection()
+        try:
+            row = conn.execute("SELECT 1 FROM user_credentials WHERE email = ?", (clean_email,)).fetchone()
+            return bool(row)
+        finally:
+            conn.close()
+
+    # ---------------- Auth Sessions (Sign In & Sign Out Persistence) ----------------
+    def record_sign_in(self, user_id: str, email: str, token: str, ip_address: str = "127.0.0.1", user_agent: str = "", expires_in_seconds: int = 86400) -> Dict[str, Any]:
+        """Registers an active sign-in session in the database and creates an audit log entry."""
+        session_id = str(uuid.uuid4())
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        expires_at = (datetime.utcnow() + timedelta(seconds=expires_in_seconds)).strftime("%Y-%m-%d %H:%M:%S")
+        clean_email = email.lower().strip()
+        conn = self.get_connection()
+        try:
+            with conn:
+                conn.execute("""
+                INSERT INTO auth_sessions (id, user_id, email, token_hash, token, ip_address, user_agent, status, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)
+                ON CONFLICT(token_hash) DO UPDATE SET
+                    status = 'active',
+                    ip_address = excluded.ip_address,
+                    user_agent = excluded.user_agent,
+                    expires_at = excluded.expires_at,
+                    signed_out_at = NULL
+                """, (session_id, user_id, clean_email, token_hash, token, ip_address, user_agent, expires_at))
+        finally:
+            conn.close()
+
+        try:
+            self.log_audit_event(
+                actor_id=user_id,
+                actor_email=clean_email,
+                action="SIGN_IN",
+                target_entity="auth_sessions",
+                target_id=session_id,
+                details={"ip_address": ip_address, "user_agent": user_agent, "status": "active"},
+                ip_address=ip_address
+            )
+            self.log_recent_activity(user_id, "AUTH", f"Signed in securely ({ip_address})", "🔐", "/#overview")
+        except Exception as e:
+            logger.warning(f"Could not log sign-in audit: {e}")
+
+        return {
+            "session_id": session_id,
+            "user_id": user_id,
+            "email": clean_email,
+            "status": "active",
+            "expires_at": expires_at
+        }
+
+    def record_sign_out(self, token: str, user_id: Optional[str] = None, ip_address: str = "127.0.0.1") -> bool:
+        """Revokes session in database, marks signed_out_at, and creates SIGN_OUT audit log."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest() if token else ""
+        conn = self.get_connection()
+        actor_email = "unknown@campusiq.edu"
+        actor_id = user_id
+        session_id = None
+        try:
+            with conn:
+                if token_hash:
+                    row = conn.execute("SELECT id, user_id, email FROM auth_sessions WHERE token_hash = ?", (token_hash,)).fetchone()
+                    if row:
+                        session_id = row["id"]
+                        actor_id = row["user_id"]
+                        actor_email = row["email"]
+                        conn.execute("""
+                        UPDATE auth_sessions
+                        SET status = 'revoked', signed_out_at = datetime('now')
+                        WHERE id = ?
+                        """, (session_id,))
+                if user_id:
+                    conn.execute("""
+                    UPDATE auth_sessions
+                    SET status = 'revoked', signed_out_at = datetime('now')
+                    WHERE user_id = ? AND status = 'active'
+                    """, (user_id,))
+                    u_row = conn.execute("SELECT email FROM profiles WHERE id = ?", (user_id,)).fetchone()
+                    if u_row:
+                        actor_email = u_row["email"]
+        finally:
+            conn.close()
+
+        try:
+            self.log_audit_event(
+                actor_id=actor_id,
+                actor_email=actor_email,
+                action="SIGN_OUT",
+                target_entity="auth_sessions",
+                target_id=session_id or (token_hash[:16] if token_hash else "explicit_user_logout"),
+                details={"ip_address": ip_address, "status": "revoked", "reason": "user_sign_out"},
+                ip_address=ip_address
+            )
+            if actor_id:
+                self.log_recent_activity(actor_id, "AUTH", "Signed out and session revoked in database", "🚪", "/#overview")
+        except Exception as e:
+            logger.warning(f"Could not log sign-out audit: {e}")
+
+        return True
+
+    def get_active_session(self, token: str) -> Optional[Dict[str, Any]]:
+        """Verifies if the session is currently active (not revoked and not expired)."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        conn = self.get_connection()
+        try:
+            row = conn.execute("""
+            SELECT * FROM auth_sessions
+            WHERE token_hash = ? AND status = 'active' AND datetime('now') < expires_at
+            """, (token_hash,)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def get_session_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Retrieves session record by token (whether active or revoked)."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        conn = self.get_connection()
+        try:
+            row = conn.execute("SELECT * FROM auth_sessions WHERE token_hash = ?", (token_hash,)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def get_user_sessions(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Retrieves session history for a student profile."""
+        conn = self.get_connection()
+        try:
+            rows = conn.execute("""
+            SELECT id, user_id, email, ip_address, user_agent, status, signed_in_at, signed_out_at, expires_at
+            FROM auth_sessions
+            WHERE user_id = ?
+            ORDER BY signed_in_at DESC
+            LIMIT ?
+            """, (user_id, limit)).fetchall()
+            return [dict(r) for r in rows]
         finally:
             conn.close()
 

@@ -25,6 +25,26 @@
       cgpa: 8.64,
       avatar_url: ''
     },
+    credentials: [
+      {
+        email: 'satyam@campusiq.edu',
+        password: 'password123',
+        user_id: 'usr_satyam_2026',
+        full_name: 'Satyam Sambhale',
+        department: 'Computer Science & Engineering',
+        branch: 'Artificial Intelligence & Machine Learning',
+        role: 'student'
+      },
+      {
+        email: 'student@campusiq.edu',
+        password: 'password123',
+        user_id: 'usr_student_demo',
+        full_name: 'Satyam Sambhale',
+        department: 'Computer Science & Engineering',
+        branch: 'Computer Science & Engineering',
+        role: 'student'
+      }
+    ],
     today_classes: [
       { id: 'c1', subject: 'Cloud Computing & Distributed Systems', name: 'Cloud Computing & Distributed Systems', time: '09:00 AM - 10:30 AM', schedule_time: '09:00 AM – 10:30 AM', room: 'Lab Block B-204', faculty: 'Dr. Ramesh Sharma', instructor: 'Dr. Ramesh Sharma', category: 'PRACTICAL', status: 'upcoming' },
       { id: 'c2', subject: 'Compiler Design & Automata', name: 'Compiler Design & Language Processors', time: '11:00 AM - 12:30 PM', schedule_time: '11:00 AM – 12:30 PM', room: 'Hall 102', faculty: 'Prof. Anita Rao', instructor: 'Prof. Anita Rao', category: 'CORE', status: 'upcoming' },
@@ -202,13 +222,21 @@
       { id: 'act-1', action_type: 'STUDY_SESSION_COMPLETED', description: 'Completed Raft Consensus Simulation (90 mins)', timestamp: '1 hour ago' },
       { id: 'act-2', action_type: 'MILESTONE_CHECKED', description: 'Achieved: Deploy 3 end-to-end production LLM agents', timestamp: 'Yesterday' },
       { id: 'act-3', action_type: 'MARKSHEET_VERIFIED', description: 'Generated tamper-evident marksheet verification code REF-2026-CS-4019', timestamp: '2 days ago' }
-    ]
+    ],
+    sessions: []
   };
 
   function getDb() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed.sessions)) parsed.sessions = [];
+        if (!Array.isArray(parsed.credentials) || parsed.credentials.length === 0) {
+          parsed.credentials = defaultDatabase.credentials ? defaultDatabase.credentials.slice() : [];
+        }
+        return parsed;
+      }
     } catch (e) {
       console.warn('CampusIQ LocalDB read error, using fresh state', e);
     }
@@ -255,18 +283,73 @@
       return makeJsonResponse({ status: 'online', mode: 'client-edge', database: 'healthy', version: '2.2.0' });
     }
 
-    // 2. Auth endpoints
-    if (path === '/api/auth/token' || path === '/api/auth/signin') {
-      const email = (body && body.email) ? body.email.toLowerCase().trim() : db.profile.email;
-      const fullName = (body && body.full_name) ? body.full_name.trim() : (db.profile.full_name || 'Satyam Sambhale');
-      db.profile.email = email;
-      if (body && body.full_name) db.profile.full_name = fullName;
+    // 2. Auth endpoints (Strict Real Database Credentials, Sign In, Sign Up, Sign Out)
+    if (path === '/api/auth/signin') {
+      const email = (body && body.email) ? body.email.toLowerCase().trim() : '';
+      const password = (body && body.password) ? String(body.password) : '';
 
-      // Deterministic roll number for any student email
+      if (!email || !email.includes('@')) {
+        return makeJsonResponse({ detail: 'A valid student email address is required.' }, 400);
+      }
+
+      // Check credentials against database
+      const cred = (db.credentials || []).find(c => c.email.toLowerCase() === email);
+      if (!cred) {
+        return makeJsonResponse({
+          detail: "Account not found with this student email. Please click 'Create account' to register."
+        }, 401);
+      }
+
+      if (cred.password !== password) {
+        return makeJsonResponse({
+          detail: "Incorrect password. Please verify your student credentials."
+        }, 401);
+      }
+
+      // Load matching profile for authenticated student
       const stuHash = Math.abs(email.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)) % 9000 + 1000;
-      db.profile.student_id = 'STU-2026-' + stuHash;
+      const userProfile = {
+        id: cred.user_id || ('usr_' + stuHash),
+        full_name: cred.full_name || 'Satyam Sambhale',
+        email: cred.email,
+        student_id: 'STU-2026-' + stuHash,
+        department: cred.department || 'Computer Science & Engineering',
+        branch: cred.branch || 'Artificial Intelligence & Machine Learning',
+        year_semester: 'Year 3, Semester 5',
+        role: cred.role || 'student',
+        phone_number: cred.phone_number || '',
+        country_code: '+91',
+        phone_verified: Boolean(cred.phone_verified),
+        enrolled_credits: 22,
+        cgpa: 8.64
+      };
+      db.profile = userProfile;
 
-      // Dispatch security sign-in notification to user notification tray
+      // Register session in mock db sessions table
+      const sessionToken = 'local-jwt-token-' + stuHash + '-' + Date.now();
+      const newSession = {
+        id: 'sess-' + Date.now(),
+        user_id: userProfile.id,
+        email: email,
+        token: sessionToken,
+        status: 'active',
+        signed_in_at: new Date().toISOString()
+      };
+      if (!Array.isArray(db.sessions)) db.sessions = [];
+      db.sessions.unshift(newSession);
+
+      // Record in activities
+      if (!Array.isArray(db.activities)) db.activities = [];
+      db.activities.unshift({
+        id: 'act-' + Date.now(),
+        action_type: 'AUTH',
+        description: `Signed in securely to CampusIQ (${email})`,
+        icon: '🔐',
+        target_link: '/#overview',
+        timestamp: 'Just now'
+      });
+
+      // Dispatch security sign-in notification
       const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       db.notifications.unshift({
         id: 'notif-login-' + Date.now(),
@@ -279,13 +362,152 @@
       saveDb(db);
 
       return makeJsonResponse({
-        access_token: 'local-jwt-token-' + stuHash,
+        success: true,
+        access_token: sessionToken,
         token_type: 'bearer',
-        user: db.profile,
+        user: userProfile,
+        session: newSession,
         email_notification_sent: true,
         email_target: email,
         gmail_inbox_url: 'https://mail.google.com/mail/u/0/#search/CampusIQ',
-        message: `Security sign-in confirmation dispatched to ${email}.`
+        message: `Signed in successfully and session registered in database for ${email}.`
+      });
+    }
+
+    if (path === '/api/auth/signup') {
+      const email = (body && body.email) ? body.email.toLowerCase().trim() : '';
+      const password = (body && body.password) ? String(body.password) : '';
+      const fullName = (body && body.full_name) ? body.full_name.trim() : email.split('@')[0].replace('.', ' ').replace(/(?:^|\s)\S/g, a => a.toUpperCase());
+
+      if (!email || !email.includes('@')) {
+        return makeJsonResponse({ detail: 'A valid student email address is required.' }, 400);
+      }
+      if (password.length < 6) {
+        return makeJsonResponse({ detail: 'Password must be at least 6 characters.' }, 400);
+      }
+
+      // Check if email already registered
+      const existing = (db.credentials || []).find(c => c.email.toLowerCase() === email);
+      if (existing) {
+        return makeJsonResponse({
+          detail: 'An account with this student email already exists. Please sign in instead.'
+        }, 400);
+      }
+
+      const stuHash = Math.abs(email.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)) % 9000 + 1000;
+      const newUserId = 'usr_' + stuHash;
+
+      // Register new credentials in database
+      const newCred = {
+        email: email,
+        password: password,
+        user_id: newUserId,
+        full_name: fullName,
+        department: 'Computer Science & Engineering',
+        branch: 'Computer Science & Engineering',
+        role: body.role || 'student',
+        created_at: new Date().toISOString()
+      };
+      if (!Array.isArray(db.credentials)) db.credentials = [];
+      db.credentials.push(newCred);
+
+      const userProfile = {
+        id: newUserId,
+        full_name: fullName,
+        email: email,
+        student_id: 'STU-2026-' + stuHash,
+        department: 'Computer Science & Engineering',
+        branch: 'Computer Science & Engineering',
+        year_semester: 'Year 3, Semester 5',
+        role: newCred.role,
+        phone_number: '',
+        country_code: '+91',
+        phone_verified: false,
+        enrolled_credits: 22,
+        cgpa: 8.50
+      };
+      db.profile = userProfile;
+
+      const sessionToken = 'local-jwt-token-' + stuHash + '-' + Date.now();
+      const newSession = {
+        id: 'sess-' + Date.now(),
+        user_id: newUserId,
+        email: email,
+        token: sessionToken,
+        status: 'active',
+        signed_in_at: new Date().toISOString()
+      };
+      if (!Array.isArray(db.sessions)) db.sessions = [];
+      db.sessions.unshift(newSession);
+
+      saveDb(db);
+
+      return makeJsonResponse({
+        success: true,
+        access_token: sessionToken,
+        token_type: 'bearer',
+        user: userProfile,
+        session: newSession,
+        email_notification_sent: true,
+        email_target: email,
+        gmail_inbox_url: 'https://mail.google.com/mail/u/0/#search/CampusIQ',
+        message: `Account created and session registered in database for ${email}.`
+      });
+    }
+
+    if (path === '/api/auth/token') {
+      const email = (body && body.email) ? body.email.toLowerCase().trim() : '';
+      const password = (body && body.password) ? String(body.password) : '';
+      if (!email || !email.includes('@')) {
+        return makeJsonResponse({ detail: 'A valid student email address is required.' }, 400);
+      }
+      const cred = (db.credentials || []).find(c => c.email.toLowerCase() === email);
+      if (cred && password && cred.password !== password) {
+        return makeJsonResponse({ detail: 'Incorrect password. Please verify your student credentials.' }, 401);
+      }
+      const stuHash = Math.abs(email.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)) % 9000 + 1000;
+      const sessionToken = 'local-jwt-token-' + stuHash;
+      return makeJsonResponse({
+        success: true,
+        access_token: sessionToken,
+        token_type: 'bearer',
+        user: db.profile
+      });
+    }
+
+    if (path === '/api/auth/signout' && method === 'POST') {
+      if (!Array.isArray(db.sessions)) db.sessions = [];
+      db.sessions.forEach(s => {
+        if (s.status === 'active') {
+          s.status = 'revoked';
+          s.signed_out_at = new Date().toISOString();
+        }
+      });
+
+      if (!Array.isArray(db.activities)) db.activities = [];
+      db.activities.unshift({
+        id: 'act-' + Date.now(),
+        action_type: 'AUTH',
+        description: 'Signed out and session revoked in database',
+        icon: '🚪',
+        target_link: '/#overview',
+        timestamp: 'Just now'
+      });
+      saveDb(db);
+
+      return makeJsonResponse({
+        success: true,
+        message: 'Signed out successfully and session revoked in database.',
+        revoked_at: new Date().toISOString()
+      });
+    }
+
+    if (path === '/api/auth/sessions') {
+      return makeJsonResponse({
+        user_id: db.profile.id,
+        email: db.profile.email,
+        sessions: db.sessions || [],
+        count: (db.sessions || []).length
       });
     }
 
@@ -311,9 +533,21 @@
     }
 
     if (path === '/api/auth/session') {
+      const authHeader = (headers && (headers.Authorization || headers.authorization)) || '';
+      let token = '';
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7).trim();
+      }
+      const activeSession = (db.sessions || []).find(s => s.token === token && s.status === 'active');
+      if (token && activeSession) {
+        return makeJsonResponse({
+          authenticated: true,
+          user: db.profile
+        });
+      }
       return makeJsonResponse({
-        authenticated: true,
-        user: db.profile
+        authenticated: false,
+        user: null
       });
     }
 

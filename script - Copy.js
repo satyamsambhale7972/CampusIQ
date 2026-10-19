@@ -224,7 +224,17 @@
     return headers;
   }
 
-  function performSignOut() {
+  async function performSignOut() {
+    const currentToken = getStoredToken();
+    if (currentToken) {
+      try {
+        fetch('/api/auth/signout', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ token: currentToken })
+        }).catch(() => {});
+      } catch (_) {}
+    }
     if (supabaseClient) {
       try { supabaseClient.auth.signOut(); } catch(e) {}
     }
@@ -232,7 +242,7 @@
     setStoredToken('');
     currentUser = null;
     updateUserUI();
-    toast('Signed out successfully.');
+    toast('Signed out and database session revoked. ✓');
     const eab = $('#emailDispatchAlert');
     if (eab) eab.style.display = 'none';
   }
@@ -277,20 +287,14 @@
         }
       }
 
-      if (!localStorage.getItem('campusiq_signed_out')) {
-        await initDefaultSession();
-      } else {
-        currentUser = null;
-        updateUserUI();
-      }
+      currentUser = null;
+      updateUserUI();
+      loadAllCampusData();
     } catch (err) {
       console.warn('Session check fallback:', err);
-      if (!localStorage.getItem('campusiq_signed_out')) {
-        await initDefaultSession();
-      } else {
-        currentUser = null;
-        updateUserUI();
-      }
+      currentUser = null;
+      updateUserUI();
+      loadAllCampusData();
     }
   }
 
@@ -579,28 +583,48 @@
       let targetEmail = email;
 
       if (authMode === 'signup') {
-        const res = await fetch('/api/auth/token', {
+        let res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, full_name: fullName })
+          body: JSON.stringify({ email, password, full_name: fullName })
         });
-        if (!res.ok) throw new Error('Account creation failed. Please check inputs.');
+        if (!res.ok && res.status === 404) {
+          res = await fetch('/api/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, full_name: fullName })
+          });
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || 'Account creation failed. Please check inputs.');
+        }
         const data = await res.json();
         token = data.access_token;
         userData = data.user;
         targetEmail = data.email_target || email;
-        toast('Account created successfully!');
+        toast('Account created and session registered in database! ✓');
       } else if (authMode === 'reset') {
         toast(`Password reset instructions dispatched to ${email}.`);
         closeAuth();
         return;
       } else {
-        const res = await fetch('/api/auth/token', {
+        let res = await fetch('/api/auth/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, full_name: fullName })
+          body: JSON.stringify({ email, password, full_name: fullName })
         });
-        if (!res.ok) throw new Error('Invalid email or password.');
+        if (!res.ok && res.status === 404) {
+          res = await fetch('/api/auth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, full_name: fullName })
+          });
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || 'Invalid email or password.');
+        }
         const data = await res.json();
         token = data.access_token;
         userData = data.user;
@@ -622,7 +646,7 @@
       dispatchRealSecurityEmail(targetEmail, currentUser.full_name || 'Student');
 
       // 3. Clean user feedback toast
-      toast(`Signed in as ${currentUser.full_name || email}! ✓`);
+      toast(`Signed in as ${currentUser.full_name || email} (Session registered in database) ✓`);
 
       // 4. Non-blocking asynchronous data hydration
       setTimeout(() => {
