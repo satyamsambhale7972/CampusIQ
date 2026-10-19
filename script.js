@@ -466,10 +466,6 @@
   function openAuth(mode = 'signin') {
     authMode = mode;
     if (authError) authError.textContent = '';
-    
-    const googleBtnText = $('#googleBtnText');
-    const googleSignInBtn = $('#googleSignInBtn');
-    const authDivider = $('#authDivider');
 
     if (mode === 'signup') {
       if (authTitle) authTitle.textContent = 'Create Student Account';
@@ -478,9 +474,6 @@
       if (authPasswordGroup) authPasswordGroup.hidden = false;
       if (authOptionsRow) authOptionsRow.hidden = true;
       if (authSubmit) authSubmit.textContent = 'Create account';
-      if (googleBtnText) googleBtnText.textContent = 'Sign up with Google';
-      if (googleSignInBtn) googleSignInBtn.style.display = 'flex';
-      if (authDivider) authDivider.style.display = 'flex';
       if (authFoot) authFoot.innerHTML = 'Already registered? <button type="button" id="toggleAuthMode">Sign in</button>';
     } else if (mode === 'reset') {
       if (authTitle) authTitle.textContent = 'Reset Password';
@@ -489,8 +482,6 @@
       if (authPasswordGroup) authPasswordGroup.hidden = true;
       if (authOptionsRow) authOptionsRow.hidden = true;
       if (authSubmit) authSubmit.textContent = 'Send reset link';
-      if (googleSignInBtn) googleSignInBtn.style.display = 'none';
-      if (authDivider) authDivider.style.display = 'none';
       if (authFoot) authFoot.innerHTML = 'Remembered your password? <button type="button" id="toggleAuthMode">Back to sign in</button>';
     } else {
       if (authTitle) authTitle.textContent = 'Welcome Back';
@@ -499,9 +490,6 @@
       if (authPasswordGroup) authPasswordGroup.hidden = false;
       if (authOptionsRow) authOptionsRow.hidden = false;
       if (authSubmit) authSubmit.textContent = 'Sign in securely';
-      if (googleBtnText) googleBtnText.textContent = 'Continue with Google';
-      if (googleSignInBtn) googleSignInBtn.style.display = 'flex';
-      if (authDivider) authDivider.style.display = 'flex';
       if (authFoot) authFoot.innerHTML = 'New to CampusIQ? <button type="button" id="toggleAuthMode">Create account</button>';
     }
 
@@ -1216,120 +1204,7 @@
     }
   })();
 
-  // ---------------- Google Account & Gateway Setup Handlers ----------------
-  const googleAuthModal = $('#googleAuthModal');
-  const googleSignInBtn = $('#googleSignInBtn');
-  const closeGoogleAuthModal = $('#closeGoogleAuthModal');
-  const googleChoosePrimary = $('#googleChoosePrimary');
-  const customGoogleEmail = $('#customGoogleEmail');
-  const customGoogleSubmitBtn = $('#customGoogleSubmitBtn');
 
-  function openGoogleAuthModal() {
-    closeAuth();
-    if (googleAuthModal) {
-      googleAuthModal.classList.add('open');
-      googleAuthModal.style.display = 'flex';
-    }
-  }
-
-  function closeGoogleAuth() {
-    if (googleAuthModal) {
-      googleAuthModal.classList.remove('open');
-      googleAuthModal.style.display = 'none';
-    }
-  }
-
-  closeGoogleAuthModal?.addEventListener('click', closeGoogleAuth);
-  $('#googleCancelBtn')?.addEventListener('click', closeGoogleAuth);
-  googleAuthModal?.addEventListener('click', e => {
-    if (e.target === googleAuthModal) closeGoogleAuth();
-  });
-
-  async function performGoogleSignIn(email, fullName) {
-    const allowBtn = $('#googleAllowBtn');
-    try {
-      if (allowBtn) {
-        allowBtn.disabled = true;
-        allowBtn.textContent = 'Connecting to Google…';
-      }
-      toast('Authenticating with Google Account…');
-
-      // 1. Try Supabase OAuth if available and configured
-      if (supabaseClient && window.CAMPUS_SUPABASE_CONFIG?.url && !window.CAMPUS_SUPABASE_CONFIG.url.includes('placeholder')) {
-        try {
-          const { data, error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.origin + window.location.pathname }
-          });
-          if (!error && data?.url) {
-            window.location.href = data.url;
-            return;
-          }
-        } catch (_) {}
-      }
-
-      // 2. Synchronize with database Google OAuth endpoint
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, full_name: fullName })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || data.message || 'Google sign in failed');
-
-      if (data.access_token) setStoredToken(data.access_token);
-      localStorage.removeItem('campusiq_signed_out');
-      currentUser = data.user;
-      currentUser.email_verified = true;
-
-      closeGoogleAuth();
-      closeAuth();
-      updateUserUI();
-      toast(`Signed in successfully with Google (${email}) ✓`);
-      setTimeout(() => loadAllCampusData(), 60);
-    } catch (err) {
-      toast('Google authentication: ' + err.message);
-    } finally {
-      if (allowBtn) {
-        allowBtn.disabled = false;
-        allowBtn.textContent = 'Allow & Connect ↗';
-      }
-    }
-  }
-
-  googleSignInBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    closeAuth();
-    openGoogleAuthModal();
-  });
-
-  $('#googleAllowBtn')?.addEventListener('click', () => {
-    const email = $('#googlePrimaryEmailText')?.textContent?.trim() || 'satyamsambhale7972@gmail.com';
-    performGoogleSignIn(email, 'Satyam Sambhale');
-  });
-
-  googleChoosePrimary?.addEventListener('click', () => {
-    const email = $('#googlePrimaryEmailText')?.textContent?.trim() || 'satyamsambhale7972@gmail.com';
-    performGoogleSignIn(email, 'Satyam Sambhale');
-  });
-
-  $('#toggleCustomGoogleBtn')?.addEventListener('click', () => {
-    const box = $('#customGoogleBox');
-    if (box) {
-      box.style.display = box.style.display === 'none' ? 'block' : 'none';
-      if (box.style.display === 'block') $('#customGoogleEmail')?.focus();
-    }
-  });
-
-  customGoogleSubmitBtn?.addEventListener('click', () => {
-    const val = $('#customGoogleEmail')?.value?.trim() || customGoogleEmail?.value?.trim() || '';
-    if (!val || !val.includes('@')) {
-      toast('Please enter a valid Google email address.');
-      return;
-    }
-    const namePart = val.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    performGoogleSignIn(val, namePart);
-  });
 
   // ---------------- Live Delivery Gateway Setup Dialog ----------------
   const gatewayConfigBackdrop = $('#gatewayConfigBackdrop');
