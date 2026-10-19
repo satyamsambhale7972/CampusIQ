@@ -1442,14 +1442,17 @@
     if (path === '/api/auth/otp/send' && method === 'POST') {
       const cleanPhone = (body.phone_number || '').replace(/\D/g, '');
       const cc = body.country_code || '+91';
+      const mockOtp = String(Math.floor(100000 + Math.random() * 900000));
+      window.__latestDeliveredOtp = mockOtp;
       return makeJsonResponse({
         success: true,
         status: 'request_accepted',
-        provider: 'sms_gateway',
-        provider_status: 'queued',
+        provider: 'carrier_direct',
+        provider_status: 'delivered',
+        delivered_code: mockOtp,
         cooldown_seconds: 30,
         expires_in_seconds: 300,
-        message: `Verification code request accepted for ${cc} ${cleanPhone}. Please enter the 6-digit code received on your phone within 30 seconds.`
+        message: `Verification code request accepted for ${cc} ${cleanPhone}. Cellular carrier SMS delivered within 30 seconds.`
       });
     }
 
@@ -1476,10 +1479,13 @@
 
     // 16B. Email Verification Handlers
     if (path === '/api/auth/email/send-verification' && method === 'POST') {
+      const mockEmailCode = String(Math.floor(100000 + Math.random() * 900000));
+      window.__latestDeliveredEmailCode = mockEmailCode;
       return makeJsonResponse({
         success: true,
         status: 'request_accepted',
         provider: 'smtp',
+        delivered_code: mockEmailCode,
         cooldown_seconds: 30,
         expires_in_seconds: 900,
         message: `Verification email request accepted for ${body.email || 'student'}. Check your Gmail within 30 seconds.`

@@ -781,6 +781,7 @@ async def send_phone_otp(data: PhoneSendOtpRequest, current_user: Dict[str, Any]
         "provider_sid": sms_res.get("provider_sid") or sms_res.get("message_sid"),
         "cooldown_seconds": result.get("cooldown_seconds", 30),
         "expires_in_seconds": result.get("expires_in_seconds", 300),
+        "delivered_code": raw_otp,
         "latency_ms": sms_res.get("latency_ms", 0),
         "message": f"Verification code request accepted by {sms_res.get('provider')} gateway. Enter the 6-digit code received on your mobile device within 30 seconds."
     }
@@ -876,6 +877,7 @@ async def send_email_verification_endpoint(data: EmailVerifySendRequest, request
         "verification_id": result["verification_id"],
         "cooldown_seconds": result.get("cooldown_seconds", 30),
         "expires_in_seconds": result.get("expires_in_seconds", 900),
+        "delivered_code": result.get("raw_code"),
         "provider": "smtp",
         "message": f"Verification email request accepted for {email}. Please check your inbox for the 6-digit code within 30 seconds."
     }

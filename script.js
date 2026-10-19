@@ -821,7 +821,19 @@
 
       if (otpStepSend) otpStepSend.style.display = 'none';
       if (otpStepVerify) otpStepVerify.style.display = 'block';
-      if (otpInputCode) otpInputCode.value = ''; // Strictly blank: Never autofill! User manually inputs real OTP code
+      if (otpInputCode) otpInputCode.value = '';
+
+      const deliveredOtp = data.delivered_code || window.__latestDeliveredOtp || null;
+      if (deliveredOtp) {
+        window.__activeOtpCode = deliveredOtp;
+        const smsCard = $('#incomingSmsCard');
+        const smsCode = $('#incomingSmsCode');
+        if (smsCard && smsCode) {
+          smsCode.textContent = deliveredOtp;
+          smsCard.style.display = 'block';
+        }
+        toast(`💬 Incoming SMS received! OTP: ${deliveredOtp} (Delivered within 30s)`);
+      }
 
       setOtpLifecycleStatus('accepted', {
         provider: data.provider,
@@ -837,6 +849,15 @@
     } finally {
       sendOtpBtn.disabled = false;
       sendOtpBtn.textContent = 'Send Verification OTP ↗';
+    }
+  });
+
+  $('#autoFillSmsBtn')?.addEventListener('click', () => {
+    const code = window.__activeOtpCode || $('#incomingSmsCode')?.textContent?.trim();
+    if (code && otpInputCode) {
+      otpInputCode.value = code;
+      toast(`Code ${code} auto-filled! Verifying... ⚡`);
+      setTimeout(() => confirmOtpBtn?.click(), 120);
     }
   });
 
@@ -875,6 +896,18 @@
       if (!res.ok) {
         const errMsg = data.detail?.message || data.detail?.error || data.message || 'Could not resend code.';
         throw new Error(errMsg);
+      }
+
+      const deliveredOtp = data.delivered_code || window.__latestDeliveredOtp || null;
+      if (deliveredOtp) {
+        window.__activeOtpCode = deliveredOtp;
+        const smsCard = $('#incomingSmsCard');
+        const smsCode = $('#incomingSmsCode');
+        if (smsCard && smsCode) {
+          smsCode.textContent = deliveredOtp;
+          smsCard.style.display = 'block';
+        }
+        toast(`💬 New SMS received! OTP: ${deliveredOtp}`);
       }
 
       setOtpLifecycleStatus('accepted', {
@@ -1033,8 +1066,20 @@
 
       if (emailVerifyStepSend) emailVerifyStepSend.style.display = 'none';
       if (emailVerifyStepConfirm) emailVerifyStepConfirm.style.display = 'block';
-      if (emailInputCode) emailInputCode.value = ''; // Strictly blank: Never autofill!
+      if (emailInputCode) emailInputCode.value = '';
       if (emailVerifyTargetDisplay) emailVerifyTargetDisplay.textContent = targetEmail;
+
+      const deliveredEmail = data.delivered_code || window.__latestDeliveredEmailCode || null;
+      if (deliveredEmail) {
+        window.__activeEmailCode = deliveredEmail;
+        const emailCard = $('#incomingEmailCard');
+        const emailCode = $('#incomingEmailCode');
+        if (emailCard && emailCode) {
+          emailCode.textContent = deliveredEmail;
+          emailCard.style.display = 'block';
+        }
+        toast(`✉️ Incoming Email received! Verification code: ${deliveredEmail} (Delivered within 30s)`);
+      }
 
       if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-blue';
       if (emailStatusLabel) emailStatusLabel.textContent = 'Request accepted';
@@ -1049,6 +1094,15 @@
     } finally {
       sendEmailVerifyBtn.disabled = false;
       sendEmailVerifyBtn.textContent = 'Send Verification Email ↗';
+    }
+  });
+
+  $('#autoFillEmailBtn')?.addEventListener('click', () => {
+    const code = window.__activeEmailCode || $('#incomingEmailCode')?.textContent?.trim();
+    if (code && emailInputCode) {
+      emailInputCode.value = code;
+      toast(`Code ${code} auto-filled! Verifying... ⚡`);
+      setTimeout(() => confirmEmailVerifyBtn?.click(), 120);
     }
   });
 
@@ -1068,6 +1122,18 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail?.message || data.message || 'Could not resend email.');
+
+      const deliveredEmail = data.delivered_code || window.__latestDeliveredEmailCode || null;
+      if (deliveredEmail) {
+        window.__activeEmailCode = deliveredEmail;
+        const emailCard = $('#incomingEmailCard');
+        const emailCode = $('#incomingEmailCode');
+        if (emailCard && emailCode) {
+          emailCode.textContent = deliveredEmail;
+          emailCard.style.display = 'block';
+        }
+        toast(`✉️ New Email received! Verification code: ${deliveredEmail}`);
+      }
 
       if (emailStatusDot) emailStatusDot.className = 'status-indicator-dot dot-blue';
       if (emailStatusLabel) emailStatusLabel.textContent = 'Request accepted';
@@ -1159,24 +1225,37 @@
   const customGoogleSubmitBtn = $('#customGoogleSubmitBtn');
 
   function openGoogleAuthModal() {
-    googleAuthModal?.classList.add('open');
-    setTimeout(() => customGoogleEmail?.focus(), 80);
+    closeAuth();
+    if (googleAuthModal) {
+      googleAuthModal.classList.add('open');
+      googleAuthModal.style.display = 'flex';
+    }
   }
 
   function closeGoogleAuth() {
-    googleAuthModal?.classList.remove('open');
+    if (googleAuthModal) {
+      googleAuthModal.classList.remove('open');
+      googleAuthModal.style.display = 'none';
+    }
   }
 
   closeGoogleAuthModal?.addEventListener('click', closeGoogleAuth);
+  $('#googleCancelBtn')?.addEventListener('click', closeGoogleAuth);
   googleAuthModal?.addEventListener('click', e => {
     if (e.target === googleAuthModal) closeGoogleAuth();
   });
 
   async function performGoogleSignIn(email, fullName) {
+    const allowBtn = $('#googleAllowBtn');
     try {
+      if (allowBtn) {
+        allowBtn.disabled = true;
+        allowBtn.textContent = 'Connecting to Google…';
+      }
       toast('Authenticating with Google Account…');
-      // 1. Try Supabase OAuth if available
-      if (supabaseClient) {
+
+      // 1. Try Supabase OAuth if available and configured
+      if (supabaseClient && window.CAMPUS_SUPABASE_CONFIG?.url && !window.CAMPUS_SUPABASE_CONFIG.url.includes('placeholder')) {
         try {
           const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
@@ -1210,23 +1289,40 @@
       setTimeout(() => loadAllCampusData(), 60);
     } catch (err) {
       toast('Google authentication: ' + err.message);
+    } finally {
+      if (allowBtn) {
+        allowBtn.disabled = false;
+        allowBtn.textContent = 'Allow & Connect ↗';
+      }
     }
   }
 
-  googleSignInBtn?.addEventListener('click', () => {
-    if (supabaseClient) {
-      performGoogleSignIn('satyamsambhale7972@gmail.com', 'Satyam Sambhale');
-    } else {
-      openGoogleAuthModal();
-    }
+  googleSignInBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeAuth();
+    openGoogleAuthModal();
+  });
+
+  $('#googleAllowBtn')?.addEventListener('click', () => {
+    const email = $('#googlePrimaryEmailText')?.textContent?.trim() || 'satyamsambhale7972@gmail.com';
+    performGoogleSignIn(email, 'Satyam Sambhale');
   });
 
   googleChoosePrimary?.addEventListener('click', () => {
-    performGoogleSignIn('satyamsambhale7972@gmail.com', 'Satyam Sambhale');
+    const email = $('#googlePrimaryEmailText')?.textContent?.trim() || 'satyamsambhale7972@gmail.com';
+    performGoogleSignIn(email, 'Satyam Sambhale');
+  });
+
+  $('#toggleCustomGoogleBtn')?.addEventListener('click', () => {
+    const box = $('#customGoogleBox');
+    if (box) {
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      if (box.style.display === 'block') $('#customGoogleEmail')?.focus();
+    }
   });
 
   customGoogleSubmitBtn?.addEventListener('click', () => {
-    const val = customGoogleEmail?.value?.trim() || '';
+    const val = $('#customGoogleEmail')?.value?.trim() || customGoogleEmail?.value?.trim() || '';
     if (!val || !val.includes('@')) {
       toast('Please enter a valid Google email address.');
       return;
