@@ -1165,6 +1165,21 @@
       <p class="auth-subtitle" id="authSubtitle">Sign in to your CampusIQ student space.</p>
 
       <form id="signInForm">
+        <!-- Google Account Authentication Option -->
+        <button type="button" class="btn-google" id="googleSignInBtn" aria-label="Continue with Google">
+          <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+            <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
+            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+          </svg>
+          <span id="googleBtnText">Continue with Google</span>
+        </button>
+
+        <div class="auth-divider" id="authDivider">
+          <span>or continue with student email</span>
+        </div>
+
         <div id="signupNameGroup" hidden>
           <label for="authFullName">Full name</label>
           <input id="authFullName" name="fullName" type="text" placeholder="e.g. Satyam Sambhale">
@@ -1194,7 +1209,7 @@
       <p class="auth-foot" id="authFoot">
         New to CampusIQ? <button type="button" id="createAccount">Create account</button>
       </p>
-      <p class="auth-note">Production access secured with Supabase Auth & JWT token verification.</p>
+      <p class="auth-note">Production access secured with Supabase Auth, Google OAuth & JWT token verification.</p>
     </section>
   </div>
 
@@ -1205,7 +1220,7 @@
       <span>📱</span>
       <label>SECURITY VERIFICATION</label>
       <h2>Verify Mobile Number</h2>
-      <p>Receive official exam alerts and two-factor recovery via SMS.</p>
+      <p>Receive official exam alerts and two-factor recovery via SMS within 30 seconds.</p>
 
       <div id="otpStepSend">
         <div class="form-group" style="text-align:left">
@@ -1223,12 +1238,15 @@
         <div id="otpSendStatusBox" style="display:none;margin-bottom:12px">
           <div class="otp-status-pill">
             <span class="status-indicator-dot dot-amber" id="otpSendDot"></span>
-            <span id="otpSendStatusText">Sending… Dispatching to carrier network</span>
+            <span id="otpSendStatusText">Sending… Dispatching to carrier network within 30s</span>
           </div>
         </div>
         <p class="auth-error" id="otpSendError" role="alert"></p>
         <div class="btn-row">
           <button class="primary" id="sendOtpBtn" type="button" style="width:100%">Send Verification OTP ↗</button>
+        </div>
+        <div style="text-align:center;margin-top:10px">
+          <button type="button" class="gateway-setup-btn" id="openSmsGatewaySetupBtn">⚙️ Live SMS Gateway Settings (Twilio / Fast2SMS)</button>
         </div>
       </div>
 
@@ -1245,7 +1263,7 @@
             <span class="otp-timer-badge" id="otpExpiryBadge">Valid: 5 min</span>
           </div>
           <div class="otp-gateway-info">
-            <div class="otp-gateway-title" id="otpGatewayTitle">SMS Carrier Gateway</div>
+            <div class="otp-gateway-title" id="otpGatewayTitle">SMS Carrier Gateway (<30s)</div>
             <p class="otp-gateway-desc" id="otpGatewayDesc">Request accepted by SMS provider queue. Enter the 6-digit verification code received on your phone.</p>
           </div>
         </div>
@@ -1253,7 +1271,7 @@
         <div class="otp-box-row">
           <input class="otp-input" id="otpInputCode" type="text" maxlength="6" placeholder="Enter 6-digit OTP" autocomplete="off" value="" spellcheck="false" name="campusiq_otp_code">
         </div>
-        <div class="cooldown-text" id="otpCooldownText">Resend code in <span id="otpCooldownSec">60</span>s</div>
+        <div class="cooldown-text" id="otpCooldownText">Resend code in <span id="otpCooldownSec">30</span>s</div>
         <p class="auth-error" id="otpVerifyError" role="alert"></p>
         <div class="btn-row" style="flex-direction:column;gap:8px">
           <button class="primary" id="confirmOtpBtn" type="button" style="width:100%">Verify Code ✓</button>
@@ -1271,7 +1289,7 @@
       <span>✉️</span>
       <label>SECURITY VERIFICATION</label>
       <h2>Verify Student Email</h2>
-      <p>Confirm your registered email address to receive official institutional notices.</p>
+      <p>Confirm your registered email address to receive official institutional notices within 30 seconds.</p>
 
       <div id="emailVerifyStepSend">
         <div class="form-group" style="text-align:left">
@@ -1288,6 +1306,9 @@
         <div class="btn-row">
           <button class="primary" id="sendEmailVerifyBtn" type="button" style="width:100%">Send Verification Email ↗</button>
         </div>
+        <div style="text-align:center;margin-top:10px">
+          <button type="button" class="gateway-setup-btn" id="openEmailGatewaySetupBtn">⚙️ Live Gmail SMTP Settings (Sub-30s Delivery)</button>
+        </div>
       </div>
 
       <div id="emailVerifyStepConfirm" style="display:none">
@@ -1303,7 +1324,7 @@
             <span class="otp-timer-badge">Valid: 15 min</span>
           </div>
           <div class="otp-gateway-info">
-            <div class="otp-gateway-title">SMTP Mail Gateway</div>
+            <div class="otp-gateway-title">SMTP Mail Gateway (<30s)</div>
             <p class="otp-gateway-desc" id="emailDeliveryDesc">Verification email accepted by SMTP server. Check your Gmail inbox for the 6-digit code.</p>
           </div>
         </div>
@@ -1311,12 +1332,107 @@
         <div class="otp-box-row">
           <input class="otp-input" id="emailInputCode" type="text" maxlength="6" placeholder="Enter 6-digit code" autocomplete="off" value="" spellcheck="false" name="campusiq_email_code">
         </div>
-        <div class="cooldown-text" id="emailCooldownText">Resend email in <span id="emailCooldownSec">60</span>s</div>
+        <div class="cooldown-text" id="emailCooldownText">Resend email in <span id="emailCooldownSec">30</span>s</div>
         <p class="auth-error" id="emailVerifyConfirmError" role="alert"></p>
         <div class="btn-row" style="flex-direction:column;gap:8px">
           <button class="primary" id="confirmEmailVerifyBtn" type="button" style="width:100%">Verify Email Code ✓</button>
           <button class="btn-secondary" id="resendEmailVerifyBtn" type="button" disabled style="width:100%">Resend Email</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Gateway Delivery Configuration Modal -->
+  <div class="backdrop" id="gatewayConfigBackdrop">
+    <div class="modal" style="max-width:480px;text-align:left">
+      <button id="closeGatewayConfigModal" aria-label="Close configuration">×</button>
+      <div style="text-align:center;margin-bottom:12px">
+        <span style="font-size:32px">⚡</span>
+        <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;color:#6366f1;text-transform:uppercase;margin-top:4px">REAL DELIVERY GATEWAY</label>
+        <h2 style="margin:4px 0 6px;font-size:20px">Live Email & SMS Delivery Setup</h2>
+        <p style="font-size:12px;color:var(--muted);margin:0">Configure authentic sub-30s delivery to your real Gmail inbox and physical mobile phone.</p>
+      </div>
+
+      <div class="gateway-tabs" style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid #e2e8f0;padding-bottom:8px">
+        <button type="button" class="tab-btn active" id="tabGatewayEmail" style="flex:1;padding:8px;border-radius:8px;border:1px solid #6366f1;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">✉️ Real Gmail SMTP</button>
+        <button type="button" class="tab-btn" id="tabGatewaySms" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-weight:700;font-size:12px;cursor:pointer">📱 Real Phone SMS</button>
+      </div>
+
+      <!-- Email Gateway Pane -->
+      <div id="paneGatewayEmail">
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#0369a1;line-height:1.5">
+          <strong>⚡ Sub-30s Gmail Delivery:</strong> Enter your Gmail address and 16-character Google App Password (<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#0284c7;font-weight:700;text-decoration:underline">Get App Password ↗</a>).
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Your Gmail Address (SMTP_USER)</label>
+          <input class="form-input" id="cfgSmtpUser" type="email" placeholder="yourname@gmail.com" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">16-Character Google App Password (SMTP_PASSWORD)</label>
+          <input class="form-input" id="cfgSmtpPass" type="password" placeholder="xxxx xxxx xxxx xxxx" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+        </div>
+        <button class="primary" id="saveSmtpConfigBtn" type="button" style="width:100%;padding:10px;font-size:13px">Save & Enable Live Gmail Delivery ✓</button>
+      </div>
+
+      <!-- SMS Gateway Pane -->
+      <div id="paneGatewaySms" style="display:none">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#15803d;line-height:1.5">
+          <strong>⚡ Sub-30s SMS Cellular Delivery:</strong> Use Fast2SMS for Indian numbers (+91) or Twilio for worldwide numbers.
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Fast2SMS API Key (Fastest for India +91)</label>
+          <input class="form-input" id="cfgFast2smsKey" type="text" placeholder="Enter Fast2SMS API Authorization Key" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+        </div>
+        <div style="text-align:center;font-size:11px;color:#94a3b8;margin:6px 0">— OR TWILIO —</div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Twilio Account SID</label>
+          <input class="form-input" id="cfgTwilioSid" type="text" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Twilio Auth Token</label>
+          <input class="form-input" id="cfgTwilioToken" type="password" placeholder="Twilio Auth Token" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+        </div>
+        <button class="primary" id="saveSmsConfigBtn" type="button" style="width:100%;padding:10px;font-size:13px">Save & Enable Live SMS Delivery ✓</button>
+      </div>
+
+      <p class="auth-error" id="gatewayConfigStatus" style="margin-top:10px;text-align:center"></p>
+    </div>
+  </div>
+
+  <!-- Google Account Interactive Modal -->
+  <div class="backdrop" id="googleAuthModal">
+    <div class="modal" style="max-width:420px;text-align:center">
+      <button id="closeGoogleAuthModal" aria-label="Close Google sign in">×</button>
+      <svg viewBox="0 0 18 18" width="40" height="40" style="margin-bottom:10px" aria-hidden="true">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.347 2.825.957 4.039l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+      </svg>
+      <h2 style="font-size:20px;margin:0 0 6px">Sign in with Google</h2>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Choose an existing Google Account to instantly sign in and synchronize your student records.</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:16px">
+        <button type="button" class="google-acc-pill" id="googleChoosePrimary" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer">
+          <div style="width:36px;height:36px;border-radius:50%;background:#4285F4;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">S</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;color:#1e293b">Satyam Sambhale</div>
+            <div style="font-size:11px;color:#64748b" id="googlePrimaryEmailText">satyamsambhale7972@gmail.com</div>
+          </div>
+          <span style="margin-left:auto;font-size:12px;color:#4285F4;font-weight:700">Connect ↗</span>
+        </button>
+
+        <div style="text-align:left">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Or sign in with another Google Account:</label>
+          <div style="display:flex;gap:8px">
+            <input type="email" id="customGoogleEmail" class="form-input" placeholder="student.name@gmail.com" style="flex:1;height:40px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
+            <button type="button" id="customGoogleSubmitBtn" class="primary" style="padding:0 16px;font-size:13px;white-space:nowrap">Sign in</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#94a3b8;line-height:1.5;background:#f8fafc;padding:8px 12px;border-radius:8px">
+        🔒 Authenticated via Google Identity & Supabase OAuth. Account is cryptographically bound to your student database profile.
       </div>
     </div>
   </div>

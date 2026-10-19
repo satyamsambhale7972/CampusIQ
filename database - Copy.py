@@ -1028,7 +1028,7 @@ class Database:
                 otp_hash = hashlib.sha256(otp.encode()).hexdigest()
 
                 expires_at = (now + timedelta(minutes=5)).isoformat()
-                cooldown_until = (now + timedelta(seconds=60)).isoformat()
+                cooldown_until = (now + timedelta(seconds=30)).isoformat()
                 verif_id = str(uuid.uuid4())
 
                 conn.execute("""
@@ -1043,7 +1043,7 @@ class Database:
                     "status": "request_accepted",
                     "verification_id": verif_id,
                     "expires_in_seconds": 300,
-                    "cooldown_seconds": 60,
+                    "cooldown_seconds": 30,
                     "raw_otp": otp,  # Strictly consumed by internal SMS dispatcher; stripped before client response
                     "message": f"OTP verification request accepted for {country_code} {phone_number}."
                 }
@@ -1173,7 +1173,7 @@ class Database:
                 token_hash = hashlib.sha256(token.encode()).hexdigest()
 
                 expires_at = (now + timedelta(minutes=15)).isoformat()
-                cooldown_until = (now + timedelta(seconds=60)).isoformat()
+                cooldown_until = (now + timedelta(seconds=30)).isoformat()
                 verif_id = str(uuid.uuid4())
 
                 conn.execute("""
@@ -1188,7 +1188,7 @@ class Database:
                     "raw_code": code,
                     "raw_token": token,
                     "expires_in_seconds": 900,
-                    "cooldown_seconds": 60,
+                    "cooldown_seconds": 30,
                     "message": f"Verification email request registered for {email}."
                 }
         finally:

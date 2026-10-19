@@ -168,12 +168,24 @@ footer{font-size:9px}
 .auth-divider:before,.auth-divider:after{content:'';height:1px;background:#ecebf4;flex:1}
 .demo-login{border:1px solid #dedcf3;background:#f8f7ff;color:#51479f}
 .demo-login:hover{background:#f0edff}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:46px;border-radius:11px;border:1px solid #dedfee;background:#ffffff;color:#3c4043;font:600 14px 'DM Sans',sans-serif;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.08);transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease;margin-bottom:6px}
+.btn-google:hover{background:#f8f9fa;border-color:#c6c9d8;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+.btn-google svg{width:18px;height:18px;flex-shrink:0}
+.google-acc-pill{transition:all .18s ease;border:1px solid #e2e8f0}
+.google-acc-pill:hover{background:#f1f5f9!important;border-color:#cbd5e1!important;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+.gateway-setup-btn{border:0;background:none;color:#6366f1;font:700 11px 'DM Sans',sans-serif;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s ease}
+.gateway-setup-btn:hover{background:#eef2ff;color:#4f46e5;text-decoration:underline}
 .auth-foot{text-align:center;color:#777992;font-size:12px;margin:20px 0 0!important}
 .auth-note{text-align:center;color:#9a9bb0;font-size:10px;line-height:1.5;margin:15px 0 0!important}
 body.dark .auth-card{background:#1b1c34;color:#f1f0ff;border-color:#343451}
 body.dark .auth-card h2,body.dark .auth-card form>label{color:#f1f0ff}
 body.dark .auth-subtitle,body.dark .auth-foot{color:#b2b2cc}
 body.dark .auth-card input[type=email],body.dark .auth-card input[type=password],body.dark .auth-card input[type=text]{background:#14152a;border-color:#3a3b58;color:#f5f4ff}
+body.dark .btn-google{background:#20223f;color:#e2e8f0;border-color:#3b3d60;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+body.dark .btn-google:hover{background:#2a2d52;border-color:#4f527c}
+body.dark .google-acc-pill{background:#1b1c34!important;border-color:#343451!important}
+body.dark .google-acc-pill:hover{background:#252646!important}
+body.dark .google-acc-pill div div:first-child{color:#f1f0ff!important}
 body.dark .demo-login{background:#282642;border-color:#464265;color:#d7d1ff}
 body.dark .auth-close{background:#2a2b46;color:#e4e2ff}
 @media(max-width:600px){.auth-card{padding:29px 22px 22px;border-radius:20px}.auth-card h2{font-size:25px}.signin-btn{padding:9px 11px;font-size:12px}.actions{gap:7px}}
