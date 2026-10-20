@@ -390,9 +390,20 @@ class Database:
                     category TEXT NOT NULL DEFAULT 'campus',
                     priority TEXT NOT NULL DEFAULT 'normal',
                     author_role TEXT NOT NULL DEFAULT 'Campus Administration',
+                    is_pinned INTEGER NOT NULL DEFAULT 0,
+                    expiry_date TEXT,
                     created_at TEXT NOT NULL DEFAULT (datetime('now'))
                 );
                 """)
+
+                # Announcements migration columns
+                existing_ann_cols = [r[1] for r in conn.execute("PRAGMA table_info(announcements)").fetchall()]
+                for col_name, col_type, default_val in [
+                    ("is_pinned", "INTEGER", "0"),
+                    ("expiry_date", "TEXT", "NULL")
+                ]:
+                    if col_name not in existing_ann_cols:
+                        conn.execute(f"ALTER TABLE announcements ADD COLUMN {col_name} {col_type} DEFAULT {default_val}")
 
                 conn.execute("""
                 CREATE TABLE IF NOT EXISTS faqs (
@@ -680,16 +691,17 @@ class Database:
                 VALUES (?, ?, ?, ?, 'student', 'B.Tech', 'Artificial Intelligence & Machine Learning', 'Computer Science & Engineering', 'Year 3, Semester 5', '2024-08-01', 1)
                 """, (u_id, u_email, u_name, u_roll))
                 
-                # Check user_credentials table
-                cred_exists = cursor.execute("SELECT id FROM user_credentials WHERE lower(email) = ?", (u_email,)).fetchone()
-                if not cred_exists:
-                    p_row = cursor.execute("SELECT id FROM profiles WHERE lower(email) = ?", (u_email,)).fetchone()
-                    prof_id = p_row[0] if p_row else u_id
-                    pwd_hash, salt = self.hash_password(u_pwd)
-                    cursor.execute("""
-                    INSERT OR IGNORE INTO user_credentials (id, user_id, email, password_hash, password_salt)
-                    VALUES (?, ?, ?, ?, ?)
-                    """, (str(uuid.uuid4()), prof_id, u_email, pwd_hash, salt))
+                # Ensure profile exists before attaching credentials to satisfy foreign key
+                p_row = cursor.execute("SELECT id FROM profiles WHERE lower(email) = ? OR id = ?", (u_email.lower(), u_id)).fetchone()
+                if p_row:
+                    prof_id = p_row[0]
+                    cred_exists = cursor.execute("SELECT id FROM user_credentials WHERE lower(email) = ?", (u_email.lower(),)).fetchone()
+                    if not cred_exists:
+                        pwd_hash, salt = self.hash_password(u_pwd)
+                        cursor.execute("""
+                        INSERT OR IGNORE INTO user_credentials (id, user_id, email, password_hash, password_salt)
+                        VALUES (?, ?, ?, ?, ?)
+                        """, (str(uuid.uuid4()), prof_id, u_email, pwd_hash, salt))
 
     # ---------------- Profile Operations ----------------
     def get_or_create_profile(self, user_id: str, email: str, full_name: str = "", role: str = "student") -> Dict[str, Any]:
@@ -752,6 +764,62 @@ class Database:
             with conn:
                 row = conn.execute("SELECT * FROM profiles WHERE lower(email) = ?", (clean_email,)).fetchone()
                 return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def get_all_profiles(self) -> List[Dict[str, Any]]:
+        """Retrieves all registered student and faculty profiles."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                rows = conn.execute("SELECT * FROM profiles ORDER BY created_at DESC").fetchall()
+                return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_all_attendance(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Retrieves all student attendance logs with student metadata."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                rows = conn.execute("""
+                SELECT a.*, p.full_name as student_name, p.email as student_email, p.student_id as student_roll
+                FROM attendance_records a 
+                LEFT JOIN profiles p ON a.student_id = p.id 
+                ORDER BY a.date DESC LIMIT ?
+                """, (limit,)).fetchall()
+                return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_all_bookings(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Retrieves all facility and desk bookings with facility metadata."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                rows = conn.execute("""
+                SELECT b.*, f.name as facility_name, f.location, p.full_name as student_name, p.email as student_email 
+                FROM facility_bookings b 
+                LEFT JOIN facilities f ON b.facility_id = f.id 
+                LEFT JOIN profiles p ON b.student_id = p.id 
+                ORDER BY b.booking_date DESC LIMIT ?
+                """, (limit,)).fetchall()
+                return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_all_sessions(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retrieves all active student login sessions."""
+        conn = self.get_connection()
+        try:
+            with conn:
+                rows = conn.execute("""
+                SELECT s.*, p.full_name as student_name 
+                FROM auth_sessions s 
+                LEFT JOIN profiles p ON s.user_id = p.id 
+                ORDER BY s.signed_in_at DESC LIMIT ?
+                """, (limit,)).fetchall()
+                return [dict(r) for r in rows]
         finally:
             conn.close()
 

@@ -13,8 +13,9 @@
 // ====================================================================
 
 window.CAMPUSIQ_SUPABASE_CONFIG = {
-  url: "YOUR_PROJECT_URL",
-  anonKey: "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY",
+  url: "https://jlssyqpqpordksbgqzrp.supabase.co",
+  anonKey: "sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT",
+  projectId: "jlssyqpqpordksbgqzrp",
   redirectUrl: "https://satyamsambhale7972.github.io/CampusIQ-/",
   deliveryTarget: "<30s",
   cooldownSeconds: 60

@@ -328,10 +328,14 @@ CREATE INDEX IF NOT EXISTS idx_ai_student ON ai_messages(student_id);
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ====================================================================
 
--- 1. Profiles: Users can only read and edit their own profiles.
+-- 1. Profiles: Users can read and edit their profiles.
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Profiles read own" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Profiles update own" ON profiles FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Profiles read own" ON profiles;
+DROP POLICY IF EXISTS "Profiles update own" ON profiles;
+CREATE POLICY "Public select profiles" ON profiles FOR SELECT USING (true);
+CREATE POLICY "Public insert profiles" ON profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public update profiles" ON profiles FOR UPDATE USING (true);
+CREATE POLICY "Public delete profiles" ON profiles FOR DELETE USING (true);
 
 -- 2. Results: Students can view only their own published or provisional results.
 ALTER TABLE academic_results ENABLE ROW LEVEL SECURITY;

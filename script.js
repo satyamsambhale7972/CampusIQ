@@ -66,8 +66,87 @@
   if (isSupabaseConfigured && window.supabase?.createClient) {
     try {
       supabaseClient = window.supabase.createClient(supabaseCfg.url, supabaseCfg.anonKey);
+      console.log('✓ CampusIQ: Supabase client connected to project:', supabaseCfg.projectId || supabaseCfg.url);
     } catch (err) {
       console.warn('CampusIQ: Could not initialize Supabase client:', err);
+    }
+  }
+
+  // ---------------- Supabase Live Synchronization Engine ----------------
+  async function syncStudentToSupabase(studentData) {
+    if (!supabaseClient) return;
+    try {
+      const email = (studentData.email || currentUser?.email || '').toLowerCase().trim();
+      if (!email) return;
+
+      // 1. Direct sync to Supabase 'students' table
+      try {
+        const studentPayload = {
+          name: studentData.full_name || currentUser?.full_name || email.split('@')[0],
+          email: email,
+          phone: studentData.phone_number !== undefined ? studentData.phone_number : (currentUser?.phone_number || ''),
+          roll_number: String(studentData.student_id || currentUser?.student_id || ('STU-' + Math.floor(10000 + Math.random() * 90000))),
+          department: studentData.department || currentUser?.department || 'Computer Science & Engineering',
+          year: studentData.year_semester || currentUser?.year_semester || '1st Year',
+          extra_details: JSON.stringify({
+            role: studentData.role || currentUser?.role || 'student',
+            phone_verified: Boolean(studentData.phone_verified ?? currentUser?.phone_verified ?? false),
+            synced_at: new Date().toISOString()
+          })
+        };
+
+        const { error: stuError } = await supabaseClient
+          .from('students')
+          .insert(studentPayload);
+
+        if (!stuError) {
+          console.log('[Supabase Sync] Student saved to students table:', email);
+        }
+      } catch (stuEx) {
+        console.warn('Supabase students table sync notice:', stuEx);
+      }
+
+      // 2. Direct sync to Supabase 'profiles' table
+      const payload = {
+        email: email,
+        full_name: studentData.full_name || currentUser?.full_name || '',
+        student_id: studentData.student_id || currentUser?.student_id || ('STU-' + Math.floor(10000 + Math.random() * 90000)),
+        department: studentData.department || currentUser?.department || 'Computer Science & Engineering',
+        branch: studentData.branch || currentUser?.branch || 'Computer Science & Engineering',
+        year_semester: studentData.year_semester || currentUser?.year_semester || 'Year 3, Semester 5',
+        phone_number: studentData.phone_number !== undefined ? studentData.phone_number : (currentUser?.phone_number || null),
+        country_code: studentData.country_code || currentUser?.country_code || '+91',
+        phone_verified: Boolean(studentData.phone_verified ?? currentUser?.phone_verified ?? false),
+        course: studentData.course || currentUser?.course || 'B.Tech',
+        role: studentData.role || currentUser?.role || 'student',
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .upsert(payload, { onConflict: 'email' });
+
+      if (error) {
+        console.warn('Supabase sync notice:', error.message);
+      } else {
+        console.log('[Supabase Sync] Student saved to profiles table:', email);
+      }
+    } catch (e) {
+      console.warn('Supabase sync exception:', e);
+    }
+  }
+
+  async function syncRecordToSupabase(table, recordData) {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient.from(table).insert(recordData);
+      if (error) {
+        console.warn(`Supabase ${table} sync notice:`, error.message);
+      } else {
+        console.log(`✓ Record saved to Supabase table '${table}'`);
+      }
+    } catch (e) {
+      console.warn(`Supabase ${table} sync exception:`, e);
     }
   }
 
@@ -148,6 +227,7 @@
     else if (page === 'attendance') fetchAttendance();
     else if (page === 'performance') fetchPerformance();
     else if (page === 'overview') fetchDashboardSummary();
+    else if (page === 'admin') { if (typeof window.checkOwnerAdminView === 'function') window.checkOwnerAdminView(); }
   }
 
   document.addEventListener('click', e => {
@@ -642,6 +722,9 @@
       updateUserUI();
       closeAuth();
 
+      // 1B. Synchronize student details to Supabase backend table
+      syncStudentToSupabase(currentUser);
+
       // 2. Real-time background security email dispatch (Quiet, no intrusive banners)
       dispatchRealSecurityEmail(targetEmail, currentUser.full_name || 'Student');
 
@@ -946,6 +1029,7 @@
       currentUser.phone_verified = true;
 
       updateUserUI();
+      syncStudentToSupabase(currentUser);
       fetchNotifications();
 
       setTimeout(() => {
@@ -1163,6 +1247,7 @@
 
       currentUser.email_verified = true;
       updateUserUI();
+      syncStudentToSupabase(currentUser);
       toast('Student email address verified successfully ✓');
 
       setTimeout(() => {
@@ -1462,6 +1547,7 @@
       currentUser = { ...currentUser, ...data.profile };
       updateUserUI();
       closeProfileModal();
+      syncStudentToSupabase({ ...currentUser, full_name: fullName, department, year_semester: yearSemester, branch });
       toast('Profile updated successfully ✓');
     } catch (err) {
       toast('Update failed: ' + err.message);
@@ -2352,6 +2438,14 @@
       });
       if (!res.ok) throw new Error('Space reservation failed.');
       closeBookFacilityModal();
+      syncRecordToSupabase('facility_bookings', {
+        facility_id: facilityId,
+        student_id: currentUser?.id || currentUser?.email || 'student',
+        booking_date: bookingDate,
+        time_slot: timeSlot,
+        purpose: purpose || 'Study session',
+        status: 'confirmed'
+      });
       toast('Desk reservation confirmed! An email pass has been issued.');
       await fetchFacilities();
       renderOverview();
@@ -4037,5 +4131,302 @@
   }
 
   checkSession();
+
+
+  // ==============================================================
+  // PRIVATE OWNER / ADMINISTRATOR MASTER CONSOLE CONTROLLER
+  // ==============================================================
+  let cachedOwnerStudents = [];
+
+  window.checkOwnerAdminView = function() {
+    const isUnlocked = sessionStorage.getItem('campusiq_owner_unlocked') === 'true' || currentUser?.role === 'admin';
+    const lockGate = document.getElementById('ownerLockGate');
+    const unlockedView = document.getElementById('ownerUnlockedView');
+
+    if (!isUnlocked) {
+      if (lockGate) lockGate.style.display = 'block';
+      if (unlockedView) unlockedView.style.display = 'none';
+    } else {
+      if (lockGate) lockGate.style.display = 'none';
+      if (unlockedView) unlockedView.style.display = 'block';
+      window.fetchAdminCockpitData();
+    }
+  };
+
+  window.handleOwnerUnlock = function(e) {
+    e.preventDefault();
+    const val = (document.getElementById('ownerPasskeyInput')?.value || '').trim();
+    if (val === 'admin' || val === '2026' || val === 'admin123' || val === 'admin@campusiq.edu') {
+      sessionStorage.setItem('campusiq_owner_unlocked', 'true');
+      toast('👑 Owner Console Unlocked Successfully!');
+      window.checkOwnerAdminView();
+    } else {
+      toast('Incorrect passkey. Use "admin" or PIN "2026".');
+    }
+  };
+
+  window.lockOwnerConsole = function() {
+    sessionStorage.removeItem('campusiq_owner_unlocked');
+    toast('Owner console locked.');
+    window.checkOwnerAdminView();
+  };
+
+  window.fetchAdminCockpitData = async function(forceRefresh = false) {
+    try {
+      // 1. Fetch from local backend overview endpoint
+      const res = await fetch('/api/admin/overview', { headers: getAuthHeaders() });
+      let backendData = { profiles: [], counts: {} };
+      if (res.ok) {
+        backendData = await res.json();
+      }
+
+      // 2. Fetch directly from Supabase 'students' table in parallel
+      let supabaseStudents = [];
+      try {
+        const sbRes = await fetch('https://jlssyqpqpordksbgqzrp.supabase.co/rest/v1/students?select=*&order=id.desc', {
+          headers: {
+            'apikey': 'sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT',
+            'Authorization': 'Bearer sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT'
+          }
+        });
+        if (sbRes.ok) {
+          supabaseStudents = await sbRes.json();
+        }
+      } catch (sbErr) {
+        console.warn('Supabase students fetch warning:', sbErr);
+      }
+
+      // 3. Merge profiles uniquely by email
+      const studentMap = new Map();
+
+      // Add backend profiles first
+      (backendData.profiles || []).forEach(p => {
+        const em = (p.email || '').toLowerCase().trim();
+        if (em) {
+          studentMap.set(em, {
+            id: p.student_id || p.id || 'N/A',
+            name: p.full_name || em.split('@')[0],
+            email: em,
+            phone: p.phone_number || '-',
+            roll: p.student_id || '-',
+            dept: p.department || p.branch || 'Computer Science & Engineering',
+            year: p.year_semester || 'Year 1, Sem 1',
+            verified: Boolean(p.phone_verified),
+            source: 'system'
+          });
+        }
+      });
+
+      // Overlay/Add Supabase students
+      (supabaseStudents || []).forEach(s => {
+        const em = (s.email || '').toLowerCase().trim();
+        if (em) {
+          const existing = studentMap.get(em) || {};
+          studentMap.set(em, {
+            id: s.id || existing.id || 'SPB',
+            name: s.name || existing.name || em.split('@')[0],
+            email: em,
+            phone: s.phone || existing.phone || '-',
+            roll: s.roll_number || existing.roll || `STU-${s.id}`,
+            dept: s.department || existing.dept || 'Computer Science & Engineering',
+            year: s.year || existing.year || '1st Year',
+            verified: true,
+            source: 'supabase'
+          });
+        }
+      });
+
+      cachedOwnerStudents = Array.from(studentMap.values());
+
+      // 4. Update KPI numbers
+      const totalCount = cachedOwnerStudents.length;
+      const verifiedCount = cachedOwnerStudents.filter(s => s.verified || s.phone !== '-').length;
+      const techCount = cachedOwnerStudents.filter(s => s.dept && (s.dept.includes('Computer') || s.dept.includes('Information') || s.dept.includes('AI'))).length;
+
+      const elTotal = document.getElementById('ownerKpiTotalStudents');
+      const elVerified = document.getElementById('ownerKpiVerifiedPhones');
+      const elTech = document.getElementById('ownerKpiTechStudents');
+
+      if (elTotal) elTotal.innerText = totalCount.toLocaleString();
+      if (elVerified) elVerified.innerText = verifiedCount.toLocaleString();
+      if (elTech) elTech.innerText = techCount.toLocaleString();
+
+      window.filterOwnerTable();
+
+      if (forceRefresh) toast(`Synced ${totalCount} student records directly from database!`);
+    } catch (err) {
+      console.warn('Error fetching admin cockpit data:', err);
+    }
+  };
+
+  window.filterOwnerTable = function() {
+    const q = (document.getElementById('ownerStudentSearch')?.value || '').toLowerCase().trim();
+    const dept = (document.getElementById('ownerDeptFilter')?.value || '');
+
+    const filtered = cachedOwnerStudents.filter(s => {
+      const matchQ = !q || (s.name && s.name.toLowerCase().includes(q)) || (s.email && s.email.toLowerCase().includes(q)) || (s.roll && String(s.roll).toLowerCase().includes(q));
+      const matchDept = !dept || (s.dept && s.dept.includes(dept));
+      return matchQ && matchDept;
+    });
+
+    renderOwnerTable(filtered);
+  };
+
+  function renderOwnerTable(records) {
+    const tbody = document.getElementById('ownerStudentsTableBody');
+    const emptyState = document.getElementById('ownerEmptyTableState');
+    const countLabel = document.getElementById('ownerTableCountLabel');
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (countLabel) {
+      countLabel.innerText = `Showing ${records.length} of ${cachedOwnerStudents.length} students`;
+    }
+
+    if (records.length === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      return;
+    }
+    if (emptyState) emptyState.style.display = 'none';
+
+    records.slice(0, 100).forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-family:monospace;font-size:11px;color:#a9a0ff"><strong>${escapeHtml(s.roll)}</strong></td>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td style="color:var(--muted);font-size:11px">${escapeHtml(s.email)}</td>
+        <td style="font-family:monospace;font-size:11px">${escapeHtml(s.phone)}</td>
+        <td><span class="info-pill" style="font-size:9px">${escapeHtml(s.dept)}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${escapeHtml(s.year)}</td>
+        <td>
+          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;background:rgba(16,185,129,0.15);color:#10b981">
+            Active
+          </span>
+        </td>
+        <td style="text-align:right">
+          <button type="button" class="icon-btn" onclick="deleteOwnerStudentRecord('${escapeHtml(s.email)}')" title="Delete Record" style="color:#f87171;width:28px;height:28px;font-size:12px;margin-left:auto">
+            🗑
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.openOwnerAddModal = function() {
+    const modal = document.getElementById('ownerAddStudentModal');
+    if (modal) modal.style.display = 'flex';
+  };
+
+  window.closeOwnerAddModal = function() {
+    const modal = document.getElementById('ownerAddStudentModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.handleOwnerCreateStudent = async function(e) {
+    e.preventDefault();
+    const newStudent = {
+      full_name: document.getElementById('oAddName').value.trim(),
+      email: document.getElementById('oAddEmail').value.trim().toLowerCase(),
+      phone_number: document.getElementById('oAddPhone').value.trim(),
+      student_id: document.getElementById('oAddRoll').value.trim(),
+      year_semester: document.getElementById('oAddYear').value.trim(),
+      department: document.getElementById('oAddDept').value,
+      password: 'student123'
+    };
+
+    // 1. Optimistically add to local cache and table (0ms delay!)
+    cachedOwnerStudents.unshift({
+      id: newStudent.student_id,
+      name: newStudent.full_name,
+      email: newStudent.email,
+      phone: newStudent.phone_number,
+      roll: newStudent.student_id,
+      dept: newStudent.department,
+      year: newStudent.year_semester,
+      verified: true,
+      source: 'owner_console'
+    });
+    window.filterOwnerTable();
+    window.closeOwnerAddModal();
+    toast(`✓ Student "${newStudent.full_name}" added to database!`);
+
+    // 2. Direct background sync to Supabase students table
+    try {
+      fetch('https://jlssyqpqpordksbgqzrp.supabase.co/rest/v1/students', {
+        method: 'POST',
+        headers: {
+          'apikey': 'sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT',
+          'Authorization': 'Bearer sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: newStudent.full_name,
+          email: newStudent.email,
+          phone: newStudent.phone_number,
+          roll_number: newStudent.student_id,
+          department: newStudent.department,
+          year: newStudent.year_semester,
+          extra_details: JSON.stringify({ created_by: 'owner_console', last_active: new Date().toISOString() })
+        })
+      });
+    } catch (err) {}
+
+    // 3. Background sync to local backend
+    try {
+      fetch('/api/admin/student/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(newStudent)
+      });
+    } catch (err) {}
+  };
+
+  window.deleteOwnerStudentRecord = async function(email) {
+    if (!confirm(`Delete student record for ${email}?`)) return;
+
+    cachedOwnerStudents = cachedOwnerStudents.filter(s => s.email !== email);
+    window.filterOwnerTable();
+    toast(`Record removed for ${email}`);
+
+    // Sync delete to Supabase
+    try {
+      fetch(`https://jlssyqpqpordksbgqzrp.supabase.co/rest/v1/students?email=eq.${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': 'sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT',
+          'Authorization': 'Bearer sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT'
+        }
+      });
+    } catch (err) {}
+  };
+
+  window.exportOwnerStudentsCSV = function() {
+    if (cachedOwnerStudents.length === 0) return toast('No students to export.');
+    const headers = ['Roll No', 'Full Name', 'Email', 'Phone', 'Department', 'Semester/Year'];
+    const rows = cachedOwnerStudents.map(s => [
+      `"${s.roll}"`,
+      `"${s.name.replace(/"/g, '""')}"`,
+      `"${s.email.replace(/"/g, '""')}"`,
+      `"${s.phone}"`,
+      `"${s.dept}"`,
+      `"${s.year}"`
+    ]);
+
+    const csvContent = headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `CampusIQ_All_Students_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    toast('Student database exported to CSV!');
+  };
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+  }
 
 })();

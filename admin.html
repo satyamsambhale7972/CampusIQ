@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusIQ — Live Student Database & Admin Cloud Cockpit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #111827;
+      --card-hover: #1e293b;
+      --border: #1f293d;
+      --border-bright: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --cyan: #06b6d4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+    }
+    .brand-title {
+      font-family: 'Manrope', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .brand-title span { color: #818cf8; }
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .header-pills {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #111827;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .dot-amber { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    .dot-blue { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: #334155; color: #fff; }
+    .btn-supabase {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .btn-supabase:hover { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; }
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: #fb7185;
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+    .btn-danger:hover { background: #f43f5e; color: #fff; }
+
+    main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.15s ease;
+    }
+    .kpi-card:hover { border-color: var(--border-bright); }
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .kpi-val {
+      font-family: 'Manrope', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Tabs Bar */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .nav-tab {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: transparent;
+      border: 0;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .nav-tab:hover { color: #fff; background: rgba(255,255,255,0.03); }
+    .nav-tab.active {
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.1);
+    }
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #818cf8;
+      border-radius: 3px;
+    }
+    .badge-count {
+      background: #1e293b;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #cbd5e1;
+    }
+
+    /* Content Pane */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 14px;
+    }
+    .search-box {
+      flex: 1;
+      max-width: 380px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      height: 38px;
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px 0 34px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 13px;
+    }
+    .filter-select {
+      height: 38px;
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: #cbd5e1;
+      font-size: 13px;
+      outline: none;
+    }
+
+    /* Data Table */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 65vh;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    thead th {
+      background: #0d1322;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s ease;
+    }
+    tbody tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    tbody td {
+      padding: 12px 18px;
+      vertical-align: middle;
+      color: #cbd5e1;
+    }
+    .student-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .avatar-name { font-weight: 700; color: #fff; font-size: 13px; }
+    .avatar-email { font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace; }
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tag-verified { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .tag-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #111827;
+      border: 1px solid var(--border-bright);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      overflow: hidden;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; color: #fff; }
+    .modal-close {
+      background: none;
+      border: 0;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .modal-body {
+      padding: 20px 24px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      height: 40px;
+      background: #0b0f19;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--primary); }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .modal-footer {
+      padding: 14px 24px;
+      background: #0d1322;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      font-weight: 600;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 200;
+    }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Supabase Sync Card */
+    .supabase-panel {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(99, 102, 241, 0.05));
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .code-block {
+      background: #080c14;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #a5b4fc;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Global Header -->
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-title">Campus<span>IQ</span> Studio</div>
+        <div class="brand-subtitle">Master Student Database &amp; Admin Cockpit</div>
+      </div>
+    </div>
+
+    <div class="header-pills">
+      <div class="status-pill" id="supabasePill" title="Supabase Cloud PostgreSQL Database">
+        <span class="dot dot-green" id="supabaseDot"></span>
+        <span id="supabasePillText">Supabase: jlssyqpqpordksbgqzrp</span>
+      </div>
+
+      <div class="status-pill" id="backendPill" title="CampusIQ FastAPI Local Engine">
+        <span class="dot dot-green" id="backendDot"></span>
+        <span id="backendPillText">API: Online (Port 8000)</span>
+      </div>
+
+      <div class="status-pill" id="heartbeatPill" title="24/7 Zero Crash Daemon">
+        <span class="dot dot-blue"></span>
+        <span>24*7 Live Guard</span>
+      </div>
+
+      <button class="btn btn-secondary" onclick="loadAllData(true)" title="Manually re-fetch latest records">
+        ↻ Refresh Data
+      </button>
+
+      <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/editor" target="_blank" class="btn btn-supabase" title="Open Supabase Cloud Table Editor in new tab">
+        Open Supabase Editor ↗
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Top KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Registered Students</span>
+        <span class="kpi-val" id="kpiTotalStudents">—</span>
+        <span class="kpi-sub" id="kpiStudentsSub">Syncing with database…</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Verified Phone Contacts</span>
+        <span class="kpi-val" id="kpiVerifiedPhone" style="color: #34d399">—</span>
+        <span class="kpi-sub">Sub-30s OTP verified</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Active Login Sessions</span>
+        <span class="kpi-val" id="kpiActiveSessions" style="color: #38bdf8">—</span>
+        <span class="kpi-sub">Real-time student sessions</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Attendance Records</span>
+        <span class="kpi-val" id="kpiAttendance">—</span>
+        <span class="kpi-sub">Official lecture attendance</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Support Inquiries</span>
+        <span class="kpi-val" id="kpiTickets" style="color: #fbbf24">—</span>
+        <span class="kpi-sub">Open student tickets</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="students" onclick="switchTab('students')">
+        🎓 Student Profiles <span class="badge-count" id="badgeStudents">0</span>
+      </button>
+      <button class="nav-tab" data-tab="sessions" onclick="switchTab('sessions')">
+        📱 Login Sessions <span class="badge-count" id="badgeSessions">0</span>
+      </button>
+      <button class="nav-tab" data-tab="attendance" onclick="switchTab('attendance')">
+        📊 Attendance Master <span class="badge-count" id="badgeAttendance">0</span>
+      </button>
+      <button class="nav-tab" data-tab="tickets" onclick="switchTab('tickets')">
+        🎫 Support Tickets <span class="badge-count" id="badgeTickets">0</span>
+      </button>
+      <button class="nav-tab" data-tab="bookings" onclick="switchTab('bookings')">
+        🏢 Desk Bookings <span class="badge-count" id="badgeBookings">0</span>
+      </button>
+      <button class="nav-tab" data-tab="supabase" onclick="switchTab('supabase')">
+        ☁️ Supabase Cloud Manager
+      </button>
+    </div>
+
+    <!-- TAB 1: Student Profiles -->
+    <div class="tab-pane active" id="tab-students">
+      <div class="controls-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="studentSearchInput" placeholder="Search by name, email, roll ID, or branch…" oninput="filterStudents()">
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <select class="filter-select" id="deptFilter" onchange="filterStudents()">
+            <option value="all">All Departments</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Artificial Intelligence">AI & Machine Learning</option>
+            <option value="Information Technology">Information Technology</option>
+          </select>
+
+          <button class="btn btn-secondary" onclick="exportStudentsCsv()">
+            📥 Export CSV
+          </button>
+
+          <button class="btn btn-primary" onclick="openAddStudentModal()">
+            + Add Student to Database
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Details</th>
+                <th>Student Roll ID</th>
+                <th>Department &amp; Branch</th>
+                <th>Year / Semester</th>
+                <th>Phone Status</th>
+                <th>Account Role</th>
+                <th>Created Date</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">
+                  Connecting to Supabase &amp; CampusIQ backend…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Sessions -->
+    <div class="tab-pane" id="tab-sessions">
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Email</th>
+                <th>IP Address</th>
+                <th>Device / Browser Agent</th>
+                <th>Sign-in Time</th>
+                <th>Session Status</th>
+              </tr>
+            </thead>
+            <tbody id="sessionsTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">Loading active sessions…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Attendance -->
+    <div class="tab-pane" id="tab-attendance">
+      <div class="controls-bar">
+        <h4 style="font-weight:700">Official Lecture Attendance Logs</h4>
+        <button class="btn btn-primary" onclick="openLogAttendanceModal()">+ Record Attendance</button>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Subject Code</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">Loading attendance logs…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Support Tickets -->
+    <div class="tab-pane" id="tab-tickets">
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket Ref</th>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Loading student tickets…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Bookings -->
+    <div class="tab-pane" id="tab-bookings">
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Facility Name</th>
+                <th>Location</th>
+                <th>Student</th>
+                <th>Date</th>
+                <th>Time Slot</th>
+                <th>Purpose</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTableBody">
+              <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Loading desk bookings…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Supabase Cloud Manager -->
+    <div class="tab-pane" id="tab-supabase">
+      <div class="supabase-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+          <div>
+            <h3 style="font-size:18px;font-weight:800;color:#fff">Supabase Cloud Database Synchronization</h3>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Connected to Project: <code style="color:#818cf8;background:#1e293b;padding:2px 6px;border-radius:4px">jlssyqpqpordksbgqzrp</code></p>
+          </div>
+          <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/editor" target="_blank" class="btn btn-supabase">
+            Open Supabase Table Editor ↗
+          </a>
+        </div>
+
+        <p style="font-size:13px;color:#cbd5e1;line-height:1.6">
+          Every time someone registers, signs in, updates their profile, or logs attendance on CampusIQ, the record is automatically saved in your <strong>Supabase Cloud PostgreSQL Database</strong>.
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px">
+          <div style="background:#111827;border:1px solid var(--border);border-radius:12px;padding:14px">
+            <h5 style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase">Table: profiles</h5>
+            <p style="font-size:12px;color:#cbd5e1;margin:4px 0 10px">Stores all student identity, names, emails, rolls, phones.</p>
+            <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/editor" target="_blank" style="font-size:12px;color:#38bdf8;text-decoration:none">View profiles in Supabase →</a>
+          </div>
+
+          <div style="background:#111827;border:1px solid var(--border);border-radius:12px;padding:14px">
+            <h5 style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase">Table: attendance_records</h5>
+            <p style="font-size:12px;color:#cbd5e1;margin:4px 0 10px">Stores lecture attendance, dates, presence status.</p>
+            <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/editor" target="_blank" style="font-size:12px;color:#38bdf8;text-decoration:none">View attendance in Supabase →</a>
+          </div>
+
+          <div style="background:#111827;border:1px solid var(--border);border-radius:12px;padding:14px">
+            <h5 style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase">Table: support_tickets</h5>
+            <p style="font-size:12px;color:#cbd5e1;margin:4px 0 10px">Stores student grievances, queries, responses.</p>
+            <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/editor" target="_blank" style="font-size:12px;color:#38bdf8;text-decoration:none">View tickets in Supabase →</a>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;border-top:1px dashed var(--border);padding-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;font-weight:700;color:#fff">One-Click SQL Setup Script (To initialize tables in Supabase SQL Editor):</span>
+            <a href="https://supabase.com/dashboard/project/jlssyqpqpordksbgqzrp/sql/new" target="_blank" class="btn btn-secondary" style="font-size:12px">
+              Open SQL Editor ↗
+            </a>
+          </div>
+          <div class="code-block">
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id TEXT PRIMARY KEY DEFAULT (gen_random_uuid())::text,
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT NOT NULL DEFAULT '',
+    student_id TEXT UNIQUE,
+    phone_number TEXT,
+    country_code TEXT DEFAULT '+91',
+    phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    course TEXT DEFAULT 'B.Tech',
+    branch TEXT DEFAULT 'Computer Science & Engineering',
+    department TEXT DEFAULT 'Computer Science & Engineering',
+    year_semester TEXT DEFAULT 'Year 3, Semester 5',
+    date_of_joining DATE DEFAULT '2024-08-01',
+    role TEXT NOT NULL DEFAULT 'student',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles" ON public.profiles FOR ALL USING (true);
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Student Modal -->
+  <div class="modal-backdrop" id="addStudentModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>+ Add Student to Database &amp; Supabase</h3>
+        <button class="modal-close" onclick="closeAddStudentModal()">✕</button>
+      </div>
+      <form id="addStudentForm" onsubmit="handleCreateStudent(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Full Student Name</label>
+            <input type="text" class="form-input" id="newStudentName" placeholder="e.g. Satyam Sambhale" required>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Student Email</label>
+              <input type="email" class="form-input" id="newStudentEmail" placeholder="student@campusiq.edu" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Student Roll ID</label>
+              <input type="text" class="form-input" id="newStudentRoll" placeholder="STU-2026-7972">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-input" id="newStudentDept" value="Computer Science & Engineering">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Year / Semester</label>
+              <input type="text" class="form-input" id="newStudentSem" value="Year 3, Semester 5">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-input" id="newStudentPhone" placeholder="10-digit mobile number">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Account Password</label>
+              <input type="password" class="form-input" id="newStudentPass" placeholder="Min 6 characters" value="CampusIQ@2026">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddStudentModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveStudentBtn">Save to Database &amp; Supabase ✓</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">Database updated successfully ✓</div>
+
+  <script>
+    // Configuration
+    const SUPABASE_URL = "https://jlssyqpqpordksbgqzrp.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT";
+    const BACKEND_URL = "http://127.0.0.1:8000";
+
+    let supabaseClient = null;
+    let allProfiles = [];
+    let allSessions = [];
+    let allAttendance = [];
+    let allTickets = [];
+    let allBookings = [];
+
+    // Initialize Supabase Client
+    if (window.supabase?.createClient) {
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      } catch (e) {
+        console.warn('Supabase init notice:', e);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
+    }
+
+    async function loadAllData(isManual = false) {
+      if (isManual) showToast('Refreshing live data from Supabase & backend…');
+
+      let backendData = null;
+
+      // 1. Fetch from FastAPI Backend
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/admin/overview`, { cache: 'no-store' });
+        if (res.ok) {
+          backendData = await res.json();
+          document.getElementById('backendDot').className = 'dot dot-green';
+          document.getElementById('backendPillText').textContent = 'API: Online (Port 8000)';
+        }
+      } catch (err) {
+        document.getElementById('backendDot').className = 'dot dot-amber';
+        document.getElementById('backendPillText').textContent = 'API: Offline (Using Cloud/Cache)';
+      }
+
+      // 2. Fetch from Supabase directly
+      let supaProfiles = [];
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+          if (!error && data) {
+            supaProfiles = data;
+            document.getElementById('supabaseDot').className = 'dot dot-green';
+            document.getElementById('supabasePillText').textContent = 'Supabase: Connected (' + data.length + ' rows)';
+          }
+        } catch (_) {}
+      }
+
+      // 3. Merge & Deduplicate
+      const profileMap = new Map();
+      if (backendData?.profiles) {
+        backendData.profiles.forEach(p => profileMap.set(p.email.toLowerCase(), p));
+      }
+      supaProfiles.forEach(p => profileMap.set(p.email.toLowerCase(), { ...profileMap.get(p.email.toLowerCase()), ...p }));
+
+      allProfiles = Array.from(profileMap.values());
+      allSessions = backendData?.sessions || [];
+      allAttendance = backendData?.attendance || [];
+      allTickets = backendData?.tickets || [];
+      allBookings = backendData?.bookings || [];
+
+      // Save offline snapshot
+      localStorage.setItem('campusiq_studio_snapshot', JSON.stringify({
+        profiles: allProfiles,
+        sessions: allSessions,
+        attendance: allAttendance,
+        tickets: allTickets,
+        bookings: allBookings,
+        timestamp: Date.now()
+      }));
+
+      updateUI();
+      if (isManual) showToast('✓ Live data synchronized successfully.');
+    }
+
+    function updateUI() {
+      // Badges
+      document.getElementById('badgeStudents').textContent = allProfiles.length;
+      document.getElementById('badgeSessions').textContent = allSessions.length;
+      document.getElementById('badgeAttendance').textContent = allAttendance.length;
+      document.getElementById('badgeTickets').textContent = allTickets.length;
+      document.getElementById('badgeBookings').textContent = allBookings.length;
+
+      // KPI Counts
+      document.getElementById('kpiTotalStudents').textContent = allProfiles.length;
+      document.getElementById('kpiStudentsSub').textContent = `${allProfiles.length} total student records`;
+
+      const verifiedCount = allProfiles.filter(p => p.phone_verified).length;
+      document.getElementById('kpiVerifiedPhone').textContent = verifiedCount;
+
+      const activeSess = allSessions.filter(s => s.status === 'active').length;
+      document.getElementById('kpiActiveSessions').textContent = activeSess;
+
+      document.getElementById('kpiAttendance').textContent = allAttendance.length;
+      document.getElementById('kpiTickets').textContent = allTickets.filter(t => t.status === 'open').length;
+
+      renderStudentsTable(allProfiles);
+      renderSessionsTable(allSessions);
+      renderAttendanceTable(allAttendance);
+      renderTicketsTable(allTickets);
+      renderBookingsTable(allBookings);
+    }
+
+    function renderStudentsTable(list) {
+      const tbody = document.getElementById('studentsTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">No matching student records found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(s => {
+        const initials = s.full_name ? s.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'ST';
+        const phoneVerified = Boolean(s.phone_verified);
+        const phoneBadge = phoneVerified
+          ? `<span class="tag tag-verified">✓ Verified (${s.country_code || '+91'} ${s.phone_number || ''})</span>`
+          : `<span class="tag tag-pending">○ Unverified</span>`;
+
+        const roleTag = s.role === 'admin'
+          ? `<span class="tag tag-purple">ADMIN</span>`
+          : `<span class="tag tag-blue">STUDENT</span>`;
+
+        const createdDate = s.created_at ? s.created_at.split('T')[0] : '2026-10-20';
+
+        return `
+          <tr>
+            <td>
+              <div class="student-cell">
+                <div class="avatar">${initials}</div>
+                <div>
+                  <div class="avatar-name">${s.full_name || 'Student'}</div>
+                  <div class="avatar-email">${s.email}</div>
+                </div>
+              </div>
+            </td>
+            <td><code style="font-family:'JetBrains Mono';font-size:12px;color:#a5b4fc">${s.student_id || 'STU-1002'}</code></td>
+            <td><b>${s.branch || s.department || 'Computer Science'}</b></td>
+            <td>${s.year_semester || 'Year 3, Semester 5'}</td>
+            <td>${phoneBadge}</td>
+            <td>${roleTag}</td>
+            <td style="font-size:12px;color:#64748b">${createdDate}</td>
+            <td style="text-align:right">
+              <button class="btn btn-danger" onclick="deleteStudent('${s.id || s.email}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderSessionsTable(list) {
+      const tbody = document.getElementById('sessionsTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">No active session telemetry found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(s => `
+        <tr>
+          <td><b>${s.email}</b></td>
+          <td><code style="color:#38bdf8">${s.ip_address || '127.0.0.1'}</code></td>
+          <td style="font-size:12px;color:#64748b;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.user_agent || 'CampusIQ Browser Client'}</td>
+          <td style="font-size:12px;color:#94a3b8">${s.signed_in_at || 'Just now'}</td>
+          <td><span class="tag tag-verified">${s.status?.toUpperCase() || 'ACTIVE'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderAttendanceTable(list) {
+      const tbody = document.getElementById('attendanceTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">No attendance records found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(a => `
+        <tr>
+          <td><b>${a.student_name || a.student_email || a.student_id}</b></td>
+          <td><span class="tag tag-blue">${a.subject_id || a.subject_code || 'CS301'}</span></td>
+          <td style="font-size:12px;color:#94a3b8">${a.date}</td>
+          <td><span class="tag tag-${a.status === 'present' ? 'verified' : 'pending'}">${a.status?.toUpperCase()}</span></td>
+          <td style="font-size:12px;color:#64748b">${a.notes || 'Lecture session'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderTicketsTable(list) {
+      const tbody = document.getElementById('ticketsTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">No support inquiries submitted.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(t => `
+        <tr>
+          <td><code>${t.ticket_number || 'TCK-1001'}</code></td>
+          <td>${t.student_email || t.student_id}</td>
+          <td><b>${t.subject}</b></td>
+          <td><span class="tag tag-blue">${t.category}</span></td>
+          <td><span class="tag tag-pending">${t.priority}</span></td>
+          <td><span class="tag tag-verified">${t.status}</span></td>
+          <td style="font-size:12px;color:#64748b">${t.created_at || 'Today'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderBookingsTable(list) {
+      const tbody = document.getElementById('bookingsTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">No facility reservations found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(b => `
+        <tr>
+          <td><b>${b.facility_name || 'Central Library'}</b></td>
+          <td>${b.location || 'Block A'}</td>
+          <td>${b.student_name || b.student_email || b.student_id}</td>
+          <td>${b.booking_date}</td>
+          <td><span class="tag tag-blue">${b.time_slot}</span></td>
+          <td>${b.purpose || 'Study session'}</td>
+          <td><span class="tag tag-verified">${b.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function filterStudents() {
+      const q = (document.getElementById('studentSearchInput').value || '').toLowerCase().trim();
+      const dept = document.getElementById('deptFilter').value;
+
+      const filtered = allProfiles.filter(s => {
+        const matchesQ = !q ||
+          (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+          (s.email && s.email.toLowerCase().includes(q)) ||
+          (s.student_id && s.student_id.toLowerCase().includes(q)) ||
+          (s.branch && s.branch.toLowerCase().includes(q));
+
+        const matchesDept = dept === 'all' ||
+          (s.department && s.department.toLowerCase().includes(dept.toLowerCase())) ||
+          (s.branch && s.branch.toLowerCase().includes(dept.toLowerCase()));
+
+        return matchesQ && matchesDept;
+      });
+
+      renderStudentsTable(filtered);
+    }
+
+    function openAddStudentModal() {
+      document.getElementById('addStudentModal').classList.add('open');
+      document.getElementById('newStudentName').focus();
+    }
+
+    function closeAddStudentModal() {
+      document.getElementById('addStudentModal').classList.remove('open');
+      document.getElementById('addStudentForm').reset();
+    }
+
+    async function handleCreateStudent(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveStudentBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving to Database…';
+
+      const fullName = document.getElementById('newStudentName').value.trim();
+      const email = document.getElementById('newStudentEmail').value.trim().toLowerCase();
+      const rollId = document.getElementById('newStudentRoll').value.trim() || `STU-${Math.floor(10000 + Math.random() * 90000)}`;
+      const dept = document.getElementById('newStudentDept').value.trim();
+      const sem = document.getElementById('newStudentSem').value.trim();
+      const phone = document.getElementById('newStudentPhone').value.trim();
+      const password = document.getElementById('newStudentPass').value || 'CampusIQ@2026';
+
+      const payload = {
+        email,
+        password,
+        full_name: fullName,
+        student_id: rollId,
+        department: dept,
+        branch: dept,
+        year_semester: sem,
+        phone_number: phone || null,
+        phone_verified: Boolean(phone),
+        role: 'student',
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        // 1. Save to FastAPI backend
+        await fetch(`${BACKEND_URL}/api/admin/student/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+
+        // 2. Save directly to Supabase profiles table
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('profiles').upsert({
+              email,
+              full_name: fullName,
+              student_id: rollId,
+              department: dept,
+              branch: dept,
+              year_semester: sem,
+              phone_number: phone || null,
+              phone_verified: Boolean(phone),
+              role: 'student',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'email' });
+          } catch (_) {}
+        }
+
+        closeAddStudentModal();
+        showToast(`✓ Student ${fullName} saved to Supabase & Database!`);
+        await loadAllData();
+      } catch (err) {
+        showToast('Error saving: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save to Database & Supabase ✓';
+      }
+    }
+
+    async function deleteStudent(studentIdOrEmail) {
+      if (!confirm(`Are you sure you want to remove student '${studentIdOrEmail}' from the database?`)) return;
+
+      try {
+        // 1. Delete from FastAPI backend
+        await fetch(`${BACKEND_URL}/api/admin/student/${studentIdOrEmail}`, { method: 'DELETE' }).catch(() => {});
+
+        // 2. Delete from Supabase
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('profiles').delete().or(`id.eq.${studentIdOrEmail},email.eq.${studentIdOrEmail}`);
+          } catch (_) {}
+        }
+
+        showToast('Student record removed from database.');
+        await loadAllData();
+      } catch (err) {
+        showToast('Error removing: ' + err.message);
+      }
+    }
+
+    function exportStudentsCsv() {
+      if (!allProfiles.length) {
+        showToast('No students to export.');
+        return;
+      }
+      const headers = ['Full Name', 'Email', 'Student ID', 'Department', 'Year/Semester', 'Phone', 'Role'];
+      const rows = allProfiles.map(s => [
+        `"${s.full_name || ''}"`,
+        `"${s.email || ''}"`,
+        `"${s.student_id || ''}"`,
+        `"${s.department || s.branch || ''}"`,
+        `"${s.year_semester || ''}"`,
+        `"${s.phone_number || ''}"`,
+        `"${s.role || 'student'}"`
+      ]);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `campusiq_students_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV Export generated and downloaded!');
+    }
+
+    // Auto-refresh timer every 15s for 24*7 live updates
+    setInterval(() => {
+      loadAllData(false);
+    }, 15000);
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check for offline snapshot
+      const cached = localStorage.getItem('campusiq_studio_snapshot');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          allProfiles = parsed.profiles || [];
+          allSessions = parsed.sessions || [];
+          allAttendance = parsed.attendance || [];
+          allTickets = parsed.tickets || [];
+          allBookings = parsed.bookings || [];
+          updateUI();
+        } catch (_) {}
+      }
+      loadAllData(false);
+    });
+  </script>
+</body>
+</html>

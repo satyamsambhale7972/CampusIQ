@@ -24,6 +24,7 @@ from auth import get_current_user, get_optional_user, require_admin_or_faculty, 
 from ai_service import ai_service
 import sms_service
 import email_service
+import supabase_sync
 
 # Configure structured logging
 logging.basicConfig(
@@ -373,6 +374,9 @@ async def issue_local_token(request: Request):
         client_ip=client_ip
     )
 
+    # Synchronize student details to Supabase backend tables
+    supabase_sync.sync_profile_to_supabase(profile)
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -419,6 +423,9 @@ async def auth_signup(data: SignUpRequest, request: Request):
         full_name=profile.get("full_name", full_name),
         client_ip=client_ip
     )
+
+    # Synchronize student details to Supabase backend tables
+    supabase_sync.sync_profile_to_supabase(profile)
 
     return {
         "success": True,
@@ -477,6 +484,9 @@ async def auth_signin(data: SignInRequest, request: Request):
         full_name=profile.get("full_name", data.full_name or "Student"),
         client_ip=client_ip
     )
+
+    # Synchronize student details to Supabase backend tables
+    supabase_sync.sync_profile_to_supabase(profile)
 
     return {
         "success": True,
@@ -1029,6 +1039,7 @@ async def update_profile(data: ProfileUpdateRequest, current_user: Dict[str, Any
         branch=data.branch or "Computer Science & Engineering"
     )
     db.log_audit_event(current_user["id"], current_user["email"], "UPDATE_PROFILE", "profiles", current_user["id"])
+    supabase_sync.sync_profile_to_supabase(updated)
     return {"message": "Profile updated successfully.", "profile": updated}
 
 @app.post("/api/profile/photo", tags=["Profile"])
@@ -1149,6 +1160,13 @@ async def log_attendance(data: AttendanceLogRequest, current_user: Dict[str, Any
         status=data.status,
         notes=data.notes or ""
     )
+    supabase_sync.sync_attendance_to_supabase({
+        "student_id": current_user["id"],
+        "subject_id": data.subject_id,
+        "date": data.date,
+        "status": data.status,
+        "notes": data.notes or ""
+    })
     return result
 
 # ----------------- Events Endpoints -----------------
@@ -1185,6 +1203,13 @@ async def book_facility_space(facility_id: str, data: FacilityBookingRequest, cu
             time_slot=data.time_slot,
             purpose=data.purpose or "Study session"
         )
+        supabase_sync.sync_booking_to_supabase({
+            "facility_id": facility_id,
+            "student_id": current_user["id"],
+            "booking_date": data.booking_date,
+            "time_slot": data.time_slot,
+            "purpose": data.purpose or "Study session"
+        })
         return {"message": "Booking confirmed.", "booking": result}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -1235,6 +1260,14 @@ async def create_ticket(data: SupportTicketCreate, current_user: Dict[str, Any] 
         initial_message=data.message
     )
     db.log_audit_event(current_user["id"], current_user["email"], "CREATE_SUPPORT_TICKET", "support_tickets", ticket["ticket_id"])
+    supabase_sync.sync_ticket_to_supabase({
+        "student_id": current_user["id"],
+        "ticket_number": ticket.get("ticket_number") or f"TCK-{ticket.get('ticket_id')}",
+        "subject": data.subject,
+        "category": data.category,
+        "priority": data.priority,
+        "message": data.message
+    })
     return {"message": "Ticket created successfully.", "ticket": ticket}
 
 @app.get("/api/help/tickets/{ticket_id}", tags=["Help"])
@@ -1338,6 +1371,66 @@ async def publish_result(data: AdminResultPublishRequest, admin_user: Dict[str, 
     db.log_audit_event(admin_user["id"], admin_user["email"], "PUBLISH_RESULT", "academic_results", result["verification_ref"])
     return {"message": "Academic result officially published.", "result": result}
 
+@app.get("/api/admin/overview", tags=["Admin"])
+async def get_admin_live_overview():
+    """
+    Live 24*7 Master Database Explorer & Admin Cockpit.
+    Returns real-time records from profiles, attendance, tickets, bookings, and sessions.
+    """
+    profiles = db.get_all_profiles()
+    tickets = db.get_all_tickets_admin()
+    attendance = db.get_all_attendance(limit=100)
+    bookings = db.get_all_bookings(limit=100)
+    sessions = db.get_all_sessions(limit=50)
+    logs = db.get_audit_logs(limit=50)
+
+    verified_phones = sum(1 for p in profiles if p.get("phone_verified"))
+    active_sessions = sum(1 for s in sessions if s.get("status") == "active")
+
+    return {
+        "status": "online",
+        "timestamp": time.time(),
+        "supabase": {
+            "connected": bool(config.SUPABASE_URL and config.SUPABASE_ANON_KEY),
+            "project_id": config.SUPABASE_PROJECT_ID,
+            "url": config.SUPABASE_URL,
+            "key_configured": bool(config.SUPABASE_ANON_KEY),
+            "table_editor_url": f"https://supabase.com/dashboard/project/{config.SUPABASE_PROJECT_ID}/editor"
+        },
+        "counts": {
+            "total_students": len(profiles),
+            "verified_contacts": verified_phones,
+            "active_sessions": active_sessions,
+            "total_attendance": len(attendance),
+            "open_tickets": sum(1 for t in tickets if t.get("status") in ("open", "in_progress")),
+            "total_bookings": len(bookings)
+        },
+        "profiles": profiles,
+        "tickets": tickets,
+        "attendance": attendance,
+        "bookings": bookings,
+        "sessions": sessions,
+        "audit_logs": logs
+    }
+
+@app.post("/api/admin/student/create", tags=["Admin"])
+async def admin_create_student_direct(data: SignUpRequest):
+    """Admin endpoint to provision a student into database & Supabase live tables."""
+    email = data.email.strip().lower()
+    full_name = data.full_name or email.split("@")[0].replace(".", " ").title()
+    user_id = f"user-{abs(hash(email)) % 900000 + 100000}"
+    
+    profile = db.get_or_create_profile(user_id=user_id, email=email, full_name=full_name, role=data.role or "student")
+    db.register_user_credentials(user_id=profile["id"], email=email, password=data.password or "CampusIQ@2026")
+    supabase_sync.sync_profile_to_supabase(profile)
+    return {"success": True, "message": f"Student {email} registered in database & Supabase.", "profile": profile}
+
+@app.delete("/api/admin/student/{user_id}", tags=["Admin"])
+async def admin_delete_student_direct(user_id: str):
+    """Admin endpoint to delete a student record."""
+    db.delete_student_account(user_id)
+    return {"success": True, "message": f"Student account {user_id} removed from database."}
+
 # ====================================================================
 # CampusIQ 2.0 Distinctive Features API
 # ====================================================================
@@ -1425,6 +1518,12 @@ async def create_career_goal_endpoint(data: CareerGoalCreateRequest, current_use
         icon="compass",
         target_link="#page-career"
     )
+    supabase_sync.sync_goal_to_supabase({
+        "student_id": current_user["id"],
+        "title": data.title,
+        "category": data.category,
+        "target_date": data.target_date
+    })
     return {"success": True, "goal_id": goal_id, "message": "Career goal created."}
 
 @app.patch("/api/career-roadmap/milestone/{milestone_id}", tags=["Career Roadmap"])
