@@ -1,1892 +1,312 @@
-<!doctype html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#15152f">
-  <title>CampusIQ — Smart Student Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusIQ | Portal & Live Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .tab-active { border-color: #6366f1; color: #818cf8; background-color: rgba(99, 102, 241, 0.1); }
+  </style>
 </head>
-<body>
+<body class="bg-[#0b0f19] text-slate-200 min-h-screen flex flex-col justify-between">
 
-  <!-- Collapsible Sidebar Navigation -->
-  <aside class="sidebar" id="sidebar">
-    <a class="brand" href="#" data-page="overview" title="CampusIQ Home">
-      <img class="brand-logo" src="campusiq-logo.svg" alt="CampusIQ logo">
-      <span class="brand-lockup">
-        <b>Campus<span>IQ</span></b>
-        <small>SMART CAMPUS PLATFORM</small>
-      </span>
-    </a>
-
-    <p class="nav-label">WORKSPACE</p>
-    <nav>
-      <button class="nav active" data-page="overview"><i>◈</i><span>Overview</span></button>
-      <button class="nav" data-page="radar"><i>🎯</i><span>Success Radar</span></button>
-      <button class="nav" data-page="planner"><i>📅</i><span>Study Planner</span></button>
-      <button class="nav" data-page="career"><i>🚀</i><span>Career Roadmap</span></button>
-      <button class="nav" data-page="academics"><i>▤</i><span>Academics</span></button>
-      <button class="nav" data-page="performance"><i>🏅</i><span>Results & CGPA</span></button>
-      <button class="nav" data-page="attendance"><i>◷</i><span>Attendance</span></button>
-      <button class="nav" data-page="navigator"><i>🧭</i><span>Campus Directory</span></button>
-      <button class="nav" data-page="notices"><i>📢</i><span>Notices</span></button>
-      <button class="nav" data-page="events"><i>✦</i><span>Events</span> <em id="navEventsBadge">4</em></button>
-      <button class="nav" data-page="facilities"><i>⌂</i><span>Facilities</span></button>
-      <button class="nav" data-page="insights"><i>⌁</i><span>AI Co-Pilot</span> <span class="live"></span></button>
-      <button class="nav" data-page="help"><i>❓</i><span>Help Centre</span></button>
-      <button class="nav" data-page="admin" id="navAdminBtn" style="display:none"><i>⚙</i><span>Admin Console</span></button>
-    </nav>
-
-    <div class="side-bottom">
-      <div class="help">
-        <span>✧</span>
-        <b>Need Assistance?</b>
-        <p>Support tickets & campus FAQs.</p>
-        <button id="helpSideBtn" type="button" data-go="help">Open Help Centre ↗</button>
+  <!-- Navigation -->
+  <header class="border-b border-slate-800 bg-[#0f172a]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/30">CQ</div>
+        <span class="text-xl font-bold tracking-tight text-white">Campus<span class="text-indigo-400">IQ</span></span>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="flex space-x-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <button onclick="switchTab('form')" id="tabFormBtn" class="tab-active px-4 py-1.5 text-xs font-semibold rounded-lg transition">Registration</button>
+        <button onclick="switchTab('dashboard')" id="tabDashBtn" class="text-slate-400 hover:text-white px-4 py-1.5 text-xs font-semibold rounded-lg transition">Admin Dashboard</button>
       </div>
 
-      <div class="user" id="sidebarUserBox" role="button" tabindex="0" title="Manage student profile">
-        <span class="avatar" id="sidebarAvatar">SS</span>
-        <div>
-          <b id="sidebarUserName">Student Space</b>
-          <small id="sidebarUserSubtitle">Authenticating...</small>
-        </div>
-        <div class="menu-anchor">
-          <button class="menu-btn" id="sidebarThreeDotBtn" type="button" aria-label="Account options">•••</button>
-          <div class="menu-dropdown" id="sidebarMenuDropdown">
-            <button class="menu-item" type="button" id="menuItemProfile">👤 Profile & Account</button>
-            <button class="menu-item" type="button" id="menuItemOtp">📱 Mobile Verification</button>
-            <button class="menu-item" type="button" id="menuItemNotif">🔔 Notification Prefs</button>
-            <button class="menu-item danger" type="button" id="menuItemSignOut">🚪 Sign Out</button>
-          </div>
-        </div>
+      <!-- Live DB Health Status -->
+      <div id="dbStatusBadge" class="hidden sm:flex items-center space-x-2 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full">
+        <span class="w-2 h-2 rounded-full bg-amber-400" id="statusDot"></span>
+        <span class="text-slate-400 font-medium" id="statusText">Connecting...</span>
       </div>
     </div>
-  </aside>
+  </header>
 
-  <!-- Main Content Area -->
-  <main id="mainContainer">
-    <!-- Topbar -->
-    <header class="topbar">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="hamb" id="hamb" aria-label="Toggle navigation">☰</button>
-        <button class="icon-btn" id="sidebarCollapseBtn" title="Toggle Sidebar" aria-label="Toggle Sidebar" style="display:none">⇄</button>
-        <div class="crumb">Workspace <span>/</span> <b id="crumb">Overview</b></div>
-      </div>
-      
-      <div class="actions">
-        <span class="status" id="campusStatus"><i></i> Campus status <b id="campusStatusText">Online</b></span>
-        <button class="icon-btn" id="theme" title="Toggle light/dark mode" aria-label="Toggle theme">◐</button>
-        <button class="icon-btn" id="notify" title="Notifications" aria-label="Notifications">♧<sup id="notifySup" style="display:none"></sup></button>
-        <button class="signin-btn" id="signInBtn">Sign in</button>
-        <button class="avatar top-avatar" id="profile" aria-label="Open profile">SS</button>
-      </div>
-    </header>
-
-    <!-- PAGE 1: OVERVIEW (3D DIMENSION COCKPIT) -->
-    <section class="page active" id="page-overview">
-      
-      <!-- TOP SECTION: OVERVIEW CATEGORY 3D DIMENSION SHOWCASE & KEY POINTS -->
-      <div class="overview-3d-dimension-banner" id="overviewHeroCard">
-        <div class="banner-3d-header">
-          <div class="banner-badge-group">
-            <span class="banner-badge badge-indigo">✦ OVERVIEW CATEGORY</span>
-            <span class="banner-badge badge-cyan">🌐 CAMPUS INTELLIGENCE</span>
-            <span class="banner-badge badge-emerald"><i class="live-dot-pulse"></i> LIVE 24×7 TELEMETRY</span>
-          </div>
-
-          <h1 class="banner-title"><span class="highlight-smart-word">SMART</span> Campus Cockpit</h1>
-          
-          <div class="banner-meta-pills">
-            <span class="meta-pill meta-user" id="overviewWelcomeName">Welcome, Scholar</span>
-            <span class="meta-sep">•</span>
-            <span class="meta-pill meta-sem" id="overviewSemesterChip">Year 3, Semester 5</span>
-            <span class="meta-sep">•</span>
-            <span class="meta-pill meta-dept" id="overviewDeptChip">Computer Science &amp; Engineering</span>
-          </div>
-        </div>
-
-        <!-- 3D Dimension Interactive Stage -->
-        <div class="banner-3d-stage-wrapper" id="hero3dStage">
-          <canvas id="campus3dCanvas" class="campus-3d-main-canvas"></canvas>
-          
-          <div class="stage-hologram-center" id="hero3dHologram">
-            <div class="hologram-gyro-mesh">
-              <div class="gyro-ring ring-outer-cyan"></div>
-              <div class="gyro-ring ring-mid-purple"></div>
-              <div class="gyro-ring ring-inner-emerald"></div>
-              <div class="gyro-quantum-core">
-                <img src="campusiq-logo.svg" alt="CampusIQ Core Logo" class="gyro-core-logo">
-                <div class="quantum-beacon-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4 Distinct Key Point Metric Cards (Upper-Side Key Point Showcase with Best Color Combination) -->
-        <div class="keypoints-grid-4">
-          
-          <!-- Key Point 1: Attendance Velocity (Mint Neon Accent) -->
-          <div class="keypoint-card card-mint">
-            <div class="kp-top">
-              <span class="kp-icon-box mint">⏱</span>
-              <span class="kp-badge mint">SAFE ZONE</span>
-            </div>
-            <div class="kp-label">ATTENDANCE VELOCITY</div>
-            <div class="kp-value" id="floatAttendance">86.4% Recorded</div>
-            <div class="kp-desc">Above 75% requirement &bull; Safe buffer margin</div>
-          </div>
-
-          <!-- Key Point 2: CGPA Standing (Royal Lilac Accent) -->
-          <div class="keypoint-card card-lilac">
-            <div class="kp-top">
-              <span class="kp-icon-box lilac">🏅</span>
-              <span class="kp-badge lilac">TOP 5% TIER</span>
-            </div>
-            <div class="kp-label">ACADEMIC STANDING</div>
-            <div class="kp-value" id="floatCgpa">8.64 / 10.0 CGPA</div>
-            <div class="kp-desc">Verified official exam record &bull; Honors tier</div>
-          </div>
-
-          <!-- Key Point 3: AI Co-Pilot Neural Core (Electric Cyan Accent) -->
-          <div class="keypoint-card card-cyan">
-            <div class="kp-top">
-              <span class="kp-icon-box cyan">✦</span>
-              <span class="kp-badge cyan">ACTIVE &bull; 24×7</span>
-            </div>
-            <div class="kp-label">AI NEURAL CO-PILOT</div>
-            <div class="kp-value" id="floatStudyTarget">Online Assistance</div>
-            <div class="kp-desc">Realtime timetable advisor &bull; Exam predictor</div>
-          </div>
-
-          <!-- Key Point 4: Institutional Security (Golden Amber Accent) -->
-          <div class="keypoint-card card-amber">
-            <div class="kp-top">
-              <span class="kp-icon-box amber">🛡</span>
-              <span class="kp-badge amber">VERIFIED STUDENT</span>
-            </div>
-            <div class="kp-label">IDENTITY &amp; SECURITY</div>
-            <div class="kp-value">Institutional Access</div>
-            <div class="kp-desc">Full access &bull; 1000+ Concurrent student capacity</div>
-          </div>
-
-        </div>
-
-        <!-- Action Command Bar -->
-        <div class="banner-actions-dock">
-          <button class="banner-btn primary-glow" data-go="radar">Open Success Radar ↗</button>
-          <button class="banner-btn glass-pill" data-go="planner">Study Timetable 📅</button>
-          <button class="banner-btn glass-pill" data-go="insights">Launch AI Co-Pilot ✦</button>
-          <button class="banner-btn glass-pill" data-go="performance">Digital Marksheet 🏅</button>
-        </div>
+  <!-- VIEW 1: REGISTRATION FORM -->
+  <main id="formView" class="max-w-xl mx-auto px-6 py-10 w-full">
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+      <div class="mb-6">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/70 px-3 py-1 rounded-full border border-indigo-800/50">Student Admission</span>
+        <h1 class="text-2xl font-bold text-white mt-3">Register Student Details</h1>
+        <p class="text-slate-400 text-sm mt-1">Data submitted here connects straight to Supabase 24/7.</p>
       </div>
 
-      <!-- 12-Section Cockpit Grid -->
-      <div class="cockpit-grid-12">
+      <div id="formAlert" class="hidden mb-6 p-4 rounded-xl text-sm font-medium"></div>
 
-        <!-- CARD 2: Today's Schedule & Room Finder (Span 7) -->
-        <article class="cockpit-card cockpit-span-7" id="cardTodaySchedule">
-          <div class="cockpit-header">
-            <h3><span>📅</span> Today's Class Timetable</h3>
-            <button class="cockpit-header-action" data-go="academics" title="View Full Timetable">↗</button>
-          </div>
-          <div class="schedule-date" style="margin:0 0 12px">
-            <b id="scheduleDayBadge">TODAY</b>
-            <strong id="scheduleDateStr">Current Session</strong>
-            <span></span>
-            <small id="scheduleClassCount">4 courses</small>
-          </div>
-          <div class="schedule" id="overviewScheduleContainer">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-        <!-- CARD 3: Academic Performance & CGPA Standing (Span 5) -->
-        <article class="cockpit-card cockpit-span-5" id="cardAcademicPerf">
-          <div class="cockpit-header">
-            <h3><span>🏅</span> Academic Standing</h3>
-            <button class="cockpit-header-action" data-go="performance" title="View Digital Marksheet">↗</button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0">
-            <div>
-              <strong style="font:800 32px 'Manrope',sans-serif;color:var(--indigo-primary)" id="cockpitCgpaValue">--</strong>
-              <small style="color:var(--muted);display:block">Cumulative CGPA / 10.0</small>
-            </div>
-            <div style="text-align:right">
-              <span class="badge" style="background:#e0e7ff;color:#4338ca;font-weight:700;padding:4px 8px;border-radius:6px" id="cockpitSemesterBadge">Semester 5</span>
-              <small style="display:block;margin-top:4px;color:var(--muted)" id="cockpitCreditsEarned">-- Credits</small>
-            </div>
-          </div>
-          <div class="progress purple" style="margin:14px 0 8px">
-            <i id="cockpitCgpaProgress" style="width:85%"></i>
-          </div>
-          <small style="color:var(--muted);font-size:11px" id="cockpitPerfNote">Official institutional result verified by Controller of Examinations.</small>
-        </article>
-
-        <!-- CARD 4: Attendance Velocity & Margin (Span 4) -->
-        <article class="cockpit-card cockpit-span-4" id="cardAttendanceVelocity">
-          <div class="cockpit-header">
-            <h3><span>◷</span> Attendance Velocity</h3>
-            <button class="cockpit-header-action" data-go="attendance" title="View Attendance Log">↗</button>
-          </div>
-          <div style="display:flex;align-items:baseline;gap:8px">
-            <strong style="font:800 28px 'Manrope',sans-serif;color:#10b981" id="cockpitAttendanceRate">--%</strong>
-            <span style="font-size:11px;color:var(--muted)">Target: 75% minimum</span>
-          </div>
-          <div class="progress green" style="margin:10px 0">
-            <i id="cockpitAttendanceProgress" style="width:90%"></i>
-          </div>
-          <p style="font-size:11px;color:var(--muted);margin:0" id="cockpitAttendanceSafety">Safe: You can miss up to <b>--</b> classes and stay above 75%.</p>
-        </article>
-
-        <!-- CARD 5: Exams & Deadlines Countdown (Span 4) -->
-        <article class="cockpit-card cockpit-span-4" id="cardDeadlinesCountdown">
-          <div class="cockpit-header">
-            <h3><span>⏳</span> Deadlines & Exams</h3>
-            <button class="cockpit-header-action" data-go="academics" title="View Calendar">↗</button>
-          </div>
-          <div class="countdown-grid" id="cockpitCountdownGrid">
-            <div class="countdown-box">
-              <b id="countdownMidterm">--d</b>
-              <small>Mid-Term Exams</small>
-            </div>
-            <div class="countdown-box">
-              <b id="countdownAssignment">--d</b>
-              <small>Next Assignment</small>
-            </div>
-            <div class="countdown-box">
-              <b id="countdownEndterm">--d</b>
-              <small>Final End-Term</small>
-            </div>
-          </div>
-        </article>
-
-        <!-- CARD 6: Coursework & Assignment Tracker (Span 4) -->
-        <article class="cockpit-card cockpit-span-4" id="cardAssignmentsProgress">
-          <div class="cockpit-header">
-            <h3><span>▣</span> Coursework Tasks</h3>
-            <button class="cockpit-header-action" id="cardOpenAsgnBtn" title="Open Assignments Manager">↗</button>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:12px;color:var(--muted)">Pending Submissions</span>
-            <span class="info-pill" id="cockpitPendingAsgnCount">0 Pending</span>
-          </div>
-          <div id="cockpitAssignmentMiniList" style="display:grid;gap:6px">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-        <!-- CARD 7: Verified Notice Intelligence (Span 6) -->
-        <article class="cockpit-card cockpit-span-6" id="cardNoticeIntelligence">
-          <div class="cockpit-header">
-            <h3><span>📢</span> Campus Bulletins</h3>
-            <button class="cockpit-header-action" data-go="notices" title="View All Notices">↗</button>
-          </div>
-          <div id="cockpitNoticesContainer" style="display:grid;gap:8px">
-            <!-- Populated dynamically with priority tags and bookmarks -->
-          </div>
-        </article>
-
-        <!-- CARD 8: AI Study Recommendations (Span 6) -->
-        <article class="cockpit-card cockpit-span-6" id="cardAiRecommendations">
-          <div class="cockpit-header">
-            <h3><span>✦</span> AI Study Actions</h3>
-            <button class="cockpit-header-action" data-go="radar" title="Open Success Radar">↗</button>
-          </div>
-          <div id="cockpitAiActionsList" style="display:grid;gap:8px">
-            <!-- Populated dynamically from Success Radar recommendations -->
-          </div>
-        </article>
-
-        <!-- CARD 9: Quick Action Launchpad (Span 6) -->
-        <article class="cockpit-card cockpit-span-6" id="cardQuickActions">
-          <div class="cockpit-header">
-            <h3><span>⚡</span> Quick Launchpad</h3>
-          </div>
-          <div class="quick-actions-bar">
-            <button class="quick-action-pill" data-go="radar">🎯 Success Radar</button>
-            <button class="quick-action-pill" data-go="planner">📅 Revision Timetable</button>
-            <button class="quick-action-pill" data-go="career">🚀 Career Roadmap</button>
-            <button class="quick-action-pill" data-go="navigator">🧭 Campus Directory</button>
-            <button class="quick-action-pill" data-go="facilities">⌂ Book Study Room</button>
-            <button class="quick-action-pill" data-go="help">🎫 Raise Support Ticket</button>
-          </div>
-        </article>
-
-        <!-- CARD 10: Active Support & Grievances (Span 6) -->
-        <article class="cockpit-card cockpit-span-6" id="cardSupportStatus">
-          <div class="cockpit-header">
-            <h3><span>🎫</span> Support & Helpdesk</h3>
-            <button class="cockpit-header-action" data-go="help" title="Help Centre">↗</button>
-          </div>
-          <div id="cockpitSupportContainer" style="display:grid;gap:8px">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-        <!-- CARD 11: Recent Student Audit Activity Trail (Span 8) -->
-        <article class="cockpit-card cockpit-span-8" id="cardRecentActivityTrail">
-          <div class="cockpit-header">
-            <h3><span>🕒</span> Persistent Activity Trail</h3>
-            <small style="color:var(--muted)">Verified institutional audit log</small>
-          </div>
-          <div class="activity-stream" id="cockpitActivityStream">
-            <!-- Populated dynamically from /api/activities/recent -->
-          </div>
-        </article>
-
-        <!-- CARD 12: Campus Facilities & Occupancy (Span 4) -->
-        <article class="cockpit-card cockpit-span-4" id="cardCampusSpaces">
-          <div class="cockpit-header">
-            <h3><span>⌂</span> Study Spaces</h3>
-            <button class="cockpit-header-action" data-go="facilities" title="All Facilities">↗</button>
-          </div>
-          <div id="cockpitFacilitiesList" style="display:grid;gap:8px">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 2: ACADEMICS -->
-    <section class="page" id="page-academics">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; LEARN WITH CLARITY</p>
-        <h1>Own your <span class="gradient">learning.</span></h1>
-        <p class="subtitle">Your timetable, assignments, syllabus materials, and study planner in one place.</p>
-      </div>
-
-      <div class="academic-hero">
+      <form id="studentForm" class="space-y-4">
         <div>
-          <label>SEMESTER CURRICULUM</label>
-          <h2 id="academicsHeroTitle">Active Curriculum Overview</h2>
-          <p id="academicsHeroSubtitle">All subjects registered for your department.</p>
-          <div class="progress big">
-            <i id="academicsHeroBar" style="width:82%"></i>
-          </div>
-          <small id="academicsHeroStats">13 credits enrolled · 4 active subjects</small>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Full Name</label>
+          <input type="text" id="name" required placeholder="John Doe" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
         </div>
-        <div class="ring">
-          <b id="academicsRingPct">82<small>%</small></b>
-          <span>PROGRESS</span>
-        </div>
-      </div>
 
-      <div class="toolbar">
-        <div class="search">
-          <span>⌕</span>
-          <input id="classSearch" placeholder="Search courses, instructors, or rooms...">
-        </div>
-        <span id="subjectCount">Loading courses...</span>
-      </div>
-
-      <div class="subjects" id="subjects">
-        <!-- Dynamically populated -->
-      </div>
-
-      <div class="section-title">
-        <div>
-          <h2>Learning shortcuts</h2>
-          <p>Productivity tools for coursework and exam preparation.</p>
-        </div>
-      </div>
-
-      <div class="shortcuts">
-        <button id="openAssignmentsBtn" type="button">
-          <span>▣</span>
-          <b>Assignments Manager</b>
-          <small>Track tasks, deadlines & priorities ↗</small>
-        </button>
-
-        <button id="openPlannerBtn" type="button">
-          <span>◷</span>
-          <b>Study Planner & Focus Timer</b>
-          <small>Plan focus blocks & pomodoro sessions ↗</small>
-        </button>
-
-        <button id="openResourcesBtn" type="button">
-          <span>▤</span>
-          <b>Course Resources & Syllabus</b>
-          <small>Lecture notes, slides & past papers ↗</small>
-        </button>
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 3: RESULTS & DIGITAL MARKSHEETS (NEW) -->
-    <section class="page" id="page-performance">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; VERIFIED ACADEMIC RECORDS</p>
-        <h1>Performance & <span class="gradient">Marksheets.</span></h1>
-        <p class="subtitle">Official examination marks, credit points, grade calculations, and downloadable grade cards.</p>
-      </div>
-
-      <!-- Performance KPI Row -->
-      <div class="stats">
-        <article class="stat s-purple">
-          <div class="stat-top"><span>🏅</span><label>Cumulative</label></div>
-          <p>CGPA Standing</p>
-          <strong id="marksheetCgpa">8.88<small>/10</small></strong>
-          <small>Grade Distinction: First Class</small>
-        </article>
-        <article class="stat s-blue">
-          <div class="stat-top"><span>▤</span><label>Current Semester</label></div>
-          <p>SGPA Score</p>
-          <strong id="marksheetSgpa">8.88</strong>
-          <small>Total 13 Semester Credits</small>
-        </article>
-        <article class="stat s-green">
-          <div class="stat-top"><span>✓</span><label>Status</label></div>
-          <p>Result Status</p>
-          <strong id="marksheetStatus">PASS</strong>
-          <small>All registered subjects cleared</small>
-        </article>
-        <article class="stat s-orange">
-          <div class="stat-top"><span>📝</span><label>Tasks</label></div>
-          <p>Assignment Completion</p>
-          <strong id="marksheetAsgnRate">100<small>%</small></strong>
-          <small>All internal coursework submitted</small>
-        </article>
-      </div>
-
-      <!-- Printable Digital Marksheet Area -->
-      <div class="marksheet-card" id="printMarksheetArea">
-        <div class="marksheet-header">
-          <div class="marksheet-title">
-            <h2>CampusIQ Examination Directorate</h2>
-            <p>Institutional Grade Card & Academic Performance Summary</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Email</label>
+            <input type="email" id="email" required placeholder="name@college.edu" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
           </div>
           <div>
-            <span class="watermark-badge watermark-official" id="marksheetBadge">● OFFICIAL RECORD</span>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="primary" id="printMarksheetBtn" type="button" style="padding:7px 12px;font-size:11px">Print Marksheet 🖨</button>
-            </div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Phone</label>
+            <input type="tel" id="phone" required placeholder="9876543210" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
           </div>
         </div>
 
-        <div class="student-meta-grid">
-          <div class="student-meta-item">
-            <small>Student Name</small>
-            <b id="msStudentName">Satyam Sambhale</b>
-          </div>
-          <div class="student-meta-item">
-            <small>Student ID</small>
-            <b id="msStudentId">STU-10294</b>
-          </div>
-          <div class="student-meta-item">
-            <small>Course & Branch</small>
-            <b id="msCourseBranch">B.Tech (CSE)</b>
-          </div>
-          <div class="student-meta-item">
-            <small>Academic Session</small>
-            <b id="msSession">Semester 5 (2025-2026)</b>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table class="marks-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Course Name</th>
-                <th>Credits</th>
-                <th>Internal (40)</th>
-                <th>External (60)</th>
-                <th>Total (100)</th>
-                <th>Grade</th>
-                <th>Grade Point</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="marksheetTableBody">
-              <!-- Dynamically populated from /api/academics/results -->
-            </tbody>
-          </table>
-        </div>
-
-        <div class="marksheet-footer">
-          <div class="verification-box">
-            <span>Official Verification Ref:</span>
-            <span class="ref-pill" id="msVerificationRef">REF-STU102-CS301-S5</span>
-            <small>Digitally verified by Examination Controller</small>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Roll / PRN Number</label>
+            <input type="text" id="rollNo" required placeholder="e.g. 21CS045" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
           </div>
           <div>
-            <b style="font-size:12px;color:var(--ink)">SGPA: <span id="msFooterSgpa">8.88</span> | CGPA: <span id="msFooterCgpa">8.88</span></b>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Academic Year</label>
+            <select id="year" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+              <option value="" disabled selected>Select Year</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="Final Year">Final Year</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 4: ATTENDANCE -->
-    <section class="page" id="page-attendance">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; SHOW UP FOR YOUR FUTURE</p>
-        <h1>Your effort, <span class="gradient">in focus.</span></h1>
-        <p class="subtitle">Real-time attendance calculations based on official institutional class records.</p>
-      </div>
-
-      <div class="attendance-top">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <h3>Overall attendance</h3>
-              <p>Across all enrolled curriculum subjects</p>
-            </div>
-            <label class="good-pill" id="attOverallPill">On track</label>
-          </div>
-
-          <div class="att-content">
-            <div class="att-ring" id="attRingGraphic">
-              <div>
-                <b id="attOverallRate">--<small>%</small></b>
-                <span>ATTENDANCE</span>
-              </div>
-            </div>
-            <div>
-              <h2 id="attHeading">Loading attendance...</h2>
-              <p id="attSummaryText">Calculating threshold metrics...</p>
-              <small>● Attended <b id="attPresentCount">-- classes</b></small>
-              <small class="muted-text">● Absent <b id="attAbsentCount">-- classes</b></small>
-            </div>
-          </div>
-        </article>
-
-        <article class="att-tip">
-          <span>✦</span>
-          <label>ATTENDANCE COMPLIANCE</label>
-          <h2>Mandatory 75% Target.</h2>
-          <p>Institutional senate rules require 75% attendance to sit for semester examinations.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="primary" id="openLogAttendanceBtn" type="button">Log Attendance +</button>
-            <button class="primary" data-go="academics" type="button" style="background:#ffffff20">View Timetable →</button>
-          </div>
-        </article>
-      </div>
-
-      <div class="section-title">
         <div>
-          <h2>Subject breakdown</h2>
-          <p>Official course attendance records and compliance status.</p>
-        </div>
-        <div class="filters">
-          <button class="filter selected" data-att="all">All subjects</button>
-          <button class="filter" data-att="risk">Needs attention (&lt;75%)</button>
-        </div>
-      </div>
-
-      <article class="panel table-panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>SUBJECT</th>
-                <th>CLASSES HELD</th>
-                <th>ATTENDED</th>
-                <th>ATTENDANCE RATE</th>
-                <th>STATUS</th>
-                <th>ACTION NEEDED</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceRows">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-        <div class="table-foot">
-          <span id="attendanceCount">Showing registered courses</span>
-          <span>Mandatory minimum target: 75%</span>
-        </div>
-      </article>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 5: CAMPUS EVENTS -->
-    <section class="page" id="page-events">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; FIND YOUR PEOPLE</p>
-        <h1>Campus is <span class="gradient">happening.</span></h1>
-        <p class="subtitle">Discover verified campus events, collaborate with peers, and RSVP in real time.</p>
-      </div>
-
-      <div class="event-feature" id="eventsFeaturedContainer">
-        <div class="event-poster">
-          <label>CAMPUS SPOTLIGHT · 2026</label>
-          <div>MAKE<br><i>IT HAPPEN.</i></div>
-          <small>IDEAS → PEOPLE → POSSIBILITY</small>
-          <span class="poster-orb"></span>
-        </div>
-        <div class="event-copy">
-          <label class="featured-label">FEATURED EVENT</label>
-          <h2 id="featuredEventTitle">Innovation Day 2026</h2>
-          <p id="featuredEventDesc">One day. Fresh ideas. A campus full of possibility. Share a project, join a team, or come get inspired.</p>
-          <div class="event-meta" id="featuredEventMeta">
-            ▦ October 22, 2026<br>
-            ⌖ Innovation Hub & Main Auditorium<br>
-            ◷ 10:00 AM onwards
-          </div>
-          <button class="primary" id="featuredRegisterBtn" type="button">Register interest ↗</button>
-          <small id="featuredRegisterStatus">Real-time RSVP integration</small>
-        </div>
-      </div>
-
-      <div class="section-title">
-        <div>
-          <h2>Coming up</h2>
-          <p>Official student activities, competitions, and workshops.</p>
-        </div>
-        <div class="filters">
-          <button class="event-filter filter selected" data-event="all">All events</button>
-          <button class="event-filter filter" data-event="tech">Technology</button>
-          <button class="event-filter filter" data-event="community">Community</button>
-          <button class="event-filter filter" data-event="workshop">Workshops</button>
-        </div>
-      </div>
-
-      <div class="event-grid" id="eventGrid">
-        <!-- Dynamically populated from /api/events -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 6: FACILITIES -->
-    <section class="page" id="page-facilities">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; MAKE SPACE FOR GREAT WORK</p>
-        <h1>Find your <span class="gradient">next spot.</span></h1>
-        <p class="subtitle">Explore campus study rooms, maker labs, and reserve workstations.</p>
-      </div>
-
-      <div class="facility-hero">
-        <div>
-          <label>CAMPUS SPACES</label>
-          <h2>Your perfect place to focus is closer than you think.</h2>
-          <p>Live occupancy monitoring and study space reservations.</p>
-        </div>
-        <div>
-          <b id="facilitiesAvailableHero">--<span>/--</span></b>
-          <small>TOTAL SEATS FREE</small>
-          <div class="mini-bars" id="facilityBars">
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-          </div>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="search">
-          <span>⌕</span>
-          <input id="facilitySearch" placeholder="Search libraries, labs, or commons...">
-        </div>
-        <div class="filters">
-          <button class="facility-filter filter selected" data-facility="all">All spaces</button>
-          <button class="facility-filter filter" data-facility="study">Study</button>
-          <button class="facility-filter filter" data-facility="social">Social</button>
-        </div>
-      </div>
-
-      <div class="facility-grid" id="facilityGrid">
-        <!-- Dynamically populated from /api/facilities -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 7: AI INSIGHTS & CO-PILOT -->
-    <section class="page" id="page-insights">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; A LITTLE MORE CLARITY</p>
-        <h1>Meet your <span class="gradient">campus co-pilot.</span></h1>
-        <p class="subtitle">Personalized academic guidance, attendance nudges, and intelligent student support.</p>
-      </div>
-
-      <div class="insight-hero">
-        <div class="ai-orb">✦</div>
-        <div>
-          <span class="pill" id="aiHeroBadge">CAMPUSIQ AI CO-PILOT</span>
-          <h2>Make the next move<br><i>your best one.</i></h2>
-          <p>Your academic assistant analyzes your registered courses, attendance rates, pending assignments, and timetable to deliver actionable study plans.</p>
-          <button class="primary" id="generate">Generate my daily brief ✦</button>
-        </div>
-      </div>
-
-      <div class="section-title">
-        <div>
-          <h2>Your daily brief</h2>
-          <p>Personalized recommendations based on your verified student profile.</p>
-        </div>
-        <label class="info-pill">Live AI Briefing</label>
-      </div>
-
-      <div class="insight-grid" id="insightGrid">
-        <!-- Dynamically populated from /api/ai/brief -->
-      </div>
-
-      <!-- Interactive AI Chat Console -->
-      <article class="ai-chat-card" id="aiChatCard">
-        <div class="ai-chat-header">
-          <h3><span>✦</span> CampusIQ Academic Assistant</h3>
-          <div style="display:flex;align-items:center;gap:10px">
-            <button id="clearAiChatBtn" type="button" style="border:0;background:rgba(255,255,255,0.2);color:#fff;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer">Clear Chat ↻</button>
-            <span class="ai-status-pill" id="aiStatusPill">Grounded in campus records</span>
-          </div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Department</label>
+          <select id="department" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+            <option value="" disabled selected>Select Branch</option>
+            <option value="Computer Science">Computer Science & Engineering</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Electronics & Telecomm">Electronics & Telecommunication</option>
+            <option value="Mechanical">Mechanical Engineering</option>
+            <option value="Civil">Civil Engineering</option>
+          </select>
         </div>
 
-        <div class="ai-chat-messages" id="aiChatMessages">
-          <div class="ai-bubble ai-bubble-assistant">
-            Hello! I am your <b>CampusIQ Academic Co-Pilot</b>. I have direct access to your enrolled courses, current attendance records, classroom timetable, marksheet scores, and pending coursework.<br><br>
-            How can I support your studies today?
-            <span class="ai-bubble-time">Just now</span>
-          </div>
-        </div>
-
-        <div class="ai-suggestions">
-          <button class="ai-pill-btn" type="button" data-prompt="What is my current CGPA and marks breakdown?">🏅 My CGPA & Marks</button>
-          <button class="ai-pill-btn" type="button" data-prompt="What is my attendance standing across all subjects?">📊 Attendance standing</button>
-          <button class="ai-pill-btn" type="button" data-prompt="Where and when is my next scheduled class?">📍 Next class location</button>
-          <button class="ai-pill-btn" type="button" data-prompt="What coursework or assignments do I have due?">📝 Pending assignments</button>
-        </div>
-
-        <form class="ai-chat-input-bar" id="aiChatForm">
-          <input type="text" id="aiQueryInput" placeholder="Ask about marks, attendance, rooms, or study spaces..." autocomplete="off" required>
-          <button type="submit" id="aiSendBtn">Ask Co-Pilot ↗</button>
-        </form>
-      </article>
-
-      <div class="disclaimer">
-        ⓘ &nbsp;
-        <p><b>CampusIQ Data Integrity:</b> Answers are strictly grounded in your authenticated student records and official university schedules. Provider keys remain securely stored on the backend server.</p>
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 8: CAMPUS HELP CENTRE (NEW) -->
-    <section class="page" id="page-help">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; STUDENT SUPPORT & HELPLINE</p>
-        <h1>Campus <span class="gradient">Help Centre.</span></h1>
-        <p class="subtitle">Search university FAQs, contact IT support, or submit a support ticket to student affairs.</p>
-      </div>
-
-      <!-- Support KPI Grid -->
-      <div class="stats">
-        <article class="stat s-blue">
-          <div class="stat-top"><span>📞</span><label>Verified Contacts</label></div>
-          <p>IT Helpdesk</p>
-          <strong style="font-size:18px">helpdesk@campusiq.edu</strong>
-          <small>Ext: 1042 · Central Block A</small>
-        </article>
-        <article class="stat s-purple">
-          <div class="stat-top"><span>🏛️</span><label>Academic Affairs</label></div>
-          <p>Dean's Office</p>
-          <strong style="font-size:18px">academics@campusiq.edu</strong>
-          <small>Mon-Fri · 09:00 AM – 05:00 PM</small>
-        </article>
-        <article class="stat s-green">
-          <div class="stat-top"><span>🚑</span><label>Campus Helpline</label></div>
-          <p>Emergency Line</p>
-          <strong style="font-size:18px">+91 020 2569 0000</strong>
-          <small>Campus Security & Medical Center</small>
-        </article>
-        <article class="stat s-orange">
-          <div class="stat-top"><span>🎫</span><label>Track Issues</label></div>
-          <p>Support Tickets</p>
-          <strong id="helpOpenTicketsCount">0 Active</strong>
-          <small>Track resolution history</small>
-        </article>
-      </div>
-
-      <!-- Support Action Bar -->
-      <div class="section-title">
-        <div>
-          <h2>Your Support Tickets</h2>
-          <p>Persistent issue tracking with college departments.</p>
-        </div>
-        <button class="primary" id="openCreateTicketBtn" type="button">Raise Support Ticket +</button>
-      </div>
-
-      <div id="studentTicketsListContainer">
-        <!-- Dynamically populated from /api/help/tickets -->
-      </div>
-
-      <!-- FAQ Section -->
-      <div class="section-title" style="margin-top:36px">
-        <div>
-          <h2>Frequently Asked Questions</h2>
-          <p>Official institutional rules, attendance guidelines, and marksheet protocols.</p>
-        </div>
-      </div>
-
-      <div id="faqAccordionContainer" style="display:grid;gap:10px">
-        <!-- Dynamically populated from /api/help/faqs -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- PAGE 9: ADMIN CONSOLE (STAFF ONLY) -->
-    <section class="page" id="page-admin">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; INSTITUTIONAL ADMINISTRATION</p>
-        <h1>Staff <span class="gradient">Control Console.</span></h1>
-        <p class="subtitle">Publish examination results, manage support tickets, and view security audit logs.</p>
-      </div>
-
-      <div class="section-title">
-        <div>
-          <h2>Open Student Support Tickets</h2>
-          <p>Respond to student queries and update ticket resolution status.</p>
-        </div>
-      </div>
-
-      <div id="adminTicketsContainer">
-        <!-- Populated from /api/admin/tickets -->
-      </div>
-
-      <div class="section-title" style="margin-top:36px">
-        <div>
-          <h2>Security & Operational Audit Logs</h2>
-          <p>Tamper-evident system activity log.</p>
-        </div>
-      </div>
-
-      <article class="panel table-panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>TIMESTAMP</th>
-                <th>ACTOR</th>
-                <th>ACTION</th>
-                <th>ENTITY</th>
-                <th>TARGET ID</th>
-              </tr>
-            </thead>
-            <tbody id="adminAuditLogsBody">
-              <!-- Populated from /api/admin/audit-logs -->
-            </tbody>
-          </table>
-        </div>
-      </article>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- ====================================================================
-         PAGE: STUDENT SUCCESS RADAR
-         ==================================================================== -->
-    <section class="page" id="page-radar">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; MULTI-DIMENSIONAL ACADEMIC TELEMETRY</p>
-        <h1>Student Success <span class="gradient">Radar.</span></h1>
-        <p class="subtitle">Personalized academic insight cockpit combining strengths, attendance trends, and computed study recommendations.</p>
-      </div>
-
-      <div class="radar-hero">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
-          <div>
-            <h2 id="radarOverallAssessment">Academic Standing: Exemplary</h2>
-            <p id="radarHeroSubtitle">Real-time synthesis of attendance velocity, coursework milestones, and historical grade points.</p>
-          </div>
-          <div style="text-align:right">
-            <span class="badge" style="background:rgba(255,255,255,0.2);color:#fff;font-size:12px;padding:6px 12px;border-radius:8px">Score: <strong id="radarOverallScore">-- / 100</strong></span>
-            <small style="display:block;margin-top:6px;color:#c7c6e6" id="radarAttendanceVelocity">Attendance: --% (+0.0% velocity)</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Strengths, Needs Attention, Velocity Cards -->
-      <div class="radar-grid-cards">
-        <article class="radar-stat-box">
-          <span class="badge" style="background:#d1fae5;color:#047857">💪 Subject Strengths</span>
-          <h4 style="margin:6px 0 12px;font:700 14px Manrope">Top Performing Disciplines</h4>
-          <div id="radarStrengthsList">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-        <article class="radar-stat-box">
-          <span class="badge" style="background:#fee2e2;color:#b91c1c">⚠️ Needs Attention</span>
-          <h4 style="margin:6px 0 12px;font:700 14px Manrope">High-Priority Focus Areas</h4>
-          <div id="radarWeaknessesList">
-            <!-- Populated dynamically -->
-          </div>
-        </article>
-
-        <article class="radar-stat-box">
-          <span class="badge" style="background:#e0e7ff;color:#4338ca">📈 Attendance Velocity</span>
-          <h4 style="margin:6px 0 12px;font:700 14px Manrope">Attendance & Buffer Health</h4>
-          <div style="padding:10px 0">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:12px;color:var(--muted)">Current Attendance</span>
-              <strong id="radarAttCurrent">--%</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:12px;color:var(--muted)">Cutoff Minimum</span>
-              <strong>75.0%</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:12px;color:var(--muted)">Buffer Allowance</span>
-              <strong id="radarAttBuffer" style="color:#10b981">-- classes safe</strong>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <!-- Actionable Study Recommendations -->
-      <div class="section-title">
-        <div>
-          <h2>Data-Grounded Study Recommendations</h2>
-          <p>Personalized next actions computed from verified academic data and attendance records.</p>
-        </div>
-      </div>
-
-      <div id="radarRecommendationsContainer" style="display:grid;gap:12px">
-        <!-- Populated dynamically -->
-      </div>
-
-      <!-- Calculation Rationale Disclaimer -->
-      <div class="radar-rationale-box">
-        <strong>Transparent Calculation Methodology:</strong>
-        <p id="radarRationaleText" style="margin:6px 0 0">
-          The Success Radar synthesizes registered course marks, attendance percentage vs. the 75% institutional threshold, and assignment completion ratios. Scores above 80 indicate high academic health. AI study recommendations are derived directly from actual academic records and strictly segregated from official examination marks.
-        </p>
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- ====================================================================
-         PAGE: AI STUDY PLANNER & REVISION TIMETABLE
-         ==================================================================== -->
-    <section class="page" id="page-planner">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; EXAM REVISION & TIMETABLE GENERATOR</p>
-        <h1>AI Study <span class="gradient">Planner.</span></h1>
-        <p class="subtitle">Dynamic revision schedule with session tracking, daily hour goals, and one-click completion status.</p>
-      </div>
-
-      <!-- Planner Target Status Box -->
-      <div class="academic-hero" style="background:linear-gradient(110deg,#1e1b4b,#3730a3)">
-        <div>
-          <label>REVISION GOAL</label>
-          <h2 id="plannerTitle">Semester 5 Comprehensive Revision</h2>
-          <p id="plannerExamTarget">Target Exam: Mid-Term & End-Term Examinations 2026</p>
-          <div class="progress big" style="background:rgba(255,255,255,0.2)">
-            <i id="plannerProgressBar" style="width:50%;background:linear-gradient(90deg,#818cf8,#34d399)"></i>
-          </div>
-          <small id="plannerStatsText">Daily Goal: 3.0 hrs/day · 2 of 4 sessions completed</small>
-        </div>
-        <div class="ring">
-          <b id="plannerCompletionRing">50<small>%</small></b>
-          <span>DONE</span>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div style="display:flex;align-items:center;gap:10px">
-          <button class="primary" id="openAddSessionBtn" type="button">Add Study Session +</button>
-          <span style="font-size:12px;color:var(--muted)" id="plannerSessionSummary">Scheduled Sessions</span>
-        </div>
-      </div>
-
-      <div class="planner-calendar-grid" id="plannerSessionsGrid">
-        <!-- Dynamically populated from /api/study-planner -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- ====================================================================
-         PAGE: SKILL & CAREER ROADMAP
-         ==================================================================== -->
-    <section class="page" id="page-career">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; STUDENT CAREER ADVANCEMENT</p>
-        <h1>Career <span class="gradient">Roadmap.</span></h1>
-        <p class="subtitle">Track competencies, portfolio projects, certifications, and internship readiness milestones.</p>
-      </div>
-
-      <div class="toolbar">
-        <button class="primary" id="openAddGoalBtn" type="button">Add Career Goal +</button>
-        <span style="font-size:12px;color:var(--muted)" id="careerGoalsSummary">Loading roadmap goals...</span>
-      </div>
-
-      <div id="careerGoalsContainer">
-        <!-- Populated dynamically from /api/career-roadmap -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- ====================================================================
-         PAGE: CAMPUS NAVIGATOR & SERVICE FINDER
-         ==================================================================== -->
-    <section class="page" id="page-navigator">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; SEARCHABLE CAMPUS DIRECTORY & NAVIGATION</p>
-        <h1>Campus <span class="gradient">Navigator.</span></h1>
-        <p class="subtitle">Locate academic departments, laboratories, libraries, administrative offices, and emergency helplines.</p>
-      </div>
-
-      <div class="toolbar">
-        <div class="search" style="max-width:420px">
-          <span>⌕</span>
-          <input id="navigatorSearchInput" placeholder="Search buildings, labs, libraries, or faculty...">
-        </div>
-        <div class="filters" id="navigatorFilters">
-          <button class="filter selected" data-cat="all">All Locations</button>
-          <button class="filter" data-cat="academic">Academic</button>
-          <button class="filter" data-cat="library">Libraries</button>
-          <button class="filter" data-cat="lab">Labs</button>
-          <button class="filter" data-cat="service">Student Services</button>
-          <button class="filter" data-cat="admin">Administration</button>
-          <button class="filter" data-cat="medical">Medical & Helpline</button>
-        </div>
-      </div>
-
-      <div class="nav-directory-grid" id="navigatorDirectoryGrid">
-        <!-- Populated dynamically from /api/navigator/directory -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
-    <!-- ====================================================================
-         PAGE: CAMPUS NOTICE INTELLIGENCE
-         ==================================================================== -->
-    <section class="page" id="page-notices">
-      <div class="page-intro">
-        <p class="eyebrow">✦ &nbsp; OFFICIAL INSTITUTIONAL BULLETIN</p>
-        <h1>Notice <span class="gradient">Intelligence.</span></h1>
-        <p class="subtitle">Verified notices with priority tracking, bookmarks, expiration warnings, and read receipts.</p>
-      </div>
-
-      <div class="toolbar">
-        <div class="search" style="max-width:380px">
-          <span>⌕</span>
-          <input id="noticesSearchInput" placeholder="Filter announcements by title or keyword...">
-        </div>
-        <div class="filters" id="noticesFilters">
-          <button class="filter selected" data-priority="all">All Bulletins</button>
-          <button class="filter" data-priority="urgent">Urgent</button>
-          <button class="filter" data-priority="high">High Priority</button>
-          <button class="filter" data-priority="normal">Normal</button>
-          <button class="filter" id="filterSavedNoticesBtn">★ Bookmarked</button>
-        </div>
-      </div>
-
-      <div id="noticesIntelligenceContainer">
-        <!-- Populated dynamically from /api/announcements/intelligence -->
-      </div>
-
-      <footer>
-        © 2026 CampusIQ <span>Built for a more connected campus ✦</span>
-        <label>Production Edition · Verified Student Platform</label>
-      </footer>
-    </section>
-
+        <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-xl transition text-white shadow-lg shadow-indigo-600/30">
+          Submit Record
+        </button>
+      </form>
+    </div>
   </main>
 
-  <!-- ====================================================================
-       INTERACTIVE MODALS & DIALOGS
-       ==================================================================== -->
-
-  <!-- Toast Notification Popup -->
-  <div class="toast" id="toast" role="status" aria-live="polite">✓ <span id="toastText">Done</span></div>
-
-  <!-- Standard Alert/Confirm Modal -->
-  <div class="backdrop" id="backdrop">
-    <div class="modal">
-      <button id="closeModal" aria-label="Close dialog">×</button>
-      <span>✦</span>
-      <label>CAMPUSIQ PLATFORM</label>
-      <h2 id="modalTitle">Notice</h2>
-      <p id="modalText">Message goes here.</p>
-      <button class="primary" id="okay">Got it ✓</button>
-    </div>
-  </div>
-
-  <!-- Authentication Backdrop Modal (Sign In / Sign Up / Reset Password) -->
-  <div class="auth-backdrop" id="authBackdrop" aria-hidden="true">
-    <section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-      <button class="auth-close" id="authClose" type="button" aria-label="Close authentication">×</button>
-      <img src="campusiq-logo.svg" alt="CampusIQ" class="auth-logo">
-      <p class="auth-eyebrow">YOUR CAMPUS, CONNECTED</p>
-      <h2 id="authTitle">Welcome back</h2>
-      <p class="auth-subtitle" id="authSubtitle">Sign in to your CampusIQ student space.</p>
-
-      <form id="signInForm">
-        <div id="signupNameGroup" hidden>
-          <label for="authFullName">Full name</label>
-          <input id="authFullName" name="fullName" type="text" placeholder="e.g. Satyam Sambhale">
-        </div>
-
-        <label for="authEmail">Student email address</label>
-        <input id="authEmail" name="email" type="email" placeholder="student@example.com" autocomplete="username" required>
-
-        <div id="authPasswordGroup">
-          <label for="authPassword">Password</label>
-          <div class="password-field">
-            <input id="authPassword" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="6">
-            <button type="button" id="togglePassword">Show</button>
-          </div>
-        </div>
-
-        <div class="auth-options" id="authOptionsRow">
-          <label class="remember"><input type="checkbox" id="rememberMe"> Remember me</label>
-          <button type="button" class="text-action" id="forgotPassword">Forgot password?</button>
-        </div>
-
-        <p class="auth-error" id="authError" role="alert"></p>
-
-        <button class="auth-submit" type="submit" id="authSubmit">Sign in securely</button>
-      </form>
-
-      <p class="auth-foot" id="authFoot">
-        New to CampusIQ? <button type="button" id="createAccount">Create account</button>
-      </p>
-      <p class="auth-note">Production access secured with Supabase Auth & JWT token verification.</p>
-    </section>
-  </div>
-
-  <!-- Mobile Number & OTP Verification Modal -->
-  <div class="backdrop" id="otpBackdrop">
-    <div class="modal">
-      <button id="closeOtpModal" aria-label="Close OTP verification">×</button>
-      <span>📱</span>
-      <label>SECURITY VERIFICATION</label>
-      <h2>Verify Mobile Number</h2>
-      <p>Receive official exam alerts and two-factor recovery via SMS within 30 seconds.</p>
-
-      <div id="otpStepSend">
-        <div class="form-group" style="text-align:left">
-          <label>Mobile Number with Country Code</label>
-          <div class="phone-input-row">
-            <select class="form-select" id="otpCountryCode">
-              <option value="+91" selected>🇮🇳 +91 (India)</option>
-              <option value="+1">🇺🇸 +1 (USA)</option>
-              <option value="+44">🇬🇧 +44 (UK)</option>
-              <option value="+971">🇦🇪 +971 (UAE)</option>
-            </select>
-            <input class="form-input" id="otpPhoneNumber" type="tel" placeholder="Enter 10-digit mobile number" maxlength="15" autocomplete="off" value="" autofocus>
-          </div>
-        </div>
-        <div id="otpSendStatusBox" style="display:none;margin-bottom:12px">
-          <div class="otp-status-pill">
-            <span class="status-indicator-dot dot-amber" id="otpSendDot"></span>
-            <span id="otpSendStatusText">Sending… Dispatching to carrier network within 30s</span>
-          </div>
-        </div>
-        <p class="auth-error" id="otpSendError" role="alert"></p>
-        <div class="btn-row">
-          <button class="primary" id="sendOtpBtn" type="button" style="width:100%">Send Verification OTP ↗</button>
-        </div>
-        <div style="text-align:center;margin-top:10px">
-          <button type="button" class="gateway-setup-btn" id="openSmsGatewaySetupBtn">⚙️ Live SMS Gateway Settings (Twilio / Fast2SMS)</button>
-        </div>
+  <!-- VIEW 2: ADMIN DASHBOARD -->
+  <main id="dashboardView" class="hidden max-w-7xl mx-auto px-6 py-10 w-full">
+    <!-- Stat Counters -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl">
+        <span class="text-xs uppercase text-slate-400 font-semibold">Total Students</span>
+        <h2 id="totalStudents" class="text-3xl font-bold mt-2 text-white">0</h2>
       </div>
-
-      <div id="otpStepVerify" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Verification target: <b id="otpTargetDisplay">--</b></p>
-        
-        <!-- Real-Time Carrier & Provider Delivery Lifecycle Status -->
-        <div class="otp-lifecycle-card" id="otpLifecycleCard">
-          <div class="otp-status-badge-row">
-            <div class="otp-status-pill" id="otpStatusPill">
-              <span class="status-indicator-dot dot-blue" id="otpStatusDot"></span>
-              <span id="otpStatusLabel">Request accepted</span>
-            </div>
-            <span class="otp-timer-badge" id="otpExpiryBadge">Valid: 5 min</span>
-          </div>
-          <div class="otp-gateway-info">
-            <div class="otp-gateway-title" id="otpGatewayTitle">SMS Carrier Gateway (<30s)</div>
-            <p class="otp-gateway-desc" id="otpGatewayDesc">Request accepted by SMS provider queue. Enter the 6-digit verification code received on your phone.</p>
-          </div>
-        <!-- Real-Time Incoming Carrier SMS Notification Card -->
-        <div class="incoming-msg-card sms-theme" id="incomingSmsCard" style="display:none">
-          <div class="incoming-msg-header">
-            <span class="incoming-msg-badge">💬 Carrier SMS Gateway</span>
-            <span class="incoming-msg-time">Just Now • Delivered in &lt;30s</span>
-          </div>
-          <div class="incoming-msg-body">
-            <div class="incoming-msg-text">
-              <strong>CampusIQ Security:</strong> Your one-time verification code is <span class="incoming-code-highlight" id="incomingSmsCode">------</span>. Valid for 5 minutes.
-            </div>
-            <button type="button" class="btn-autofill" id="autoFillSmsBtn">⚡ Auto-fill code into box</button>
-          </div>
-        </div>
-
-        <div class="otp-box-row">
-          <input class="otp-input" id="otpInputCode" type="text" maxlength="6" placeholder="Enter 6-digit OTP" autocomplete="off" value="" spellcheck="false" name="campusiq_otp_code">
-        </div>
-        <div class="cooldown-text" id="otpCooldownText">Resend code in <span id="otpCooldownSec">30</span>s</div>
-        <p class="auth-error" id="otpVerifyError" role="alert"></p>
-        <div class="btn-row" style="flex-direction:column;gap:8px">
-          <button class="primary" id="confirmOtpBtn" type="button" style="width:100%">Verify Code ✓</button>
-          <button class="btn-secondary" id="resendOtpBtn" type="button" disabled style="width:100%">Resend OTP</button>
-          <button type="button" class="change-number-link" id="changeNumberBtn">← Change mobile number</button>
-        </div>
+      <div class="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl">
+        <span class="text-xs uppercase text-slate-400 font-semibold">Most Popular Branch</span>
+        <h2 id="popularDept" class="text-xl font-bold mt-2 text-indigo-400">-</h2>
+      </div>
+      <div class="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl">
+        <span class="text-xs uppercase text-slate-400 font-semibold">Live Realtime Sync</span>
+        <h2 class="text-xl font-bold mt-2 text-emerald-400">Active</h2>
       </div>
     </div>
-  </div>
 
-  <!-- Email Verification Modal -->
-  <div class="backdrop" id="emailVerifyBackdrop">
-    <div class="modal">
-      <button id="closeEmailVerifyModal" aria-label="Close email verification">×</button>
-      <span>✉️</span>
-      <label>SECURITY VERIFICATION</label>
-      <h2>Verify Student Email</h2>
-      <p>Confirm your registered email address to receive official institutional notices within 30 seconds.</p>
-
-      <div id="emailVerifyStepSend">
-        <div class="form-group" style="text-align:left">
-          <label>Registered Student Email</label>
-          <input class="form-input" id="emailVerifyInput" type="email" readonly>
-        </div>
-        <div id="emailSendStatusBox" style="display:none;margin-bottom:12px">
-          <div class="otp-status-pill">
-            <span class="status-indicator-dot dot-amber" id="emailSendDot"></span>
-            <span id="emailSendStatusText">Sending… Connecting to SMTP gateway</span>
-          </div>
-        </div>
-        <p class="auth-error" id="emailVerifySendError" role="alert"></p>
-        <div class="btn-row">
-          <button class="primary" id="sendEmailVerifyBtn" type="button" style="width:100%">Send Verification Email ↗</button>
-        </div>
-        <div style="text-align:center;margin-top:10px">
-          <button type="button" class="gateway-setup-btn" id="openEmailGatewaySetupBtn">⚙️ Live Gmail SMTP Settings (Sub-30s Delivery)</button>
-        </div>
-      </div>
-
-      <div id="emailVerifyStepConfirm" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Code dispatched to <b id="emailVerifyTargetDisplay">--</b></p>
-
-        <!-- Real-Time SMTP Delivery Lifecycle Status -->
-        <div class="otp-lifecycle-card">
-          <div class="otp-status-badge-row">
-            <div class="otp-status-pill">
-              <span class="status-indicator-dot dot-blue" id="emailStatusDot"></span>
-              <span id="emailStatusLabel">Request accepted</span>
-            </div>
-            <span class="otp-timer-badge">Valid: 15 min</span>
-          </div>
-          <div class="otp-gateway-info">
-            <div class="otp-gateway-title">SMTP Mail Gateway (<30s)</div>
-            <p class="otp-gateway-desc" id="emailDeliveryDesc">Verification email accepted by SMTP server. Check your Gmail inbox for the 6-digit code.</p>
-          </div>
-        <!-- Real-Time Incoming Gmail SMTP Notification Card -->
-        <div class="incoming-msg-card email-theme" id="incomingEmailCard" style="display:none">
-          <div class="incoming-msg-header">
-            <span class="incoming-msg-badge">✉️ Gmail SMTP Dispatch</span>
-            <span class="incoming-msg-time">Just Now • Delivered in &lt;30s</span>
-          </div>
-          <div class="incoming-msg-body">
-            <div class="incoming-msg-text">
-              <strong>CampusIQ Verification:</strong> Your student confirmation code is <span class="incoming-code-highlight" id="incomingEmailCode">------</span>.
-            </div>
-            <button type="button" class="btn-autofill" id="autoFillEmailBtn">⚡ Auto-fill code into box</button>
-          </div>
-        </div>
-
-        <div class="otp-box-row">
-          <input class="otp-input" id="emailInputCode" type="text" maxlength="6" placeholder="Enter 6-digit code" autocomplete="off" value="" spellcheck="false" name="campusiq_email_code">
-        </div>
-        <div class="cooldown-text" id="emailCooldownText">Resend email in <span id="emailCooldownSec">30</span>s</div>
-        <p class="auth-error" id="emailVerifyConfirmError" role="alert"></p>
-        <div class="btn-row" style="flex-direction:column;gap:8px">
-          <button class="primary" id="confirmEmailVerifyBtn" type="button" style="width:100%">Verify Email Code ✓</button>
-          <button class="btn-secondary" id="resendEmailVerifyBtn" type="button" disabled style="width:100%">Resend Email</button>
-        </div>
+    <!-- Controls -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+      <input type="text" id="searchInput" oninput="filterData()" placeholder="Filter by Name, Roll No, or Department..." class="w-full md:w-96 px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+      <div class="flex space-x-2">
+        <button onclick="loadDashboardData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl border border-slate-700">Refresh</button>
+        <button onclick="downloadCSV()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-xl text-white">Export CSV</button>
       </div>
     </div>
-  </div>
 
-  <!-- Live Gateway Delivery Configuration Modal -->
-  <div class="backdrop" id="gatewayConfigBackdrop">
-    <div class="modal" style="max-width:480px;text-align:left">
-      <button id="closeGatewayConfigModal" aria-label="Close configuration">×</button>
-      <div style="text-align:center;margin-bottom:12px">
-        <span style="font-size:32px">⚡</span>
-        <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;color:#6366f1;text-transform:uppercase;margin-top:4px">REAL DELIVERY GATEWAY</label>
-        <h2 style="margin:4px 0 6px;font-size:20px">Live Email & SMS Delivery Setup</h2>
-        <p style="font-size:12px;color:var(--muted);margin:0">Configure authentic sub-30s delivery to your real Gmail inbox and physical mobile phone.</p>
-      </div>
-
-      <div class="gateway-tabs" style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid #e2e8f0;padding-bottom:8px">
-        <button type="button" class="tab-btn active" id="tabGatewayEmail" style="flex:1;padding:8px;border-radius:8px;border:1px solid #6366f1;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">✉️ Real Gmail SMTP</button>
-        <button type="button" class="tab-btn" id="tabGatewaySms" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-weight:700;font-size:12px;cursor:pointer">📱 Real Phone SMS</button>
-      </div>
-
-      <!-- Email Gateway Pane -->
-      <div id="paneGatewayEmail">
-        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#0369a1;line-height:1.5">
-          <strong>⚡ Sub-30s Gmail Delivery:</strong> Enter your Gmail address and 16-character Google App Password (<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#0284c7;font-weight:700;text-decoration:underline">Get App Password ↗</a>).
-        </div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Your Gmail Address (SMTP_USER)</label>
-          <input class="form-input" id="cfgSmtpUser" type="email" placeholder="yourname@gmail.com" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
-        </div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">16-Character Google App Password (SMTP_PASSWORD)</label>
-          <input class="form-input" id="cfgSmtpPass" type="password" placeholder="xxxx xxxx xxxx xxxx" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
-        </div>
-        <button class="primary" id="saveSmtpConfigBtn" type="button" style="width:100%;padding:10px;font-size:13px">Save & Enable Live Gmail Delivery ✓</button>
-      </div>
-
-      <!-- SMS Gateway Pane -->
-      <div id="paneGatewaySms" style="display:none">
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#15803d;line-height:1.5">
-          <strong>⚡ Sub-30s SMS Cellular Delivery:</strong> Use Fast2SMS for Indian numbers (+91) or Twilio for worldwide numbers.
-        </div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Fast2SMS API Key (Fastest for India +91)</label>
-          <input class="form-input" id="cfgFast2smsKey" type="text" placeholder="Enter Fast2SMS API Authorization Key" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
-        </div>
-        <div style="text-align:center;font-size:11px;color:#94a3b8;margin:6px 0">— OR TWILIO —</div>
-        <div class="form-group" style="margin-bottom:8px">
-          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Twilio Account SID</label>
-          <input class="form-input" id="cfgTwilioSid" type="text" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
-        </div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px">Twilio Auth Token</label>
-          <input class="form-input" id="cfgTwilioToken" type="password" placeholder="Twilio Auth Token" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px">
-        </div>
-        <button class="primary" id="saveSmsConfigBtn" type="button" style="width:100%;padding:10px;font-size:13px">Save & Enable Live SMS Delivery ✓</button>
-      </div>
-
-      <p class="auth-error" id="gatewayConfigStatus" style="margin-top:10px;text-align:center"></p>
+    <!-- Table -->
+    <div class="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-900/40">
+      <table class="w-full text-left text-sm text-slate-300">
+        <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+          <tr>
+            <th class="py-3 px-4">Roll No</th>
+            <th class="py-3 px-4">Name</th>
+            <th class="py-3 px-4">Email</th>
+            <th class="py-3 px-4">Phone</th>
+            <th class="py-3 px-4">Department</th>
+            <th class="py-3 px-4">Year</th>
+            <th class="py-3 px-4">Date</th>
+          </tr>
+        </thead>
+        <tbody id="studentRecordsBody" class="divide-y divide-slate-800">
+          <tr><td colspan="7" class="text-center py-6 text-slate-500">Loading records...</td></tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </main>
 
+  <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+    CampusIQ Platform &bull; Built with Supabase & GitHub Pages
+  </footer>
 
-  <!-- Student Profile & Account Settings Modal -->
-  <div class="backdrop" id="profileBackdrop">
-    <div class="modal modal-large">
-      <button id="closeProfileModal" aria-label="Close profile">×</button>
-      <div class="modal-head">
-        <h2>Student Profile & Settings</h2>
-        <span class="good-pill" id="profileRoleBadge">Student Account</span>
-      </div>
+  <script>
+    // Configuration
+    const SUPABASE_URL = 'https://jlssyqpqpordksbgqzrp.supabase.co';
+    // Use your anon key here. (If sb_publishable fails, paste the eyJ... anon key from Supabase API settings)
+    const SUPABASE_KEY = 'sb_publishable_8SXt24Djg97RTD4iRyVb7w_4oFVOXDT';
+    
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let cachedList = [];
 
-      <div class="modal-scrollable">
-        <!-- Profile Photo & Identity Box -->
-        <div class="profile-photo-card" style="display:flex;align-items:center;gap:20px;margin-bottom:20px;padding:18px;background:var(--card);border:1px solid var(--line);border-radius:16px;flex-wrap:wrap">
-          <div style="position:relative;width:72px;height:72px;flex-shrink:0">
-            <span class="avatar" id="profileAvatarLarge" style="width:72px;height:72px;font-size:24px;border-radius:50%;display:grid;place-items:center">SS</span>
-            <img id="profileAvatarImg" alt="Profile photo" style="display:none;width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--purple)">
-          </div>
-          <div style="flex:1;min-width:200px">
-            <b id="profileDisplayNameLarge" style="font:800 17px Manrope;display:block">Satyam Sambhale</b>
-            <div style="display:flex;gap:8px;align-items:center;margin:4px 0 10px;flex-wrap:wrap">
-              <small id="profilePhoneStatus" style="font-size:12px;color:#10b981">● Phone Verified (+91)</small>
-              <small id="profileEmailStatus" style="font-size:12px;color:#10b981">● Email Verified</small>
-              <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:10px" id="profileBranchBadge">Computer Science & Engineering</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <label class="btn-secondary" for="profilePhotoFileInput" style="cursor:pointer;font-size:11px;padding:6px 12px;margin:0;display:inline-flex;align-items:center;gap:4px">
-                📷 Change Photo
-                <input type="file" id="profilePhotoFileInput" accept="image/*" style="display:none">
-              </label>
-              <button class="btn-secondary" id="profilePhotoRemoveBtn" type="button" style="font-size:11px;padding:6px 12px;color:var(--danger)">✕ Remove Photo</button>
-              <button class="btn-secondary" id="openOtpFromProfileBtn" type="button" style="font-size:11px;padding:6px 12px">Update Mobile 📱</button>
-              <button class="btn-secondary" id="openEmailVerifyBtn" type="button" style="font-size:11px;padding:6px 12px">Verify Email ✉️</button>
-            </div>
-          </div>
-        </div>
+    // Check DB Connection
+    async function checkHealth() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      try {
+        const { error } = await client.from('students').select('id').limit(1);
+        if (error) throw error;
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        text.textContent = "Supabase Live";
+      } catch (e) {
+        dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        text.textContent = "DB Key Error";
+        console.error("Supabase Error:", e.message);
+      }
+    }
+    checkHealth();
 
+    // Tab Switching
+    function switchTab(tab) {
+      const formView = document.getElementById('formView');
+      const dashboardView = document.getElementById('dashboardView');
+      const tabFormBtn = document.getElementById('tabFormBtn');
+      const tabDashBtn = document.getElementById('tabDashBtn');
 
-        <form id="profileForm">
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label for="profileFullNameInput">Full Name</label>
-              <input class="form-input" id="profileFullNameInput" type="text" required>
-            </div>
-            <div class="form-group">
-              <label for="profileStudentIdInput">Student ID / Roll No</label>
-              <input class="form-input" id="profileStudentIdInput" type="text" readonly title="Verified enrollment ID cannot be modified by student">
-            </div>
-          </div>
+      if (tab === 'form') {
+        formView.classList.remove('hidden');
+        dashboardView.classList.add('hidden');
+        tabFormBtn.classList.add('tab-active');
+        tabDashBtn.classList.remove('tab-active');
+      } else {
+        formView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        tabDashBtn.classList.add('tab-active');
+        tabFormBtn.classList.remove('tab-active');
+        loadDashboardData();
+      }
+    }
 
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label for="profileEmailInput">Registered Email (Security Notices Sent Here)</label>
-              <input class="form-input" id="profileEmailInput" type="email" readonly>
-            </div>
-            <div class="form-group">
-              <label for="profileJoiningInput">Date of Joining</label>
-              <input class="form-input" id="profileJoiningInput" type="text" readonly>
-            </div>
-          </div>
+    // Submit Action
+    const form = document.getElementById('studentForm');
+    const alertBox = document.getElementById('formAlert');
+    const submitBtn = document.getElementById('submitBtn');
 
-          <div class="form-grid-3" style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px">
-            <div class="form-group">
-              <label for="profileBranchInput">Branch / Specialization</label>
-              <select class="form-select" id="profileBranchInput">
-                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-                <option value="AI & Data Science">AI & Data Science</option>
-                <option value="Information Technology">Information Technology</option>
-                <option value="Electronics & Communication">Electronics & Communication</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="General Engineering">General Engineering</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="profileDeptInput">Department</label>
-              <input class="form-input" id="profileDeptInput" type="text" required>
-            </div>
-            <div class="form-group">
-              <label for="profileSemesterInput">Academic Semester</label>
-              <input class="form-input" id="profileSemesterInput" type="text" required>
-            </div>
-          </div>
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving to Database...';
 
-          <div class="btn-row">
-            <button class="btn-secondary" id="profileDeleteAccountBtn" type="button" style="color:var(--danger)">Purge Account</button>
-            <button class="btn-secondary" id="profileSignOutBtn" type="button">Sign Out</button>
-            <button class="primary" type="submit">Save Changes ✓</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        roll_number: document.getElementById('rollNo').value.trim(),
+        department: document.getElementById('department').value,
+        year: document.getElementById('year').value
+      };
 
-  <!-- Create Support Ticket Modal -->
-  <div class="backdrop" id="ticketBackdrop">
-    <div class="modal">
-      <button id="closeTicketModal" aria-label="Close ticket dialog">×</button>
-      <span>🎫</span>
-      <label>SUPPORT TICKETING</label>
-      <h2>Create Support Ticket</h2>
-      <p>Submit an inquiry to student affairs or technical services.</p>
+      try {
+        const { error } = await client.from('students').insert([payload]);
+        if (error) throw error;
 
-      <form id="createTicketForm" style="text-align:left">
-        <div class="form-group">
-          <label for="ticketSubject">Subject</label>
-          <input class="form-input" id="ticketSubject" placeholder="e.g. Attendance discrepancy in CS303" required>
-        </div>
+        alertBox.className = "mb-6 p-4 rounded-xl text-sm font-medium bg-emerald-950/80 text-emerald-300 border border-emerald-800";
+        alertBox.textContent = "Student details registered successfully!";
+        alertBox.classList.remove('hidden');
+        form.reset();
+      } catch (err) {
+        alertBox.className = "mb-6 p-4 rounded-xl text-sm font-medium bg-rose-950/80 text-rose-300 border border-rose-800";
+        alertBox.textContent = err.message || "Could not save details.";
+        alertBox.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Record';
+      }
+    });
 
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label for="ticketCategory">Category</label>
-            <select class="form-select" id="ticketCategory" required>
-              <option value="academic">Academic & Timetable</option>
-              <option value="attendance">Attendance Discrepancy</option>
-              <option value="results">Results & Marksheet</option>
-              <option value="facilities">Facility / Lab Access</option>
-              <option value="technical">Technical / Login Issue</option>
-              <option value="general">General Campus Inquiry</option>
-            </select>
-          </div>
+    // Load Dashboard Records
+    async function loadDashboardData() {
+      const tbody = document.getElementById('studentRecordsBody');
+      const { data, error } = await client.from('students').select('*').order('created_at', { ascending: false });
 
-          <div class="form-group">
-            <label for="ticketPriority">Priority</label>
-            <select class="form-select" id="ticketPriority" required>
-              <option value="low">Low Priority</option>
-              <option value="medium" selected>Medium Priority</option>
-              <option value="high">High Priority</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </div>
-        </div>
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-rose-400">Error loading data: ${error.message}</td></tr>`;
+        return;
+      }
 
-        <div class="form-group">
-          <label for="ticketMessage">Description & Details</label>
-          <textarea class="form-textarea" id="ticketMessage" rows="4" placeholder="Explain your inquiry with course codes or dates..." required></textarea>
-        </div>
+      cachedList = data || [];
+      renderRecords(cachedList);
+    }
 
-        <div class="btn-row">
-          <button class="primary" type="submit" style="width:100%">Submit Support Ticket ↗</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    function renderRecords(list) {
+      const tbody = document.getElementById('studentRecordsBody');
+      document.getElementById('totalStudents').textContent = list.length;
 
-  <!-- Ticket Conversation Details Modal -->
-  <div class="backdrop" id="ticketDetailsBackdrop">
-    <div class="modal modal-large">
-      <button id="closeTicketDetailsModal" aria-label="Close ticket conversation">×</button>
-      <div class="modal-head">
-        <div>
-          <h2 id="tdSubject">Ticket Subject</h2>
-          <small id="tdMeta" style="color:var(--muted)">TICK-2026-1049 · Category: Academic</small>
-        </div>
-        <span class="ticket-status-pill status-open" id="tdStatusPill">OPEN</span>
-      </div>
+      // Find top dept
+      if (list.length > 0) {
+        const counts = {};
+        list.forEach(i => counts[i.department] = (counts[i.department] || 0) + 1);
+        const top = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        document.getElementById('popularDept').textContent = top;
+      }
 
-      <div class="modal-scrollable">
-        <div class="ai-chat-messages" id="tdMessageThread" style="max-height:300px;margin-bottom:14px">
-          <!-- Populated from ticket details -->
-        </div>
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">No records found.</td></tr>`;
+        return;
+      }
 
-        <form id="tdReplyForm" style="display:flex;gap:10px">
-          <input type="hidden" id="tdActiveTicketId">
-          <input class="form-input" id="tdReplyInput" placeholder="Write a response to this ticket..." required>
-          <button class="primary" type="submit">Reply ↗</button>
-        </form>
-      </div>
-    </div>
-  </div>
+      tbody.innerHTML = list.map(s => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="py-3 px-4 font-mono text-indigo-400">${escapeHtml(s.roll_number)}</td>
+          <td class="py-3 px-4 text-white font-medium">${escapeHtml(s.name)}</td>
+          <td class="py-3 px-4">${escapeHtml(s.email)}</td>
+          <td class="py-3 px-4">${escapeHtml(s.phone)}</td>
+          <td class="py-3 px-4">${escapeHtml(s.department)}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 bg-slate-800 rounded text-xs">${escapeHtml(s.year)}</span></td>
+          <td class="py-3 px-4 text-xs text-slate-500">${new Date(s.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
 
-  <!-- Slide-in Notifications Drawer -->
-  <div class="notif-drawer" id="notifDrawer">
-    <div class="notif-drawer-header">
-      <div>
-        <h3 style="font:800 16px Manrope;margin:0">Notifications</h3>
-        <small id="notifDrawerUnreadCount" style="color:var(--muted)">0 unread bulletins</small>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="markAllNotifReadBtn" type="button" style="border:0;background:none;color:var(--purple);font-size:11px;font-weight:700;cursor:pointer">Mark all read</button>
-        <button id="closeNotifDrawer" type="button" style="border:0;background:#f3f4f6;width:28px;height:28px;border-radius:6px;cursor:pointer">×</button>
-      </div>
-    </div>
-    <div class="notif-list" id="notifDrawerList">
-      <!-- Populated from /api/notifications -->
-    </div>
-  </div>
+    function filterData() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = cachedList.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        s.roll_number.toLowerCase().includes(q) ||
+        s.department.toLowerCase().includes(q)
+      );
+      renderRecords(filtered);
+    }
 
-  <!-- Assignments Manager Modal -->
-  <div class="backdrop" id="assignmentsBackdrop">
-    <div class="modal modal-large">
-      <button id="closeAssignmentsModal" aria-label="Close assignments">×</button>
-      <div class="modal-head">
-        <h2>Assignments Manager</h2>
-        <span class="info-pill" id="assignmentCountBadge">0 tasks</span>
-      </div>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
+    }
 
-      <div class="modal-scrollable">
-        <div class="task-list" id="assignmentListContainer">
-          <p style="color:var(--muted);text-align:center;padding:20px">Loading your coursework assignments...</p>
-        </div>
-
-        <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">
-          <h4 style="margin:0 0 10px;font:700 13px Manrope">Add New Assignment</h4>
-          <form id="addAssignmentForm">
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="asgnTitle">Assignment Title</label>
-                <input class="form-input" id="asgnTitle" placeholder="e.g. Implement Dijkstra's Algorithm" required>
-              </div>
-              <div class="form-group">
-                <label for="asgnSubject">Course / Subject</label>
-                <select class="form-select" id="asgnSubject">
-                  <!-- Populated from subjects -->
-                </select>
-              </div>
-            </div>
-
-            <div class="form-grid-3" style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-bottom:12px">
-              <div class="form-group">
-                <label for="asgnBranch">Department / Branch</label>
-                <select class="form-select" id="asgnBranch">
-                  <option value="Computer Science & Engineering" selected>CSE - Computer Science</option>
-                  <option value="Information Technology">IT - Information Technology</option>
-                  <option value="AI & Data Science">AI & Data Science</option>
-                  <option value="Electronics & Communication">ECE - Electronics</option>
-                  <option value="Mechanical Engineering">Mechanical Engineering</option>
-                  <option value="Civil Engineering">Civil Engineering</option>
-                  <option value="General Engineering">General Engineering</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="asgnDueDate">Due Date</label>
-                <input class="form-input" id="asgnDueDate" type="date" required>
-              </div>
-              <div class="form-group">
-                <label for="asgnDueTime">Due Time</label>
-                <input class="form-input" id="asgnDueTime" type="time" value="23:59" required>
-              </div>
-            </div>
-
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="asgnPriority">Priority</label>
-                <select class="form-select" id="asgnPriority">
-                  <option value="low">Low Priority</option>
-                  <option value="medium" selected>Medium Priority</option>
-                  <option value="high">High Priority</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="asgnMaxMarks">Max Points (Marks)</label>
-                <input class="form-input" id="asgnMaxMarks" type="number" value="100" min="10" max="100">
-              </div>
-            </div>
-
-            <div class="btn-row" style="margin-top:14px">
-              <button class="primary" type="submit" style="width:100%">Add Assignment +</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Study Planner Modal -->
-  <div class="backdrop" id="plannerBackdrop">
-    <div class="modal modal-large">
-      <button id="closePlannerModal" aria-label="Close planner">×</button>
-      <div class="modal-head">
-        <h2>Study Planner & Focus Timer</h2>
-        <span class="info-pill">Pomodoro Method</span>
-      </div>
-
-      <div class="modal-scrollable" style="text-align:center">
-        <div style="background:linear-gradient(135deg,#252250,#47389c);color:#fff;border-radius:16px;padding:24px;margin-bottom:18px">
-          <p style="font-size:11px;letter-spacing:1px;color:#c0b7ff;font-weight:700;margin:0 0 6px">FOCUS WINDOW</p>
-          <h1 id="timerDisplay" style="font:800 48px Manrope;margin:0 0 14px">25:00</h1>
-          <div style="display:flex;justify-content:center;gap:12px">
-            <button class="primary" id="timerToggleBtn" type="button">Start Session ▶</button>
-            <button class="btn-secondary" id="timerResetBtn" type="button" style="color:#fff;background:#ffffff20">Reset ↻</button>
-          </div>
-        </div>
-
-        <div style="text-align:left">
-          <h4 style="font:700 13px Manrope;margin:0 0 8px">Recommended Focus Blocks</h4>
-          <div style="display:grid;gap:8px;font-size:12px;color:var(--muted)">
-            <div style="padding:10px;border:1px solid var(--line);border-radius:8px">
-              <b>Morning Block (08:30 – 09:00 AM)</b>: Review DSA lecture notes before Dr. Sharma's lecture in Room A-204.
-            </div>
-            <div style="padding:10px;border:1px solid var(--line);border-radius:8px">
-              <b>Afternoon Block (01:15 – 01:45 PM)</b>: Practice SQL normalization queries at the Central Library.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Course Resources Modal -->
-  <div class="backdrop" id="resourcesBackdrop">
-    <div class="modal modal-large">
-      <button id="closeResourcesModal" aria-label="Close resources">×</button>
-      <div class="modal-head">
-        <h2>Course Resources & Syllabus</h2>
-        <span class="info-pill">Official Notes & Past Papers</span>
-      </div>
-
-      <div class="modal-scrollable" id="resourcesListContainer">
-        <!-- Dynamically populated from /api/academics/resources -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Log Attendance Modal -->
-  <div class="backdrop" id="logAttendanceBackdrop">
-    <div class="modal">
-      <button id="closeLogAttendanceModal" aria-label="Close dialog">×</button>
-      <span>◷</span>
-      <label>ATTENDANCE LOG</label>
-      <h2>Log Class Record</h2>
-      <p>Record your lecture attendance entry.</p>
-
-      <form id="logAttendanceForm" style="text-align:left">
-        <div class="form-group">
-          <label for="attSubjectSelect">Subject</label>
-          <select class="form-select" id="attSubjectSelect" required>
-            <!-- Populated from subjects -->
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="attDateInput">Date</label>
-          <input class="form-input" id="attDateInput" type="date" required>
-        </div>
-
-        <div class="form-group">
-          <label for="attStatusSelect">Status</label>
-          <select class="form-select" id="attStatusSelect" required>
-            <option value="present" selected>Present</option>
-            <option value="absent">Absent</option>
-            <option value="late">Late</option>
-            <option value="excused">Excused (Medical/Official)</option>
-          </select>
-        </div>
-
-        <div class="btn-row">
-          <button class="primary" type="submit" style="width:100%">Save Attendance Entry ✓</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Book Facility Modal -->
-  <div class="backdrop" id="bookFacilityBackdrop">
-    <div class="modal">
-      <button id="closeBookFacilityModal" aria-label="Close dialog">×</button>
-      <span>⌂</span>
-      <label>SPACE RESERVATION</label>
-      <h2 id="bookFacilityTitle">Reserve Study Space</h2>
-      <p id="bookFacilityLocation">Confirm your desk reservation.</p>
-
-      <form id="bookFacilityForm" style="text-align:left">
-        <input type="hidden" id="bookFacilityId">
-
-        <div class="form-group">
-          <label for="bookDateInput">Date</label>
-          <input class="form-input" id="bookDateInput" type="date" required>
-        </div>
-
-        <div class="form-group">
-          <label for="bookSlotSelect">Time Slot</label>
-          <select class="form-select" id="bookSlotSelect" required>
-            <option value="09:00 AM – 11:00 AM">09:00 AM – 11:00 AM (Morning)</option>
-            <option value="11:30 AM – 01:30 PM">11:30 AM – 01:30 PM (Mid-day)</option>
-            <option value="02:00 PM – 04:00 PM" selected>02:00 PM – 04:00 PM (Afternoon)</option>
-            <option value="04:30 PM – 06:30 PM">04:30 PM – 06:30 PM (Evening)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="bookPurposeInput">Purpose</label>
-          <input class="form-input" id="bookPurposeInput" value="Individual study & research" required>
-        </div>
-
-        <div class="btn-row">
-          <button class="primary" type="submit" style="width:100%">Confirm Reservation ✓</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Study Session Modal -->
-  <div class="backdrop" id="addSessionBackdrop">
-    <div class="modal">
-      <button id="closeAddSessionModal" aria-label="Close add session">×</button>
-      <span>📅</span>
-      <label>AI STUDY PLANNER</label>
-      <h2>Schedule Revision Session</h2>
-      <p>Add a structured subject review slot to your timetable.</p>
-
-      <form id="addSessionForm" style="text-align:left">
-        <div class="form-group">
-          <label for="sessSubjectInput">Subject Name</label>
-          <input class="form-input" id="sessSubjectInput" placeholder="e.g. Operating Systems" required>
-        </div>
-        <div class="form-group">
-          <label for="sessTopicInput">Revision Topic / Chapters</label>
-          <input class="form-input" id="sessTopicInput" placeholder="e.g. Virtual Memory & Page Replacement" required>
-        </div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label for="sessDateInput">Date</label>
-            <input class="form-input" id="sessDateInput" type="date" required>
-          </div>
-          <div class="form-group">
-            <label for="sessTimeInput">Start Time</label>
-            <input class="form-input" id="sessTimeInput" type="time" value="16:00" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="sessDurationInput">Duration (Minutes)</label>
-          <input class="form-input" id="sessDurationInput" type="number" min="15" max="360" value="60" required>
-        </div>
-        <div class="btn-row">
-          <button class="primary" type="submit" style="width:100%">Schedule Session +</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Career Goal Modal -->
-  <div class="backdrop" id="addGoalBackdrop">
-    <div class="modal">
-      <button id="closeAddGoalModal" aria-label="Close add goal">×</button>
-      <span>🚀</span>
-      <label>CAREER ROADMAP</label>
-      <h2>New Roadmap Goal</h2>
-      <p>Define a competency target or internship milestone.</p>
-
-      <form id="addGoalForm" style="text-align:left">
-        <div class="form-group">
-          <label for="goalTitleInput">Goal Title</label>
-          <input class="form-input" id="goalTitleInput" placeholder="e.g. AWS Cloud Practitioner Certification" required>
-        </div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label for="goalCategorySelect">Category</label>
-            <select class="form-select" id="goalCategorySelect" required>
-              <option value="skill" selected>Core Skill</option>
-              <option value="internship">Internship Prep</option>
-              <option value="project">Portfolio Project</option>
-              <option value="certification">Certification</option>
-              <option value="academic">Academic Excellence</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="goalTargetDateInput">Target Date</label>
-            <input class="form-input" id="goalTargetDateInput" type="date">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="goalMilestonesInput">Checklist Milestones (one per line)</label>
-          <textarea class="form-input" id="goalMilestonesInput" rows="3" placeholder="Complete Cloud Fundamentals module&#10;Solve 5 sample practice papers&#10;Schedule certification exam"></textarea>
-        </div>
-        <div class="btn-row">
-          <button class="primary" type="submit" style="width:100%">Create Roadmap Goal +</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-
-
-
-  <!-- External Supabase SDK (optional client-side auth) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <script src="campus-mock-engine.js?v=8.0"></script>
-  <script src="script.js?v=8.0"></script>
+    function downloadCSV() {
+      if (!cachedList.length) return alert('No data to export!');
+      let csv = 'Roll,Name,Email,Phone,Department,Year\n';
+      cachedList.forEach(r => {
+        csv += `"${r.roll_number}","${r.name}","${r.email}","${r.phone}","${r.department}","${r.year}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `CampusIQ_${Date.now()}.csv`;
+      a.click();
+    }
+  </script>
 </body>
 </html>
