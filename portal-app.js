@@ -337,7 +337,18 @@ class CampusIQPortalController {
 
     if (!student) {
       // Show login screen; hide private portal
-      if (loginGate) loginGate.classList.remove("hidden");
+      if (loginGate) {
+        loginGate.classList.remove("hidden");
+        const rollEl = document.getElementById("login-input-roll");
+        const passEl = document.getElementById("login-input-password");
+        if (rollEl) rollEl.value = "";
+        if (passEl) {
+          passEl.value = "";
+          passEl.type = "password";
+        }
+        const btn = document.getElementById("btn-toggle-student-password");
+        if (btn) btn.innerHTML = `<i id="icon-toggle-student-password" data-lucide="eye" class="w-4 h-4 text-slate-400"></i>`;
+      }
       if (portalApp) portalApp.classList.add("hidden");
     } else {
       // Show portal; hide login gate
@@ -347,6 +358,70 @@ class CampusIQPortalController {
     }
 
     if (window.lucide) window.lucide.createIcons();
+  }
+
+
+  loadNoticesFromStorage() {
+    const cached = localStorage.getItem("campusiq_notices");
+    if (cached) {
+      try {
+        const adminNotices = JSON.parse(cached);
+        if (Array.isArray(adminNotices) && adminNotices.length > 0) {
+          // Merge with built-in default notices
+          const mapped = adminNotices.map(n => ({
+            id: n.id,
+            title: n.title,
+            target: n.target || "all",
+            student_name: n.student_name || "",
+            badgeType: n.priority === "urgent" ? "badge-exam" : "badge-circular",
+            sourceLabel: n.author || "Office of the Dean",
+            category: n.category ? n.category.toLowerCase() : "academic",
+            priority: n.priority || "high",
+            date: n.date || "Today",
+            department: n.department || "All Engineering Departments",
+            author: n.author || "Dean of Academic Affairs",
+            summary: n.summary || n.message || "",
+            attachmentName: n.attachment || "Official_Notification.pdf",
+            attachmentSize: "240 KB"
+          }));
+          this.state.notices = mapped;
+        }
+      } catch (e) {
+        console.warn("Notice parse error:", e);
+      }
+    }
+  }
+
+  setupCrossTabSync() {
+    window.addEventListener("storage", (e) => {
+      if (e.key === "campusiq_registry_store") {
+        try {
+          const store = JSON.parse(e.newValue || "[]");
+          if (this.state.student) {
+            const updated = store.find(s => s.student_id === this.state.student.student_id);
+            if (updated) {
+              this.state.student = updated;
+              this.renderAllViewsForStudent(updated);
+              this.showToast("Record Updated by Administration", `Your attendance / records were updated to ${updated.overall_attendance}%.`, "info");
+            }
+          }
+        } catch (err) {}
+      } else if (e.key === "campusiq_notices") {
+        this.loadNoticesFromStorage();
+        this.renderNotices();
+      } else if (e.key === "campusiq_tickets") {
+        this.renderTicketsList();
+      }
+    });
+
+    window.addEventListener("campusiq_notices_updated", () => {
+      this.loadNoticesFromStorage();
+      this.renderNotices();
+    });
+
+    window.addEventListener("campusiq:new-notice", () => {
+      this.renderNotices();
+    });
   }
 
   renderAllViewsForStudent(student) {
@@ -495,14 +570,105 @@ class CampusIQPortalController {
     this.renderNotices();
   }
 
+    // --- Personal Institutional Notices & Fee Warning Banners ---
+  renderPersonalNoticeBanner(personalNotices) {
+    const banner = document.getElementById("overview-personal-notice-banner");
+    if (!banner) return;
+
+    if (!personalNotices || personalNotices.length === 0) {
+      banner.innerHTML = "";
+      banner.classList.add("hidden");
+      return;
+    }
+
+    const html = personalNotices.map(n => {
+      const isFee = (n.category || "").toLowerCase().includes("fee") || (n.title || "").toLowerCase().includes("fee");
+      const bgClasses = isFee
+        ? "bg-gradient-to-r from-red-600 via-rose-700 to-amber-600 text-white border-2 border-red-400"
+        : "bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 text-white border-2 border-amber-400";
+
+      return `
+        <div class="${bgClasses} p-4 sm:p-5 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+          <div class="flex items-start gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+              <i data-lucide="${isFee ? 'alert-triangle' : 'bell-ring'}" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span class="text-[10px] font-black uppercase tracking-wider bg-black/40 px-2.5 py-0.5 rounded-full border border-white/25 text-amber-200">
+                  ${n.category || 'Direct Administration Notice'}
+                </span>
+                <span class="text-xs font-mono opacity-90">${n.date || 'Today'}</span>
+                <span class="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">Official Notice from Dean</span>
+              </div>
+              <h3 class="text-sm sm:text-base font-black text-white leading-snug">${n.title}</h3>
+              <p class="text-xs text-white/95 mt-1 leading-relaxed max-w-2xl font-medium">${n.summary || n.message}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full md:w-auto flex-shrink-0">
+            ${isFee ? `
+              <button onclick="window.Portal.switchTab('fees')" class="w-full md:w-auto px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-red-900 font-extrabold text-xs transition shadow-md flex items-center justify-center gap-1.5">
+                <i data-lucide="credit-card" class="w-4 h-4 text-red-600"></i>
+                <span>Review Fees Ledger</span>
+              </button>
+            ` : ''}
+            <button onclick="window.Portal.dismissPersonalNotice('${n.id}')" class="px-3.5 py-2 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-xs transition border border-white/30 flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Acknowledge</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    banner.innerHTML = html;
+    banner.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  dismissPersonalNotice(noticeId) {
+    this.state.notices = this.state.notices.filter(n => n.id !== noticeId);
+    try {
+      localStorage.setItem("campusiq_notices", JSON.stringify(this.state.notices));
+    } catch (e) {}
+    this.renderNotices();
+    this.showToast("Notice Acknowledged", "Notice archived from your active notices list.", "info");
+  }
+
   renderNotices() {
     const listEl = document.getElementById("notices-list-container");
     const overviewListEl = document.getElementById("overview-notices-container");
     if (!listEl && !overviewListEl) return;
 
-    let filtered = this.state.notices;
+    const studentId = this.state.student ? this.state.student.student_id : "";
+    
+    // Check for personal direct notices from local notices + individual notices service
+    let indNotices = [];
+    if (window.CampusIQService && window.CampusIQService.getStudentIndividualNotices) {
+      indNotices = window.CampusIQService.getStudentIndividualNotices(studentId).map(n => ({
+        id: n.id || n.notice_id,
+        target: studentId,
+        title: n.title,
+        summary: n.message,
+        message: n.message,
+        category: n.category || "Official Notice",
+        priority: n.priority || "high",
+        date: new Date(n.created_at).toLocaleDateString(),
+        sourceLabel: "Official Notice from Dean",
+        badgeType: "bg-amber-100 text-amber-800 border border-amber-300 font-bold"
+      }));
+    }
+    const personalNotices = [
+      ...this.state.notices.filter(n => n.target && n.target === studentId),
+      ...indNotices
+    ];
+    this.renderPersonalNoticeBanner(personalNotices);
+
+    // Visible notices: common broadcast to all OR personal to this student
+    let filtered = this.state.notices.filter(n => !n.target || n.target === "all" || n.target === studentId);
+
     if (this.state.noticeFilter !== "all") {
-      filtered = filtered.filter(n => n.category === this.state.noticeFilter);
+      filtered = filtered.filter(n => n.category === this.state.noticeFilter || (n.priority && n.priority === this.state.noticeFilter));
     }
 
     if (this.state.searchQuery.trim() !== "") {
@@ -931,15 +1097,15 @@ class CampusIQPortalController {
     if (window.lucide) window.lucide.createIcons();
   }
 
-  async handleTicketSubmit(event) {
-    event.preventDefault();
+  async async handleTicketSubmit(event) {
+    if (event) event.preventDefault();
     const subject = document.getElementById("ticket-subject").value;
     const category = document.getElementById("ticket-category").value;
     const priority = document.getElementById("ticket-priority").value;
     const message = document.getElementById("ticket-message").value;
 
     if (!subject || !message) {
-      alert("Please fill in both subject and description.");
+      this.showToast("Missing Fields", "Please fill in both subject and description.", "error");
       return;
     }
 
@@ -950,8 +1116,14 @@ class CampusIQPortalController {
       message
     });
 
-    document.getElementById("ticket-submit-form").reset();
+    const form = document.getElementById("ticket-submit-form");
+    if (form) form.reset();
+
+    // Trigger instant cross-tab and cross-window sync to Admin Portal
+    window.dispatchEvent(new Event("campusiq_tickets_updated"));
+
     this.renderTicketsList();
+    this.showToast("Grievance Dispatched to Dean", `Ticket #${newTicket.ticket_number} synced to Admin Portal. 12-Hour SLA active.`, "success");
     this.openSlaEscalationModal(newTicket.ticket_number);
   }
 
@@ -1009,11 +1181,242 @@ class CampusIQPortalController {
     this.calculateCgpaTarget(9.00);
   }
 
+// ==========================================================================
+  // ISOLATED SECTION PRINTING ENGINE (Zero Unwanted Background Pages)
+  // ==========================================================================
+  printIsolatedElement(elementId, docTitle) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+      console.error("[CampusIQ Print] Element not found:", elementId);
+      this.showToast("Print Target Missing", "Document section not found for printing.", "error");
+      return;
+    }
+
+    this.showToast("Document Ready", `Formatting official ${docTitle} for isolated download...`, "info");
+
+    // Remove any previous print frame
+    const old = document.getElementById("campusiq-print-frame");
+    if (old) old.remove();
+
+    const iframe = document.createElement("iframe");
+    iframe.id = "campusiq-print-frame";
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    // Clone element
+    const clone = el.cloneNode(true);
+    // Remove all action buttons and interactive controls from clone
+    clone.querySelectorAll("button, .no-print, input, select").forEach(b => b.remove());
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>${docTitle} — Official Institutional Document</title>
+        <link rel="stylesheet" href="college-theme.css">
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          @page {
+            size: auto;
+            margin: 12mm;
+          }
+          body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #ffffff !important;
+            color: #0F172A !important;
+            padding: 16px;
+            margin: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .font-academic { font-family: 'Cinzel', serif; }
+          button, .no-print { display: none !important; }
+        </style>
+      </head>
+      <body>
+        <div style="max-width: 680px; margin: 0 auto;">
+          ${clone.outerHTML}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 350);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    doc.close();
+  }
+
   printSmartIdCard() {
-    this.showToast("Print Smart ID Pass", "Opening browser print interface for verified institutional ID pass...", "info");
-    setTimeout(() => {
-      window.print();
-    }, 600);
+    this.printIsolatedElement("smart-id-card-element", "Student Smart ID Card");
+  }
+
+  printFeeReceipt() {
+    this.printIsolatedElement("fee-receipt-card", "Official Tuition Fee Voucher");
+  }
+
+  printGatepass() {
+    this.printIsolatedElement("gatepass-card", "Campus Gate Pass");
+  }
+
+  printInternshipNoc() {
+    this.printIsolatedElement("internship-noc-card", "Official Internship NOC Letter");
+  }
+
+  printExamResult() {
+    this.printIsolatedElement("exam-result-card", "Official Semester Examination Grade Card");
+  }
+
+  printHallTicket() {
+    this.printIsolatedElement("hall-ticket-card", "Official Semester 5 Hall Ticket");
+  }
+
+  printEventPass() {
+    this.printIsolatedElement("event-pass-card", "Event & Course Registration Slip");
+  }
+
+  // --- Official Exam Result / Grade Card Modal ---
+  openExamResultModal() {
+    const student = window.CampusIQService ? window.CampusIQService.currentUser : null;
+    if (!student) return;
+
+    const rName = document.getElementById("res-student-name");
+    const rRoll = document.getElementById("res-student-roll");
+    const rDept = document.getElementById("res-student-dept");
+    const rSem = document.getElementById("res-student-sem");
+    const rCgpa = document.getElementById("res-student-cgpa");
+    const rStanding = document.getElementById("res-student-standing");
+    const rTable = document.getElementById("res-subjects-tbody");
+
+    if (rName) rName.textContent = student.full_name;
+    if (rRoll) rRoll.textContent = student.student_id;
+    if (rDept) rDept.textContent = student.department || student.branch;
+    if (rSem) rSem.textContent = student.year_semester || "Year 3, Semester 5";
+    if (rCgpa) rCgpa.textContent = student.cgpa || "8.84";
+    if (rStanding) rStanding.textContent = student.academic_standing || "Dean's Honor List";
+
+    if (rTable && student.subjects) {
+      rTable.innerHTML = student.subjects.map((s, idx) => `
+        <tr class="border-b border-slate-200 text-xs">
+          <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${s.code || 'CSE' + (301 + idx)}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-900">${s.name}</td>
+          <td class="py-2.5 px-3 text-center font-mono font-bold">${s.credits || 4}</td>
+          <td class="py-2.5 px-3 text-center font-bold text-blue-700">${Math.floor(78 + Math.random() * 18)}/100</td>
+          <td class="py-2.5 px-3 text-center font-black text-emerald-700">A+</td>
+          <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-800">9.0</td>
+          <td class="py-2.5 px-3 text-center font-bold text-emerald-600">PASS</td>
+        </tr>
+      `).join("");
+    }
+
+    const modal = document.getElementById("exam-result-modal");
+    if (modal) modal.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeExamResultModal() {
+    const modal = document.getElementById("exam-result-modal");
+    if (modal) modal.classList.add("hidden");
+  }
+
+  // --- Official Examination Hall Ticket Modal ---
+  openHallTicketModal() {
+    const student = window.CampusIQService ? window.CampusIQService.currentUser : null;
+    if (!student) return;
+
+    const hName = document.getElementById("hall-ticket-name");
+    const hRoll = document.getElementById("hall-ticket-roll");
+    const hDept = document.getElementById("hall-ticket-dept");
+    const hPhoto = document.getElementById("hall-ticket-photo");
+    const hTable = document.getElementById("hall-ticket-tbody");
+
+    if (hName) hName.textContent = student.full_name;
+    if (hRoll) hRoll.textContent = student.student_id;
+    if (hDept) hDept.textContent = student.department || student.branch;
+    if (hPhoto && student.avatar_url) hPhoto.src = student.avatar_url;
+
+    if (hTable && student.subjects) {
+      const dates = ["Nov 16, 2026", "Nov 19, 2026", "Nov 23, 2026", "Nov 26, 2026", "Nov 30, 2026"];
+      hTable.innerHTML = student.subjects.map((s, idx) => `
+        <tr class="border-b border-slate-200 text-xs">
+          <td class="py-2 px-3 font-mono font-bold text-slate-800">${dates[idx % dates.length]}</td>
+          <td class="py-2 px-3 font-mono font-semibold text-slate-700">${s.code || 'CSE' + (301 + idx)}</td>
+          <td class="py-2 px-3 font-bold text-slate-900">${s.name}</td>
+          <td class="py-2 px-3 text-center font-mono">10:00 AM - 01:00 PM</td>
+          <td class="py-2 px-3 text-center font-mono font-bold text-blue-700">${s.room || 'Hall A-204'}</td>
+        </tr>
+      `).join("");
+    }
+
+    const modal = document.getElementById("hall-ticket-modal");
+    if (modal) modal.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeHallTicketModal() {
+    const modal = document.getElementById("hall-ticket-modal");
+    if (modal) modal.classList.add("hidden");
+  }
+
+  // --- Event & Course Registration Real Confirmation ---
+  confirmEventRegistration() {
+    const eventTitle = document.getElementById("modal-event-title") ? document.getElementById("modal-event-title").textContent : "Campus Collegiate Event";
+    const student = window.CampusIQService ? window.CampusIQService.currentUser : null;
+    const studentId = student ? student.student_id : "252921201";
+    const studentName = student ? student.full_name : "Enrolled Student";
+
+    const regToken = "REG-2026-EVT-" + Math.floor(100000 + Math.random() * 900000);
+
+    const registered = JSON.parse(localStorage.getItem("campusiq_registered_events") || "[]");
+    registered.push({
+      token: regToken,
+      eventTitle: eventTitle,
+      studentId: studentId,
+      studentName: studentName,
+      registeredAt: new Date().toISOString()
+    });
+    localStorage.setItem("campusiq_registered_events", JSON.stringify(registered));
+
+    this.closeEventModal();
+    this.showToast("Registration Confirmed!", `Enrolled in "${eventTitle}". Token: ${regToken}`, "success");
+    this.openEventPassModal(eventTitle, regToken, student);
+  }
+
+  openEventPassModal(eventTitle, regToken, student) {
+    const s = student || (window.CampusIQService ? window.CampusIQService.currentUser : null);
+    const pTitle = document.getElementById("event-pass-title");
+    const pToken = document.getElementById("event-pass-token");
+    const pStudent = document.getElementById("event-pass-student");
+    const pRoll = document.getElementById("event-pass-roll");
+    const pTime = document.getElementById("event-pass-time");
+
+    if (pTitle) pTitle.textContent = eventTitle;
+    if (pToken) pToken.textContent = regToken;
+    if (pStudent && s) pStudent.textContent = s.full_name;
+    if (pRoll && s) pRoll.textContent = s.student_id;
+    if (pTime) pTime.textContent = new Date().toLocaleString();
+
+    const modal = document.getElementById("event-pass-modal");
+    if (modal) modal.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeEventPassModal() {
+    const modal = document.getElementById("event-pass-modal");
+    if (modal) modal.classList.add("hidden");
   }
 
   calculateCgpaTarget(targetValue) {
@@ -1236,6 +1639,20 @@ class CampusIQPortalController {
   }
 
   // --- Auth Handlers ---
+  togglePasswordVisibility() {
+    const passInput = document.getElementById("login-input-password");
+    const btn = document.getElementById("btn-toggle-student-password");
+    if (!passInput) return;
+    if (passInput.type === "password") {
+      passInput.type = "text";
+      if (btn) btn.innerHTML = `<i id="icon-toggle-student-password" data-lucide="eye-off" class="w-4 h-4 text-amber-400"></i>`;
+    } else {
+      passInput.type = "password";
+      if (btn) btn.innerHTML = `<i id="icon-toggle-student-password" data-lucide="eye" class="w-4 h-4 text-slate-400"></i>`;
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
   async handleLoginSubmit(event) {
     event.preventDefault();
     const rollOrEmail = document.getElementById("login-input-roll").value;
@@ -1251,7 +1668,7 @@ class CampusIQPortalController {
 
   quickDemoLogin(rollNo) {
     document.getElementById("login-input-roll").value = rollNo;
-    document.getElementById("login-input-password").value = "student123";
+    document.getElementById("login-input-password").value = "2026";
     this.handleLoginSubmit({ preventDefault: () => {} });
   }
 

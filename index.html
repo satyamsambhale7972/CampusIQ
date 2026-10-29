@@ -59,6 +59,18 @@
   <script src="students-database.js"></script>
   
   <!-- Official College Theme CSS -->
+    <!-- Auto-purge stale cache to ensure all 4 cohorts (1,000 students) load fresh -->
+  <script>
+    (function() {
+      try {
+        var ver = localStorage.getItem("campusiq_registry_version");
+        if (ver !== "2026_cohort_v5_balanced_1000") {
+          localStorage.removeItem("campusiq_registry_store");
+          localStorage.setItem("campusiq_registry_version", "2026_cohort_v5_balanced_1000");
+        }
+      } catch(e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="college-theme.css">
   
   <!-- Official HD Favicons & App Icons -->
@@ -93,7 +105,8 @@
           </div>
         </div>
         <!-- Gate Theme Toggle -->
-        <button onclick="window.Portal.toggleTheme()" class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-amber-300 font-bold transition" title="Toggle Dark/Light Mode">
+                    
+            <button onclick="window.Portal.toggleTheme()" class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-amber-300 font-bold transition" title="Toggle Dark/Light Mode">
           <i data-lucide="moon" id="theme-icon-gate" class="w-3.5 h-3.5"></i>
           <span id="theme-label-gate">Dark Mode</span>
         </button>
@@ -137,8 +150,9 @@
                 type="text" 
                 id="login-input-roll" 
                 required 
-                value="252921201"
-                placeholder="e.g. 252921201 or satyam.sambhale@campusiq.edu"
+                value=""
+                autocomplete="off"
+                placeholder=""
                 class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm rounded-xl pl-9 pr-4 py-3 border border-slate-700 focus:outline-none focus:border-amber-400"
               >
               <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
@@ -152,11 +166,22 @@
                 type="password" 
                 id="login-input-password" 
                 required 
-                value="student123"
-                placeholder="••••••••"
-                class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm rounded-xl pl-9 pr-4 py-3 border border-slate-700 focus:outline-none focus:border-amber-400"
+                value=""
+                autocomplete="new-password"
+                placeholder=""
+                class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm rounded-xl pl-9 pr-11 py-3 border border-slate-700 focus:outline-none focus:border-amber-400"
               >
               <i data-lucide="key" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+              <button 
+                type="button" 
+                id="btn-toggle-student-password" 
+                onclick="window.Portal.togglePasswordVisibility()" 
+                class="absolute right-3 top-3 text-slate-400 hover:text-amber-400 focus:outline-none p-1 rounded transition cursor-pointer"
+                title="Show / Hide Password"
+                aria-label="Toggle password visibility"
+              >
+                <i id="icon-toggle-student-password" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
             </div>
           </div>
 
@@ -165,24 +190,6 @@
             <span>Sign In to Student Portal</span>
           </button>
         </form>
-
-        <!-- Quick Demo Profiles for Evaluator/Buyer (Does NOT leak to regular public without clicking) -->
-        <div class="mt-6 pt-5 border-t border-slate-700/60">
-          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-            <span>Instant Demo Logins (1-Click):</span>
-            <span class="text-amber-300 font-mono text-[10px]">Pass: student123</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <button onclick="window.Portal.quickDemoLogin('252921201')" class="p-2 rounded-lg bg-[#0B132B] hover:bg-slate-800 border border-slate-700 text-left transition">
-              <div class="font-bold text-white truncate">Satyam Sambhale</div>
-              <div class="text-[10px] text-emerald-400">Roll: 252921201 (84% Att)</div>
-            </button>
-            <button onclick="window.Portal.quickDemoLogin('252921202')" class="p-2 rounded-lg bg-[#0B132B] hover:bg-slate-800 border border-slate-700 text-left transition">
-              <div class="font-bold text-white truncate">Aarav Sharma</div>
-              <div class="text-[10px] text-red-400">Roll: 252921202 (Shortage!)</div>
-            </button>
-          </div>
-        </div>
 
       </div>
     </div>
@@ -482,7 +489,7 @@
           <div class="flex items-center gap-2 sm:gap-3">
             
             <!-- Dark Mode Toggle Button (Upper Right Corner) -->
-            <button onclick="window.Portal.toggleTheme()" id="theme-toggle-header" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition flex items-center gap-1.5" title="Toggle Dark/Normal Mode">
+                        <button onclick="window.Portal.toggleTheme()" id="theme-toggle-header" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition flex items-center gap-1.5" title="Toggle Dark/Normal Mode">
               <i data-lucide="moon" id="theme-icon-header" class="w-4 h-4"></i>
               <span id="theme-label-header" class="text-xs font-bold hidden md:inline">Dark</span>
             </button>
@@ -532,6 +539,9 @@
 
         <!-- ==================== TAB 1: OVERVIEW DASHBOARD ==================== -->
         <div id="tab-overview" class="tab-pane space-y-6">
+          
+          <!-- Personal High-Priority Institutional Notice / Fee Warning Banner -->
+          <div id="overview-personal-notice-banner" class="hidden mb-4"></div>
           
           <!-- Welcome Hero Banner -->
           <div class="bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#1D4ED8] text-white p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -681,7 +691,7 @@
                   <span>Instant Problem Solvers</span>
                 </h4>
                 <div class="space-y-2 text-xs">
-                  <button onclick="window.Portal.downloadResourceSimulator('Semester 5 Hall Ticket (Verified Barcode)')" class="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition flex items-center justify-between">
+                  <button onclick="window.Portal.openHallTicketModal()" class="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition flex items-center justify-between">
                     <span class="font-semibold text-slate-800 flex items-center gap-2">
                       <i data-lucide="qr-code" class="w-4 h-4 text-blue-600"></i>
                       <span>Download Hall Ticket (Barcode Verified)</span>
@@ -945,10 +955,16 @@
               </div>
               <p class="text-xs text-slate-500 mt-1">Official unit-wise mark distribution, high-weightage topics, and faculty consultation cabins.</p>
             </div>
-            <button onclick="window.Portal.switchTab('ai-copilot')" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 text-white font-bold text-xs flex items-center gap-1.5 shadow">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-              <span>Get AI Exam Strategy</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="window.Portal.openExamResultModal()" class="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+                <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                <span>Download Result / Grade Card</span>
+              </button>
+              <button onclick="window.Portal.openHallTicketModal()" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+                <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
+                <span>Semester 5 Hall Ticket</span>
+              </button>
+            </div>
           </div>
 
           <div id="exam-radar-container" class="space-y-4"></div>
@@ -1141,7 +1157,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             <!-- Trending Feature 1: Official Verifiable Digital Smart Student ID Card -->
-            <div class="smart-id-card p-6 flex flex-col justify-between relative shadow-2xl">
+            <div id="smart-id-card-element" class="smart-id-card p-6 flex flex-col justify-between relative shadow-2xl">
               <div>
                 <!-- Top University ID Header -->
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-amber-400/30">
@@ -1961,9 +1977,9 @@
         <button onclick="window.Portal.closeEventModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
           Dismiss
         </button>
-        <button onclick="alert('Registration confirmed! Sent to campus event coordinator.'); window.Portal.closeEventModal();" class="px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-blue-900 text-amber-300 font-bold text-xs transition flex items-center gap-1.5 shadow-sm">
-          <i data-lucide="check" class="w-3.5 h-3.5"></i>
-          <span>Confirm Registration</span>
+        <button onclick="window.Portal.confirmEventRegistration()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+          <span>Confirm Event &amp; Course Registration</span>
         </button>
       </div>
     </div>
@@ -1971,7 +1987,7 @@
 
   <!-- Modal: Official Stamped Institutional Fee Voucher -->
   <div id="fee-receipt-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
+    <div id="fee-receipt-card" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <div class="flex items-center gap-2.5">
           <div class="w-11 h-11 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 to-amber-400 shadow ring-1 ring-blue-400/30">
@@ -2026,7 +2042,7 @@
         <button onclick="window.Portal.closeFeeReceiptModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
           Close
         </button>
-        <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-blue-900 text-amber-300 font-bold text-xs transition flex items-center gap-1.5 shadow-sm">
+        <button onclick="window.Portal.printFeeReceipt()" class="px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-blue-900 text-amber-300 font-bold text-xs transition flex items-center gap-1.5 shadow-sm">
           <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           <span>Print Official Voucher</span>
         </button>
@@ -2090,7 +2106,7 @@
 
   <!-- Modal: Live Verifiable Digital E-Gatepass QR -->
   <div id="egatepass-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
+    <div id="gatepass-card" class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <span class="text-xs font-bold text-orange-600 uppercase tracking-wider flex items-center gap-1">
           <i data-lucide="shield-check" class="w-4 h-4"></i> Official Campus Gatepass
@@ -2133,7 +2149,7 @@
         <button onclick="window.Portal.closeGatepassModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
           Dismiss
         </button>
-        <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+        <button onclick="window.Portal.printGatepass()" class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
           <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           <span>Print Pass</span>
         </button>
@@ -2143,7 +2159,7 @@
 
   <!-- Modal: Official Signed Institutional NOC Letter -->
   <div id="internship-noc-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
+    <div id="internship-noc-card" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <div class="flex items-center gap-2.5">
           <div class="w-11 h-11 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 to-amber-400 shadow ring-1 ring-blue-400/30">
@@ -2191,7 +2207,7 @@
         <button onclick="window.Portal.closeInternshipNocModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
           Close
         </button>
-        <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-pink-700 hover:bg-pink-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+        <button onclick="window.Portal.printInternshipNoc()" class="px-4 py-2 rounded-lg bg-pink-700 hover:bg-pink-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
           <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           <span>Print Official NOC</span>
         </button>
@@ -2240,6 +2256,248 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  
+  <!-- ====================================================================
+       MODAL 1: OFFICIAL SEMESTER EXAMINATION RESULT & GRADE CARD
+       ==================================================================== -->
+  <div id="exam-result-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden overflow-y-auto">
+    <div id="exam-result-card" class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-4 shadow-2xl relative border-t-8 border-t-blue-800 my-8">
+      
+      <!-- Official University Header -->
+      <div class="flex items-center justify-between pb-4 border-b-2 border-slate-900">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl p-0.5 bg-amber-400 shadow ring-1 ring-amber-500 flex-shrink-0">
+            <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
+              <img src="campusiq-logo.png" alt="University Crest" class="w-full h-full object-cover">
+            </div>
+          </div>
+          <div>
+            <h3 class="font-academic text-base sm:text-lg font-black text-slate-900 tracking-wider">CAMPUSIQ AUTONOMOUS UNIVERSITY SYSTEM</h3>
+            <p class="text-[10px] sm:text-xs text-amber-700 font-mono font-bold uppercase tracking-widest">Office of the Controller of Examinations &bull; Official Grade Card</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300 uppercase">Verified Result</span>
+        </div>
+      </div>
+
+      <!-- Student Credentials Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+        <div>
+          <span class="text-slate-500 font-semibold block text-[10px] uppercase">Candidate Name</span>
+          <strong id="res-student-name" class="text-slate-900 font-bold">Satyam Sambhale</strong>
+        </div>
+        <div>
+          <span class="text-slate-500 font-semibold block text-[10px] uppercase">Roll Number / PRN</span>
+          <strong id="res-student-roll" class="font-mono text-blue-700 font-black">252921201</strong>
+        </div>
+        <div>
+          <span class="text-slate-500 font-semibold block text-[10px] uppercase">Academic Cohort</span>
+          <strong id="res-student-sem" class="text-slate-800 font-bold">Year 3, Semester 5</strong>
+        </div>
+        <div class="col-span-2">
+          <span class="text-slate-500 font-semibold block text-[10px] uppercase">Department / Degree</span>
+          <strong id="res-student-dept" class="text-slate-800 font-bold">Computer Science and Engineering</strong>
+        </div>
+        <div>
+          <span class="text-slate-500 font-semibold block text-[10px] uppercase">Academic Standing</span>
+          <strong id="res-student-standing" class="text-emerald-700 font-black">Dean's Honor List</strong>
+        </div>
+      </div>
+
+      <!-- Subject-wise Marks & Grade Ledger -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold">
+              <th class="py-2 px-3">Code</th>
+              <th class="py-2 px-3">Course Title</th>
+              <th class="py-2 px-3 text-center">Credits</th>
+              <th class="py-2 px-3 text-center">Marks</th>
+              <th class="py-2 px-3 text-center">Grade</th>
+              <th class="py-2 px-3 text-center">Grade Point</th>
+              <th class="py-2 px-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="res-subjects-tbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Result Summary & Dean Seal -->
+      <div class="flex items-center justify-between flex-wrap gap-4 pt-3 border-t border-slate-200 text-xs">
+        <div>
+          <div class="text-slate-500 font-semibold text-[10px] uppercase">Cumulative Performance</div>
+          <div class="text-lg font-black text-slate-900 font-mono mt-0.5">
+            CGPA: <span id="res-student-cgpa" class="text-blue-700">8.84</span> / 10.00
+          </div>
+          <span class="text-emerald-700 font-bold text-[11px]">&bull; Class of Award: FIRST CLASS WITH DISTINCTION</span>
+        </div>
+        <div class="text-right">
+          <div class="barcode-strip text-xs text-slate-800 select-none">||| | |||| | ||||| || ||| ||||</div>
+          <p class="text-[9px] text-slate-500 font-mono mt-0.5">Dr. Rajeshwar Sen &bull; Controller of Examinations</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-2 no-print border-t border-slate-100">
+        <button onclick="window.Portal.closeExamResultModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          Close
+        </button>
+        <button onclick="window.Portal.printExamResult()" class="px-5 py-2.5 rounded-lg bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs transition flex items-center gap-2 shadow">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Print / Download Result Card</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 2: OFFICIAL EXAMINATION HALL TICKET (VERIFIED BARCODE)
+       ==================================================================== -->
+  <div id="hall-ticket-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden overflow-y-auto">
+    <div id="hall-ticket-card" class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-4 shadow-2xl relative border-t-8 border-t-red-600 my-8">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b-2 border-slate-900">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl p-0.5 bg-amber-400 shadow ring-1 ring-amber-500 flex-shrink-0">
+            <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
+              <img src="campusiq-logo.png" alt="University Crest" class="w-full h-full object-cover">
+            </div>
+          </div>
+          <div>
+            <h3 class="font-academic text-base font-black text-slate-900 tracking-wider">CAMPUSIQ EXAMINATION COUNCIL</h3>
+            <p class="text-[10px] text-red-700 font-mono font-bold uppercase tracking-widest">End-Semester Examination Hall Ticket &bull; Fall 2026</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-800 font-bold text-[10px] border border-red-300">Statutory Clearance Approved</span>
+        </div>
+      </div>
+
+      <!-- Candidate Box with Photo -->
+      <div class="flex items-start gap-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+        <div class="w-16 h-20 bg-slate-200 rounded-lg overflow-hidden border border-slate-300 flex-shrink-0">
+          <img id="hall-ticket-photo" src="" alt="Candidate" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-slate-500 text-[10px] uppercase font-semibold">Candidate Name</span>
+            <strong id="hall-ticket-name" class="text-slate-900 font-bold block">Satyam Sambhale</strong>
+          </div>
+          <div>
+            <span class="text-slate-500 text-[10px] uppercase font-semibold">Roll Number / PRN</span>
+            <strong id="hall-ticket-roll" class="font-mono text-blue-700 font-black block">252921201</strong>
+          </div>
+          <div class="col-span-2">
+            <span class="text-slate-500 text-[10px] uppercase font-semibold">Department &amp; Branch</span>
+            <strong id="hall-ticket-dept" class="text-slate-800 font-bold block">Computer Science and Engineering</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Examination Schedule Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-white text-[11px] uppercase font-bold">
+              <th class="py-2 px-3">Date</th>
+              <th class="py-2 px-3">Code</th>
+              <th class="py-2 px-3">Course Title</th>
+              <th class="py-2 px-3 text-center">Timing</th>
+              <th class="py-2 px-3 text-center">Hall / Center</th>
+            </tr>
+          </thead>
+          <tbody id="hall-ticket-tbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Biometric Barcode & Controller Signature -->
+      <div class="bg-black/90 p-3 rounded-xl border border-white/10 text-white flex items-center justify-between">
+        <div>
+          <div class="barcode-strip text-xs text-amber-300 select-none">||| | |||| | ||||| || ||| |||| | |||</div>
+          <div class="text-[9px] text-slate-400 font-mono mt-0.5">Biometric Gate Scanner Verification Hash: 252921-APPROVED</div>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-emerald-400 font-bold">&check; Countersigned by Controller</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-2 no-print border-t border-slate-100">
+        <button onclick="window.Portal.closeHallTicketModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          Close
+        </button>
+        <button onclick="window.Portal.printHallTicket()" class="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition flex items-center gap-2 shadow">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Print / Download Hall Ticket</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL 3: EVENT & COURSE REGISTRATION CONFIRMATION PASS
+       ==================================================================== -->
+  <div id="event-pass-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+    <div id="event-pass-card" class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative border-t-8 border-t-emerald-600">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm text-slate-900">Registration Confirmed</h4>
+            <p class="text-[10px] text-slate-500 font-mono">Academic Events &amp; Electives Council</p>
+          </div>
+        </div>
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold">CONFIRMED</span>
+      </div>
+
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+        <div>
+          <span class="text-slate-500 block text-[10px] uppercase font-semibold">Registered Activity</span>
+          <strong id="event-pass-title" class="text-sm font-black text-slate-900 block mt-0.5">Advanced Cloud Workshop</strong>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Student Name</span>
+            <strong id="event-pass-student" class="text-slate-800 font-bold block">Satyam Sambhale</strong>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Roll Number</span>
+            <strong id="event-pass-roll" class="font-mono text-blue-700 font-bold block">252921201</strong>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-slate-200">
+          <span class="text-slate-500 block text-[10px] uppercase font-semibold">Registration Token</span>
+          <strong id="event-pass-token" class="font-mono text-emerald-700 font-black text-sm block">REG-2026-EVT-789201</strong>
+        </div>
+        <div class="text-[10px] text-slate-400 font-mono pt-1">
+          Timestamp: <span id="event-pass-time">Oct 30, 2026 02:20 AM</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 no-print border-t border-slate-100">
+        <button onclick="window.Portal.closeEventPassModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          Close
+        </button>
+        <button onclick="window.Portal.printEventPass()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span>Print Registration Slip</span>
+        </button>
+      </div>
+
     </div>
   </div>
 

@@ -1,33 +1,18 @@
-# Environment files containing sensitive keys
-.env
-.env.local
-.env.*.local
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Python cache & artifacts
+# CampusIQ - Git Ignore Rules
+*.zip
+*.log
+*.tmp
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-dist/
-*.egg-info/
-
-# Testing & Coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Editor & OS files
+*.pyc
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
+temp-*.js
+admin-app-backup-*.js
+admin-app-test-*.js
+test-*.jpg
+test_*.py
+generate_*.py
+inspect_*.py
+update_*.py
+apply_*.py
+package_*.py

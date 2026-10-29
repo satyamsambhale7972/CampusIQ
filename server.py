@@ -18,8 +18,7 @@ class CampusPortalHandler(http.server.SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     os.chdir(DIRECTORY)
     # Allow port reuse
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), CampusPortalHandler) as httpd:
+    with http.server.ThreadingHTTPServer(("", PORT), CampusPortalHandler) as httpd:
         print(f"================================================================")
         print(f" CAMPUSIQ Official College Student Portal Server Live")
         print(f" Serving directory: {DIRECTORY}")
