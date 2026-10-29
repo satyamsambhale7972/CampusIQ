@@ -1,0 +1,6 @@
+# Allow all search engines (Googlebot, Bingbot) to crawl CampusIQ
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: sitemap.xml
