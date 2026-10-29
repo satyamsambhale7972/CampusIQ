@@ -33,9 +33,9 @@
     (function() {
       try {
         var ver = localStorage.getItem("campusiq_registry_version");
-        if (ver !== "2026_cohort_v5_balanced_1000") {
+        if (ver !== "2026_cohort_v7_universal_2026") {
           localStorage.removeItem("campusiq_registry_store");
-          localStorage.setItem("campusiq_registry_version", "2026_cohort_v5_balanced_1000");
+          localStorage.setItem("campusiq_registry_version", "2026_cohort_v7_universal_2026");
         }
         // STRICT SECURITY: Wipe stored administrative session on page open
         localStorage.removeItem("campusiq_admin_session");

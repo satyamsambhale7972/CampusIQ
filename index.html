@@ -64,9 +64,10 @@
     (function() {
       try {
         var ver = localStorage.getItem("campusiq_registry_version");
-        if (ver !== "2026_cohort_v5_balanced_1000") {
+        if (ver !== "2026_cohort_v7_universal_2026") {
           localStorage.removeItem("campusiq_registry_store");
-          localStorage.setItem("campusiq_registry_version", "2026_cohort_v5_balanced_1000");
+          localStorage.removeItem("campusiq_authenticated_student");
+          localStorage.setItem("campusiq_registry_version", "2026_cohort_v7_universal_2026");
         }
       } catch(e) {}
     })();
@@ -141,8 +142,11 @@
           </div>
         </div>
 
+        <!-- Error Alert -->
+        <div id="student-login-error" class="hidden mb-4 p-3 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-xs font-semibold"></div>
+
         <!-- Login Form -->
-        <form onsubmit="window.Portal.handleLoginSubmit(event)" class="space-y-4">
+        <form onsubmit="event.preventDefault(); if(window.Portal) window.Portal.handleLoginSubmit(event); return false;" class="space-y-4">
           <div>
             <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Student Roll No or College Email *</label>
             <div class="relative">
@@ -154,6 +158,7 @@
                 autocomplete="off"
                 placeholder=""
                 class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm rounded-xl pl-9 pr-4 py-3 border border-slate-700 focus:outline-none focus:border-amber-400"
+                onkeydown="if(event.key==='Enter'){event.preventDefault(); if(window.Portal) window.Portal.handleLoginSubmit(event);}"
               >
               <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
             </div>
@@ -170,6 +175,7 @@
                 autocomplete="new-password"
                 placeholder=""
                 class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm rounded-xl pl-9 pr-11 py-3 border border-slate-700 focus:outline-none focus:border-amber-400"
+                onkeydown="if(event.key==='Enter'){event.preventDefault(); if(window.Portal) window.Portal.handleLoginSubmit(event);}"
               >
               <i data-lucide="key" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
               <button 
@@ -185,7 +191,7 @@
             </div>
           </div>
 
-          <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+          <button type="button" onclick="event.preventDefault(); if(window.Portal) window.Portal.handleLoginSubmit(event); return false;" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span>Sign In to Student Portal</span>
           </button>
@@ -210,42 +216,21 @@
     <!-- LEFT-SIDE NAVIGATION SIDEBAR -->
     <aside id="desktop-sidebar" class="college-sidebar w-72 h-screen fixed left-0 top-0 z-40 hidden md:flex flex-col justify-between p-4 shadow-xl custom-scroll overflow-y-auto">
       <div>
-        
-        <!-- College Brand Header -->
-        <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-700/60 cursor-pointer" onclick="window.Portal.switchTab('overview')">
-          <div class="w-12 h-12 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-amber-400 shadow-lg ring-1 ring-blue-400/40">
+        <!-- College Brand Header (Clickable Logo Navigates to Overview) -->
+        <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-700/60 cursor-pointer group transition hover:opacity-90" onclick="window.Portal.switchTab('overview')" title="CampusIQ Institutional ERP - Click to return to Overview">
+          <div class="w-11 h-11 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-amber-400 shadow-lg ring-1 ring-blue-400/40 group-hover:ring-amber-400/60 transition">
             <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
               <img src="campusiq-logo.png" alt="CampusIQ Official Collegiate Seal" class="w-full h-full object-cover select-none pointer-events-none">
             </div>
           </div>
           <div class="min-w-0">
-            <h1 class="font-academic text-xl font-black tracking-wider text-white flex items-center leading-none">
+            <h1 class="font-academic text-lg font-black tracking-wider text-white flex items-center leading-none">
               CAMPUS<span class="text-amber-400">IQ</span>
             </h1>
             <p class="text-[10px] text-amber-300 font-mono tracking-wider uppercase font-bold mt-1">
               Autonomous ERP
             </p>
             <div class="text-[9px] text-slate-400 font-medium">NAAC 'A++' Accredited</div>
-          </div>
-        </div>
-
-        <!-- Active Logged-In Student Profile Chip -->
-        <div class="bg-[#1C2541] p-3 rounded-xl border border-slate-700/80 mb-5 relative group">
-          <div class="flex items-center gap-3">
-            <div class="relative cursor-pointer" onclick="window.Portal.openPhotoUploadModal()" title="Click to change profile photo">
-              <img id="sidebar-student-avatar" src="" alt="Avatar" class="w-11 h-11 rounded-full object-cover border-2 border-amber-400 shadow-sm group-hover:opacity-80 transition">
-              <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px] shadow">
-                <i data-lucide="camera" class="w-3 h-3"></i>
-              </div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h4 id="sidebar-student-name" class="text-xs font-bold text-white truncate">Student Name</h4>
-              <div id="sidebar-student-roll" class="text-[11px] text-amber-300 font-mono font-medium">Roll: ...</div>
-              <div id="sidebar-student-dept" class="text-[10px] text-slate-400 truncate">Department</div>
-            </div>
-            <button onclick="window.Portal.handleSignOut()" title="Sign Out" class="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-700/60 text-red-300 transition">
-              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-            </button>
           </div>
         </div>
 
@@ -358,18 +343,18 @@
     <aside id="mobile-sidebar" class="college-sidebar w-72 h-screen fixed left-0 top-0 z-50 flex flex-col justify-between p-4 shadow-2xl -translate-x-full transition-transform md:hidden custom-scroll overflow-y-auto">
       <div>
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.Portal.switchTab('overview')" title="CampusIQ Institutional ERP - Click to return to Overview">
             <div class="w-10 h-10 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 to-amber-400 shadow ring-1 ring-blue-400/30">
               <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
                 <img src="campusiq-logo.png" alt="CampusIQ Official Collegiate Seal" class="w-full h-full object-cover select-none pointer-events-none">
               </div>
             </div>
             <div>
-              <span class="font-academic text-base font-black text-white">CAMPUS<span class="text-amber-400">IQ</span></span>
-              <span class="text-[9px] text-amber-300 block uppercase font-mono tracking-wider">Autonomous Portal</span>
+              <span class="font-academic text-base font-black text-white flex items-center leading-none">CAMPUS<span class="text-amber-400">IQ</span></span>
+              <span class="text-[9px] text-amber-300 block uppercase font-mono tracking-wider mt-0.5">Autonomous ERP</span>
             </div>
           </div>
-          <button onclick="window.Portal.toggleMobileSidebar()" class="text-slate-400 hover:text-white">
+          <button onclick="window.Portal.toggleMobileSidebar()" class="text-slate-400 hover:text-white p-1 rounded-lg">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
@@ -442,26 +427,9 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           <div class="flex items-center gap-3">
-            <button onclick="window.Portal.toggleMobileSidebar()" class="md:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+            <button onclick="window.Portal.toggleMobileSidebar()" class="md:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700" title="Open Menu">
               <i data-lucide="menu" class="w-5 h-5"></i>
             </button>
-
-            <!-- Brand Mark in Top Header Bar -->
-            <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.Portal.switchTab('overview')">
-              <div class="w-10 h-10 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 to-amber-400 shadow ring-1 ring-blue-400/30">
-                <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
-                  <img src="campusiq-logo.png" alt="CampusIQ Official Collegiate Seal" class="w-full h-full object-cover select-none pointer-events-none">
-                </div>
-              </div>
-              <div class="leading-tight hidden sm:block">
-                <span class="font-academic font-black text-sm tracking-wider text-slate-900 dark:text-white flex items-center">
-                  CAMPUS<span class="text-amber-500">IQ</span>
-                </span>
-                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold block uppercase tracking-wider">
-                  University SIS
-                </span>
-              </div>
-            </div>
           </div>
 
           <!-- Instant Spotlight Search Bar -->
@@ -509,8 +477,9 @@
               <button onclick="window.Portal.openPhotoUploadModal()" title="Change Profile Photo" class="relative group">
                 <img id="header-student-avatar" src="" alt="Avatar" class="w-8 h-8 rounded-full object-cover border-2 border-blue-600 shadow-sm group-hover:opacity-80 transition">
               </button>
-              <button onclick="window.Portal.handleSignOut()" title="Sign Out" class="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 transition">
-                <i data-lucide="log-out" class="w-4 h-4"></i>
+              <button onclick="window.Portal.handleSignOut()" title="Sign Out of Student Portal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition cursor-pointer" aria-label="Sign Out">
+                <i data-lucide="log-out" class="w-4 h-4 text-white"></i>
+                <span class="hidden md:inline font-bold">Sign Out</span>
               </button>
             </div>
 
@@ -519,16 +488,16 @@
         </div>
       </header>
 
-      <!-- Marquee Ticker: Direct Official Circulars -->
-      <div class="ticker-wrap py-2 px-4 shadow-sm border-b border-amber-200">
-        <div class="max-w-7xl mx-auto flex items-center">
-          <div class="flex items-center gap-1.5 bg-blue-900 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider mr-3 flex-shrink-0">
+      <!-- Marquee Ticker: Direct Official Circulars (Continuous Horizontal Scrolling) -->
+      <div class="ticker-wrap py-2.5 px-4 shadow-sm border-b border-amber-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto flex items-center gap-3">
+          <div class="flex items-center gap-1.5 bg-blue-900 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider flex-shrink-0 z-10 shadow-sm">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
             <span>Official Circulars</span>
           </div>
-          <div class="overflow-hidden flex-1">
+          <div class="ticker-track overflow-hidden flex-1 relative">
             <div id="campus-marquee-text" class="ticker-content">
-              <span class="text-xs text-slate-700 font-semibold">Loading official university circulars...</span>
+              <span class="text-xs text-slate-700 dark:text-slate-300 font-semibold">Loading official university circulars...</span>
             </div>
           </div>
         </div>

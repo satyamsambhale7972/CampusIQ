@@ -1,7 +1,8 @@
 /* ====================================================================
-   CAMPUSIQ — Precision Dual-Theme Collegiate Design System v6.0
-   Guarantees 100% visible brand identity, razor-sharp light mode,
-   and deep obsidian dark mode with zero blurry or invisible text.
+   CAMPUSIQ — Precision Collegiate Dual-Theme Design System v7.5
+   Guarantees 100% visible typography, crystal-clear light mode,
+   deep obsidian dark mode with zero blank keywords or washed-out text,
+   smooth horizontal scrolling circulars marquee, and isolated section printing.
    ==================================================================== */
 
 :root {
@@ -11,14 +12,13 @@
 
 body {
   font-family: var(--font-sans);
-  -webkit-font-smoothing: auto !important;
-  -moz-osx-font-smoothing: auto !important;
-  text-rendering: geometricPrecision !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-academic {
-  font-family: var(--font-sans) !important;
-  font-weight: 900 !important;
+  font-family: var(--font-sans);
+  font-weight: 900;
   letter-spacing: -0.02em;
 }
 
@@ -35,383 +35,294 @@ body {
   border-radius: 9999px;
 }
 
-/* ====================================================================
-   1. UNIVERSAL HIGH-CONTRAST LIGHT MODE ARCHITECTURE
-   ==================================================================== */
-
-body:not(.dark-theme),
-html:not(.dark) body {
-  background-color: #F8FAFC !important;
-  color: #0F172A !important;
-}
-
-body:not(.dark-theme) main {
-  background-color: #F8FAFC !important;
-}
-
-/* Headings in Light Mode */
-body:not(.dark-theme) main h1,
-body:not(.dark-theme) main h2,
-body:not(.dark-theme) main h3,
-body:not(.dark-theme) main h4,
-body:not(.dark-theme) main h5 {
-  color: #0F172A !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.015em;
-}
-
-/* Paragraphs & Text in Light Mode */
-body:not(.dark-theme) main p,
-body:not(.dark-theme) main label,
-body:not(.dark-theme) main li {
-  color: #1E293B;
-  font-weight: 600;
-}
-
-/* Card Surfaces in Light Mode */
-body:not(.dark-theme) main .bg-white,
-body:not(.dark-theme) header.bg-white {
-  background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
-  box-shadow: 0 1px 4px 0 rgba(15, 23, 42, 0.08) !important;
-  color: #0F172A !important;
-}
-
-/* Tables in Light Mode */
-body:not(.dark-theme) main table th {
-  background-color: #E2E8F0 !important;
-  color: #0F172A !important;
-  font-weight: 900 !important;
-  border-bottom: 2px solid #94A3B8 !important;
-  font-size: 11px !important;
-  letter-spacing: 0.04em;
-}
-
-body:not(.dark-theme) main table td {
-  color: #0F172A !important;
-  font-weight: 700 !important;
-  border-bottom: 1px solid #CBD5E1 !important;
-}
-
-body:not(.dark-theme) main table tr:hover td {
-  background-color: #F1F5F9 !important;
-}
-
-/* Form Inputs in Light Mode */
-body:not(.dark-theme) main input:not([type="checkbox"]):not([type="radio"]),
-body:not(.dark-theme) main select,
-body:not(.dark-theme) main textarea {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
-  border: 1.5px solid #94A3B8 !important;
-  font-weight: 700 !important;
-}
-
-body:not(.dark-theme) main input:focus,
-body:not(.dark-theme) main select:focus,
-body:not(.dark-theme) main textarea:focus {
-  border-color: #1D4ED8 !important;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15) !important;
-}
-
-/* Modals & Drawers in Light Mode */
-body:not(.dark-theme) #student-profile-drawer > div,
-body:not(.dark-theme) #admin-edit-student-modal > div,
-body:not(.dark-theme) #admin-direct-notice-modal > div,
-body:not(.dark-theme) #admin-resolve-ticket-modal > div,
-body:not(.dark-theme) #nexora-right-drawer {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
-  border-color: #CBD5E1 !important;
-}
-
-/* Light Mode Component Rules */
-body:not(.dark-theme) .dept-attendance-title {
-  color: #0F172A !important;
-  font-weight: 900 !important;
-}
-
-body:not(.dark-theme) .notice-title {
-  color: #0F172A !important;
-  font-weight: 900 !important;
-}
-
-body:not(.dark-theme) .notice-summary-text {
-  color: #1E293B !important;
-  font-weight: 600 !important;
-}
-
-body:not(.dark-theme) .notice-meta-date,
-body:not(.dark-theme) .notice-meta-line {
-  color: #475569 !important;
-  font-weight: 700 !important;
-}
-
-body:not(.dark-theme) .ticket-subject {
-  color: #0F172A !important;
-  font-weight: 900 !important;
-}
-
-body:not(.dark-theme) .ticket-message-box {
-  background-color: #F1F5F9 !important;
-  color: #0F172A !important;
-  border-color: #CBD5E1 !important;
-  font-weight: 600 !important;
-}
-
-body:not(.dark-theme) .ticket-meta {
-  color: #475569 !important;
-  border-color: #E2E8F0 !important;
-  font-weight: 700 !important;
-}
-
-body:not(.dark-theme) .student-highlight {
-  color: #0F172A !important;
-}
-
-body:not(.dark-theme) .faculty-name {
-  color: #0F172A !important;
-  font-weight: 900 !important;
-}
-
-body:not(.dark-theme) .faculty-email {
-  color: #1D4ED8 !important;
-  font-weight: 800 !important;
-}
-
-body:not(.dark-theme) .faculty-dept,
-body:not(.dark-theme) .faculty-lectures,
-body:not(.dark-theme) .faculty-hours {
-  color: #0F172A !important;
-}
-
-
-/* ====================================================================
-   2. PURE OBSIDIAN DARK MODE ARCHITECTURE (Crystal-Clear White Text)
-   ==================================================================== */
-
-.dark-theme body,
-html.dark body {
+/* Sidebar Architecture (Persistent Dark Collegiate Navy) */
+.college-sidebar,
+#admin-main-sidebar {
   background-color: #070D19 !important;
-  color: #F8FAFC !important;
-}
-
-.dark-theme main,
-html.dark main {
-  background-color: #070D19 !important;
-}
-
-.dark-theme .bg-white,
-html.dark .bg-white,
-.dark-theme .bg-slate-800,
-html.dark .bg-slate-800 {
-  background-color: #0F172A !important;
-  border-color: #1E293B !important;
-  color: #F8FAFC !important;
-}
-
-.dark-theme header,
-html.dark header {
-  background-color: #081225 !important;
-  border-color: #1E293B !important;
-}
-
-.dark-theme h1,
-.dark-theme h2,
-.dark-theme h3,
-.dark-theme h4,
-.dark-theme h5,
-html.dark h1,
-html.dark h2,
-html.dark h3,
-html.dark h4,
-html.dark h5 {
+  border-right: 1px solid rgba(51, 65, 85, 0.5) !important;
   color: #FFFFFF !important;
 }
 
-.dark-theme p,
-html.dark p,
-.dark-theme label,
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #94A3B8;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.sidebar-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.sidebar-nav-link.active {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.sidebar-nav-link.active i {
+  color: #FFFFFF !important;
+}
+
+/* Base Card Surfaces */
+.portal-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);
+}
+
+.portal-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FFFFFF;
+}
+
+.timetable-row {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  transition: all 0.15s;
+}
+
+.timetable-row:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.timetable-row.active-now {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+/* Smart Student ID Card */
+.smart-id-card {
+  background: linear-gradient(135deg, #061122 0%, #0B132B 50%, #1C2541 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  border-radius: 1.25rem;
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   HORIZONTAL CONTINUOUS SCROLLING OFFICIAL CIRCULARS MARQUEE
+   Smooth endless horizontal glide across the screen with hover-pause
+   ========================================================================== */
+.ticker-wrap {
+  background: #FEF3C7;
+  border-bottom: 1.5px solid #FDE68A;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.ticker-track {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marqueeHorizontal 32s linear infinite;
+}
+
+.ticker-content:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeHorizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1E293B;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ticker-item:hover {
+  color: #1D4ED8;
+  text-decoration: underline;
+}
+
+.barcode-strip {
+  letter-spacing: 2px;
+  font-family: var(--font-mono);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+/* ==========================================================================
+   DARK THEME HARMONIZATION (Applied when <html class="dark">)
+   Smoothly flips backgrounds to deep obsidian and dark text to crisp white,
+   WITHOUT overriding specific badge colors (amber, emerald, red, blue).
+   ========================================================================== */
+html.dark body {
+  background-color: #070D19;
+  color: #F8FAFC;
+}
+
+html.dark header {
+  background-color: #081225;
+  border-color: #1E293B;
+}
+
+html.dark .bg-white {
+  background-color: #0F172A;
+  border-color: #1E293B;
+}
+
+html.dark .portal-card,
+html.dark .timetable-row {
+  background-color: #0F172A;
+  border-color: #1E293B;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+html.dark .timetable-row.active-now {
+  background-color: #0F2042;
+  border-color: #2563EB;
+}
+
+html.dark .portal-card-header {
+  background-color: #0F172A;
+  border-color: #1E293B;
+}
+
+/* Headings in Dark Mode */
+html.dark main h1,
+html.dark main h2,
+html.dark main h3,
+html.dark main h4 {
+  color: #FFFFFF;
+}
+
 html.dark label {
-  color: #CBD5E1 !important;
+  color: #CBD5E1;
 }
 
-/* Tables in Dark Mode */
-.dark-theme table th,
+/* Slate Text in Dark Mode (High Contrast, No Blank Keywords) */
+html.dark .text-slate-900 {
+  color: #F8FAFC;
+}
+
+html.dark .text-slate-800 {
+  color: #F1F5F9;
+}
+
+html.dark .text-slate-700 {
+  color: #E2E8F0;
+}
+
+html.dark .text-slate-600 {
+  color: #CBD5E1;
+}
+
+html.dark .text-slate-500 {
+  color: #94A3B8;
+}
+
+/* Card Surface Backgrounds in Dark Mode */
+html.dark .portal-card .bg-slate-50,
+html.dark .portal-card .bg-slate-100,
+html.dark main .bg-slate-50,
+html.dark main .bg-slate-100 {
+  background-color: #141E33;
+  border-color: #1E293B;
+}
+
+html.dark .portal-card .border-slate-100,
+html.dark .portal-card .border-slate-200,
+html.dark main .border-slate-200 {
+  border-color: #1E293B;
+}
+
+html.dark .portal-card .divide-slate-100 > * + * {
+  border-color: #1E293B;
+}
+
+/* Marquee Ticker in Dark Mode */
+html.dark .ticker-wrap {
+  background: #0B132B;
+  border-color: #1E293B;
+}
+
+html.dark .ticker-item {
+  color: #E2E8F0;
+}
+
+html.dark .ticker-item:hover {
+  color: #60A5FA;
+}
+
+/* Table Harmonization in Dark Mode */
 html.dark table th {
-  background-color: #0B1325 !important;
-  color: #E2E8F0 !important;
-  border-color: #1E293B !important;
+  background-color: #0B1325;
+  color: #E2E8F0;
+  border-color: #1E293B;
 }
 
-.dark-theme table td,
 html.dark table td {
-  color: #E2E8F0 !important;
-  border-color: #1E293B !important;
+  border-color: #1E293B;
+  color: #E2E8F0;
 }
 
-.dark-theme table tr:hover td,
 html.dark table tr:hover td {
-  background-color: #0F1B33 !important;
+  background-color: #0F1B33;
 }
 
 /* Form Inputs in Dark Mode */
-.dark-theme input:not([type="checkbox"]):not([type="radio"]),
-.dark-theme select,
-.dark-theme textarea,
 html.dark input:not([type="checkbox"]):not([type="radio"]),
 html.dark select,
 html.dark textarea {
-  background-color: #0B1325 !important;
-  color: #FFFFFF !important;
-  border-color: #334155 !important;
-}
-
-/* Modals & Drawers in Dark Mode */
-.dark-theme #student-profile-drawer > div,
-.dark-theme #admin-edit-student-modal > div,
-.dark-theme #admin-direct-notice-modal > div,
-.dark-theme #admin-resolve-ticket-modal > div,
-.dark-theme #nexora-right-drawer,
-html.dark #student-profile-drawer > div,
-html.dark #admin-edit-student-modal > div,
-html.dark #admin-direct-notice-modal > div,
-html.dark #admin-resolve-ticket-modal > div,
-html.dark #nexora-right-drawer {
-  background-color: #0B1325 !important;
-  color: #FFFFFF !important;
-  border-color: #1E293B !important;
-}
-
-/* Dark Mode Component Rules */
-.dark-theme .dept-attendance-title,
-html.dark .dept-attendance-title {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-.dark-theme .notice-title,
-html.dark .notice-title {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-.dark-theme .notice-summary-text,
-html.dark .notice-summary-text {
-  color: #E2E8F0 !important;
-  font-weight: 600 !important;
-}
-
-.dark-theme .notice-meta-date,
-html.dark .notice-meta-date,
-.dark-theme .notice-meta-line,
-html.dark .notice-meta-line {
-  color: #94A3B8 !important;
-  font-weight: 600 !important;
-}
-
-.dark-theme .ticket-subject,
-html.dark .ticket-subject {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-.dark-theme .ticket-message-box,
-html.dark .ticket-message-box {
-  background-color: #070D19 !important;
-  color: #E2E8F0 !important;
-  border-color: #1E293B !important;
-  font-weight: 600 !important;
-}
-
-.dark-theme .ticket-meta,
-html.dark .ticket-meta {
-  color: #94A3B8 !important;
-  border-color: #1E293B !important;
-  font-weight: 600 !important;
-}
-
-.dark-theme .student-highlight,
-html.dark .student-highlight {
-  color: #FFFFFF !important;
-}
-
-.dark-theme .faculty-name,
-html.dark .faculty-name {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-.dark-theme .faculty-email,
-html.dark .faculty-email {
-  color: #38BDF8 !important;
-  font-weight: 800 !important;
-}
-
-.dark-theme .faculty-dept,
-html.dark .faculty-dept,
-.dark-theme .faculty-lectures,
-html.dark .faculty-lectures,
-.dark-theme .faculty-hours,
-html.dark .faculty-hours {
-  color: #E2E8F0 !important;
-}
-
-
-/* ====================================================================
-   3. PROTECTED DARK ENCLAVES (Sidebar & Login Gate MUST ALWAYS KEEP WHITE TEXT)
-   ==================================================================== */
-#admin-main-sidebar,
-#admin-login-gate,
-#login-gate-screen {
-  background-color: #081225 !important;
-  color: #F8FAFC !important;
-}
-
-#admin-main-sidebar h1,
-#admin-login-gate h1,
-#login-gate-screen h1 {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-}
-
-#admin-main-sidebar h1 span,
-#admin-login-gate h1 span,
-#login-gate-screen h1 span {
-  color: #F59E0B !important; /* Golden Amber IQ */
-}
-
-#admin-main-sidebar p,
-#admin-login-gate p,
-#login-gate-screen p {
-  color: #CBD5E1 !important;
-}
-
-#admin-main-sidebar .admin-nav-item span {
-  color: #E2E8F0 !important;
-}
-
-#admin-main-sidebar .admin-nav-item:hover {
-  background-color: #0F1B33 !important;
-}
-
-#admin-main-sidebar .admin-nav-item.bg-blue-600 {
-  background-color: #2563EB !important;
-}
-
-#admin-main-sidebar .admin-nav-item.bg-blue-600 span {
-  color: #FFFFFF !important;
+  background-color: #0B1325;
+  color: #FFFFFF;
+  border-color: #334155;
 }
 
 /* ==========================================================================
    ISOLATED SECTION PRINTING & DOWNLOAD SYSTEM
-   Eliminates all unwanted background pages, sidebars, and navigation.
+   When printing any section or card, hides all background layout elements.
    ========================================================================== */
 @media print {
-  /* Hide the entire standard layout by default */
-  header, aside, #sidebar, #admin-main-sidebar, nav, .sidebar-nav-link,
-  #toast-container, .modal-overlay button, .no-print,
-  #portal-spotlight-search-modal, #sla-hotline-modal {
+  header, 
+  aside, 
+  #sidebar, 
+  #admin-main-sidebar, 
+  nav, 
+  .sidebar-nav-link,
+  #toast-container, 
+  .modal-overlay button, 
+  .no-print,
+  #portal-spotlight-search-modal, 
+  #sla-hotline-modal {
     display: none !important;
   }
 

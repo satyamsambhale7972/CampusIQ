@@ -508,19 +508,29 @@ class CampusIQPortalController {
     if (window.lucide) window.lucide.createIcons();
   }
 
-  // --- Marquee Ticker ---
+  // --- Marquee Ticker (Continuous Horizontal Scrolling) ---
   renderTicker() {
     const tickerEl = document.getElementById("campus-marquee-text");
     if (!tickerEl) return;
 
-    const items = this.state.notices.map(n => {
-      const badge = n.priority === 'urgent' ? '🔴 [URGENT NOTICE]' : '🏛️ [OFFICIAL CIRCULAR]';
-      return `<span class="inline-block mx-6 font-semibold text-xs tracking-wide text-slate-800">
-        <strong class="${n.priority === 'urgent' ? 'text-red-700' : 'text-blue-900'}">${badge}</strong> ${n.title} (${n.date})
-      </span>`;
-    }).join("&bull;");
+    const notices = this.state.notices || [];
+    if (notices.length === 0) {
+      tickerEl.innerHTML = `<span class="ticker-item text-xs text-slate-500">No active circulars.</span>`;
+      return;
+    }
 
-    tickerEl.innerHTML = items + "&bull;" + items;
+    const items = notices.map(n => {
+      const badge = n.priority === 'urgent' ? '🔴 [URGENT]' : '🏛️ [OFFICIAL]';
+      return `<span class="ticker-item" onclick="window.Portal.openNoticeModal('${n.id}')" title="Click to view full circular">
+        <strong class="${n.priority === 'urgent' ? 'text-red-600' : 'text-blue-700'}">${badge}</strong>
+        <span>${n.title}</span>
+        <span class="text-[11px] font-mono text-slate-500">(${n.date})</span>
+        <span class="text-amber-500 mx-2">&bull;</span>
+      </span>`;
+    }).join("");
+
+    // Repeat 3 times for completely seamless infinite horizontal loop
+    tickerEl.innerHTML = items + items + items;
   }
 
   // --- Sidebar Tab Switching ---
@@ -1097,7 +1107,7 @@ class CampusIQPortalController {
     if (window.lucide) window.lucide.createIcons();
   }
 
-  async async handleTicketSubmit(event) {
+  async handleTicketSubmit(event) {
     if (event) event.preventDefault();
     const subject = document.getElementById("ticket-subject").value;
     const category = document.getElementById("ticket-category").value;
@@ -1258,6 +1268,16 @@ class CampusIQPortalController {
       </html>
     `);
     doc.close();
+
+    // Direct invocation fallback
+    setTimeout(() => {
+      try {
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }
+      } catch (e) {}
+    }, 450);
   }
 
   printSmartIdCard() {
@@ -1654,16 +1674,58 @@ class CampusIQPortalController {
   }
 
   async handleLoginSubmit(event) {
-    event.preventDefault();
-    const rollOrEmail = document.getElementById("login-input-roll").value;
-    const password = document.getElementById("login-input-password").value;
+    if (event) {
+      if (typeof event.preventDefault === "function") event.preventDefault();
+      if (typeof event.stopPropagation === "function") event.stopPropagation();
+    }
+    const rollInput = document.getElementById("login-input-roll");
+    const passInput = document.getElementById("login-input-password");
+    const rollOrEmail = rollInput ? rollInput.value.trim() : "";
+    const password = passInput ? passInput.value.trim() : "";
+    const errorBox = document.getElementById("student-login-error");
+
+    if (errorBox) {
+      errorBox.textContent = "";
+      errorBox.classList.add("hidden");
+    }
+
+    if (!rollOrEmail) {
+      if (errorBox) {
+        errorBox.textContent = "Please enter your Student Roll Number or College Email.";
+        errorBox.classList.remove("hidden");
+      }
+      this.showToast("Missing Roll Number", "Please enter your roll number.", "error");
+      return false;
+    }
+
+    if (!password) {
+      if (errorBox) {
+        errorBox.textContent = "Please enter your Student Portal Password (2026).";
+        errorBox.classList.remove("hidden");
+      }
+      this.showToast("Missing Password", "Please enter your password.", "error");
+      return false;
+    }
+
+    if (!window.CampusIQService) {
+      console.error("CampusIQService not initialized");
+      return false;
+    }
 
     const res = await window.CampusIQService.loginStudent(rollOrEmail, password);
-    if (res.success) {
+    if (res && res.success) {
+      if (errorBox) errorBox.classList.add("hidden");
       this.showToast("Welcome Back!", `Signed in as ${res.user.full_name}. Data unlocked.`, "success");
+      this.checkSessionAndRender(res.user);
     } else {
-      alert(res.message);
+      const errMsg = (res && res.message) ? res.message : "Authentication failed. Please verify credentials.";
+      if (errorBox) {
+        errorBox.textContent = errMsg;
+        errorBox.classList.remove("hidden");
+      }
+      this.showToast("Authentication Failed", errMsg, "error");
     }
+    return false;
   }
 
   quickDemoLogin(rollNo) {
@@ -2492,6 +2554,19 @@ class CampusIQPortalController {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  window.Portal = new CampusIQPortalController();
-});
+function initPortalApp() {
+  if (!window.Portal) {
+    try {
+      window.Portal = new CampusIQPortalController();
+      console.log("[CampusIQ] Student Portal initialized successfully.");
+    } catch (err) {
+      console.error("[CampusIQ] Fatal error initializing Portal:", err);
+    }
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPortalApp);
+} else {
+  initPortalApp();
+}

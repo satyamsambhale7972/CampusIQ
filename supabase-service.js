@@ -30,7 +30,7 @@ class SupabaseAcademicService {
     }
 
     // 2. Load Student Master Registry from secure database file (Guaranteed all 1,000 students across 4 cohorts)
-    const CURRENT_VERSION = "2026_cohort_v5_balanced_1000";
+    const CURRENT_VERSION = "2026_cohort_v7_universal_2026";
     const cachedVer = localStorage.getItem("campusiq_registry_version");
     const cachedRegistry = localStorage.getItem("campusiq_registry_store");
     let validRegistry = null;
@@ -56,7 +56,7 @@ class SupabaseAcademicService {
     this.allStudentsRegistry = validRegistry;
 
     // 3. Restore authenticated session (if previously logged in)
-    const activeSession = localStorage.getItem("campusiq_authenticated_student");
+    const activeSession = sessionStorage.getItem("campusiq_authenticated_student");
     if (activeSession) {
       try {
         this.currentUser = JSON.parse(activeSession);
@@ -102,22 +102,34 @@ class SupabaseAcademicService {
 
   // --- Strict Student Authentication (Only Particular Student Data Loaded) ---
   async loginStudent(rollOrEmail, password) {
-    const cleanId = rollOrEmail.trim().toLowerCase();
+    if (!rollOrEmail) {
+      return { success: false, message: "Roll number or college email is required." };
+    }
+    const cleanId = String(rollOrEmail).trim().toLowerCase();
+    const cleanPass = String(password || "").trim();
     
+    // Ensure allStudentsRegistry is loaded
+    if (!this.allStudentsRegistry || this.allStudentsRegistry.length === 0) {
+      if (typeof window !== "undefined" && window.CAMPUSIQ_STUDENTS && window.CAMPUSIQ_STUDENTS.length > 0) {
+        this.allStudentsRegistry = window.CAMPUSIQ_STUDENTS;
+      }
+    }
+
     // Look up in 1000-student registry
     const match = this.allStudentsRegistry.find(s => 
-      s.student_id.toLowerCase() === cleanId || 
-      s.email.toLowerCase() === cleanId
+      String(s.student_id).trim().toLowerCase() === cleanId || 
+      String(s.email).trim().toLowerCase() === cleanId
     );
 
     if (match) {
       // Check password: Password is '2026' for all enrolled students
-      const isPassValid = (password === "2026" || password === "student123" || password === match.password);
+      const isPassValid = (cleanPass === "2026" || cleanPass === "student123" || cleanPass === String(match.password).trim());
       if (!isPassValid) {
         return { success: false, message: "Invalid Security Password. Please enter '2026'." };
       }
 
       this.currentUser = { ...match };
+      sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
       localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
       window.dispatchEvent(new CustomEvent("campusiq:session-changed", { detail: this.currentUser }));
       return { success: true, user: this.currentUser };
@@ -164,6 +176,7 @@ class SupabaseAcademicService {
 
   logoutStudent() {
     this.currentUser = null;
+    sessionStorage.removeItem("campusiq_authenticated_student");
     localStorage.removeItem("campusiq_authenticated_student");
     window.dispatchEvent(new CustomEvent("campusiq:session-changed", { detail: null }));
     return { success: true };

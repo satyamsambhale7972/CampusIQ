@@ -1,115 +1,101 @@
-# CAMPUSIQ — Institutional University Student Portal & CAMPUSAI
+# CAMPUSIQ & CAMPUSAI — Enterprise Autonomous University ERP System
+### Modern Higher Education Governance & Collegiate Student Information Portal
 
-A commercial-grade, authentic university student information portal designed with institutional elegance, featuring an integrated AI Academic Copilot (**CAMPUSAI**), strict individual student data privacy, and live Supabase cloud connectivity.
-
----
-
-## 🏛️ System Highlights & Architecture
-
-### 1. Strict Individual Student Privacy (Zero Data Leakage)
-- **Private Institutional Gate**: No public directory, student lists, or data leaks.
-- **Roll Number & Password Authentication**: Only the authenticated student's unique attendance, CGPA, courses, and timetable records are decrypted and rendered into the active session.
-- **120+ Unique Student Registry**: Distinct attendance records (from critical shortage alerts to distinction honors) pre-seeded and synced.
-
-### 2. CAMPUSAI — 24/7 Academic AI Copilot
-- Accessible via sidebar, header launcher, floating widget, or shortcut (`Ctrl + K`).
-- Connected directly to enrolled courses, credits, faculty office hours, unit-by-unit exam blueprints, and high-yield questions.
-- Explains the university statutory 75% attendance rule, calculates safe bunks, and guides students through grievance escalation.
-
-### 3. Official Attendance & Statutory Compliance Ledger
-- **Restricted Access**: In compliance with university statutory regulations, student self-marking is disabled. Attendance is authenticated via faculty biometric scanners and official lecture registers.
-- **Statutory 75% Calculation**:
-  - If $\ge 75\%$: Displays safe status with exact number of permissible safe bunks.
-  - If $< 75\%$: Displays urgent shortage alert with the exact number of consecutive lectures needed to restore exam eligibility.
-- **Discrepancy Resolution**: 1-click recount request connects directly to the Dean's Priority Grievance Redressal Desk.
-
-### 4. Instant Spotlight Search Dropdown (13 University Hubs)
-- Located in the top header (with keyboard shortcut `Ctrl + K` or `/`).
-- Dynamically searches across:
-  - **13 Core Portal Sections & Enterprise Features**
-  - **Enrolled Courses & Unit Blueprints**
-  - **Official Circulars & Rescheduled Exams**
-  - **Campus Competitions, Hackathons & Fests**
-  - **CAMPUSAI Direct Query Action**
-- 1-click jumps smoothly to the desired section or opens modal dialogs without page reloads.
-
-### 5. Fees, Tuition Dues & Scholarship Desk (New Enterprise Hub)
-- **Institutional Tuition Ledger**: Comprehensive breakdown of Tuition, AI Laboratory, Digital Library, and Exam dues.
-- **Download Stamped Fee Voucher**: 1-click printable official university voucher (`VCH-2026-88192`) with biometric barcode, QR clearance, and Accounts Officer countersignature.
-- **Simulated Payment Gateway**: Students can simulate instant online clearing of remaining dues via UPI / NetBanking / Cards with real-time receipt generation.
-- **Scholarship Disbursement Tracker**: Status of State Merit-cum-Means Fellowship with 1-click Sanction Order download.
-
-### 6. Hostel, Campus Mess & Live E-Gatepass Hub (New Enterprise Hub)
-- **Official Residence Allotment**: Hall of Residence, Wing, Room & Bed number, roommate contact, Wi-Fi credentials, and Chief Warden directory.
-- **Live Verifiable E-Gatepass Generator**: Generates cryptographic turnstile QR pass with student photo, validity countdown, and digital warden approval stamp.
-- **7-Day Dynamic Mess Menu**: Interactive daily schedule for Breakfast, Lunch, High Tea, and Dinner with nutritional calories, dietary badges (Pure Veg / High Protein), and interactive 1–5 star food quality rating.
-- **Hostel Maintenance Service Desk**: 1-click service ticket generation (`HST-2026-XXXX`) for Wi-Fi router reboot, electrical, and plumbing repairs.
-
-### 7. Training & Placements (T&P) / Career Radar (New Enterprise Hub)
-- **Live Campus Recruitment Drives**: Super Dream and Dream hiring drives (Google India ₹32 LPA, Microsoft IDC ₹28.5 LPA, Deloitte ₹12.5 LPA, L&T ₹9.0 LPA).
-- **Automated CGPA Cutoff Validation**: Validates student eligibility before applying.
-- **CAMPUSAI ATS Resume Scanner**: 94% compatibility scoring with matched Fortune 500 keyword filters and LaTeX/DOCX template downloads.
-- **Official Internship NOC Generator**: 1-click printable No Objection Certificate on university letterhead countersigned by the Dean of Academic Affairs.
-
-### 8. Digital Smart Student ID Card & Biometric Credential
-- Verifiable ID pass featuring dynamic gate-scanner QR code, 1D code barcode strip, student photo, blood group, emergency contact, and official university hologram seal (`OFFICIAL BIOMETRIC ID • VALID 2026-27`).
-- Includes 1-click **Print Smart ID** formatted for official laminated physical credentials.
-
-### 9. Graduation Honors & CGPA Target Forecaster
-- Dynamic academic projection engine allowing students to select their graduation goal (e.g., *Dean's Honors Distinction $\ge 9.0$*, *First Class with Distinction $\ge 8.5$*).
-- Instantly computes the exact SGPA required per semester across remaining terms and credit weights.
-
-### 10. Live Campus Pulse & Facility Status
-- Real-time university facility telemetry:
-  - **Campus Electric Shuttle**: Live GPS route countdown and ETA.
-  - **Central Library Quiet Zone**: Live capacity tracking and available study desks.
-  - **Advanced AI & GPU Lab**: Available NVIDIA compute terminals for research scholars.
-
-### 11. Institutional Priority Grievance Escalation & Direct Phone Hotlines
-- Official inquiry registration with unique Ticket ID (`TKT-XXXXXX`) synced directly to Supabase `support_tickets`.
-- Institutional Priority Review by the Department Head and Dean's Office.
-- Emergency direct telephone lines for the Dean of Academic Affairs, Controller of Examinations, and Student Helpline.
-
-### 12. Dual Collegiate Theme Engine (Dark & Light Modes)
-- Upper-right toggle accessible on both the login gate and authenticated portal header.
-- High-contrast obsidian dark palette and traditional collegiate light palette with persistent preference in `localStorage`.
-- 100% responsive across smartphones, tablets, laptops, and ultra-wide displays.
-
-### 13. Authoritative University Crest & Emblem
-- Authentic heraldic university seal featuring golden laurels, academic graduation cap, open book, eternal flame torch, crossed feather quills, and the Latin motto **"VERITAS ET EXCELLENTIA"**.
-- Rendered inline directly in the HTML for 100% guaranteed, rock-solid visibility across all browsers.
+CAMPUSIQ is a commercial-grade university software ecosystem featuring:
+1. **Student Information System (`index.html`)**: Strict individual student data privacy, 13 collegiate modules, CAMPUSAI academic copilot, digital student smart IDs, and statutory 75% attendance compliance.
+2. **Dedicated Governance Admin ERP (`admin.html`)**: Dean of Academics and Examination Controller dashboard managing **1,000 verified enrolled students** across all 4 engineering cohorts, common notice broadcasting, personal direct notices, 12-hour SLA grievance resolution, and full faculty roster.
+3. **NEXORA AI Academic Assistant**: Intelligent right-side slide-over assistant answering collegiate queries, policy questions, and syllabus information.
+4. **Strict Security Access Control**: Zero auto-login bypass, show/hide password toggle, blank-on-load inputs, and explicit mistake reporting.
+5. **High-Contrast Dual-Theme Architecture**: Seamless toggle between pure Light Mode (`#0F172A` contrast) and obsidian Dark Mode (`#081225`).
+6. **Real-Time Two-Way Cloud Sync**: Supabase integration and cross-tab storage event listeners synchronize updates instantly.
 
 ---
 
-## 💻 Tech Stack
-- **Frontend**: Vanilla ES6+ JavaScript, Tailwind CSS, Lucide Icons, Custom Collegiate Theme CSS.
-- **Styling**: Oxford Navy (`#061122`), Cambridge Blue (`#1D4ED8`), Academic Gold (`#D97706`), Ambient Canvas Texture.
-- **Backend / Database**: Supabase PostgreSQL (`profiles`, `attendance_records`, `support_tickets`).
-- **Offline Reliability**: Automatic fallback to encrypted local browser storage if offline.
+## 🏛️ System Architecture & Portal Access
+
+| Portal | Entry File / URL | Primary Users | Authentication |
+| :--- | :--- | :--- | :--- |
+| **Student Portal** | `index.html` or `http://localhost:8000/` | Enrolled Students | Roll Number (`252921201`) + Password (`2026`) |
+| **Admin ERP** | `admin.html` or `http://localhost:8000/admin.html` | Deans, Controllers, Faculty | Login Name (`campusiq`) + Password (`2026`) |
 
 ---
 
-## 🚀 How to Run Locally
+## 👨‍💼 Key Admin ERP Modules (`admin.html`)
 
-```bash
-# 1. Navigate to the project directory
-cd campusiq-college-portal
+1. **1,000+ Master Student Directory (All 4 Cohorts)**:
+   - **First Year (FE)**: 250 Students (Semesters 1 & 2)
+   - **Second Year (SE)**: 250 Students (Semesters 3 & 4)
+   - **Third Year (TE)**: 250 Students (Semesters 5 & 6)
+   - **Fourth Year (BE)**: 250 Students (Semesters 7 & 8)
+   - Instant cohort filter pills: `All Cohorts (1,000)`, `First Year (FE)`, `Second Year (SE)`, `Third Year (TE)`, `Fourth Year (BE)`.
+   - Real-time search by name, roll number, department, and branch.
+   - CGPA distinction (>= 7.5) and remediation (< 7.5) filter pills.
+   - Statutory 75% attendance threshold compliance filters.
+   - Fee ledger filters (pending dues vs cleared).
+   - In-place student 360 profile drawer and 1-click CSV master ledger export.
 
-# 2. Start the local server
-python -m http.server 8000
-# or on Windows
-py -3 server.py
-```
+2. **Faculty Directory Roster**:
+   - Directory of 11 departmental professors across Computer Science, AI & Data Science, IT, Mechanical, Civil, Electrical, and MBA Tech.
+   - Includes faculty IDs, cabin locations, office consultation hours, and high-contrast email contacts.
 
-Open your browser at: **`http://localhost:8000`**
+3. **Notice & Broadcast Dispatch Center**:
+   - Institutional circulars and urgent examination notices.
+   - Personal direct notice dispatch to specific roll numbers.
 
-### Instant Demo Credentials:
-- **Roll No**: `252921201` (Satyam Sambhale — 84% Attendance, Dean's Honors)
-- **Roll No**: `252921202` (Aarav Sharma — 68.2% Shortage Alert)
-- **Password**: `student123`
+4. **12-Hour SLA Grievance Desk**:
+   - Live queue of student tickets with 12-hour SLA response guarantees.
+   - Action remarks and resolution workflows.
+
+5. **NEXORA AI Slide-Over Copilot**:
+   - Accessible via the top header button across all modules.
 
 ---
 
-## ☁️ Deployment
-- **Vercel / Netlify**: Drag-and-drop the unzipped project folder directly into the dashboard.
-- **GitHub Pages**: Push to GitHub repository and activate GitHub Pages on the `main` branch root.
+## 🔑 Demo Authentication Credentials
+
+### 1. Administrative Governance Access (`admin.html`):
+- **Administrator Login Name**: `campusiq`
+- **Security Password**: `2026`
+- **Authorized Role**: Dr. Rajeshwar Sen (Dean of Academic Affairs & Controller of Examinations)
+
+### 2. Student Information Portal Access (`index.html`):
+- **Universal Student Password**: `2026` (works for all 1,000 enrolled students)
+- **Satyam Sambhale** (CSE, Dean's Honors): Roll `252921201` | Password `2026`
+- **Aarav Sharma** (AI&DS, Attendance Shortage Warning): Roll `252921202` | Password `2026`
+- **Priya Sharma** (IT, Chancellor's Gold Medalist): Roll `252921203` | Password `2026`
+- **Rohan Deshmukh** (MECH, Borderline 76.5% Attendance): Roll `252921204` | Password `2026`
+
+---
+
+## 🚀 Quick Start / Local Run
+
+1. Clone or extract this repository into any folder:
+   ```bash
+   git clone https://github.com/<your-username>/campusiq-college-portal.git
+   cd campusiq-college-portal
+   ```
+2. Start the local server:
+   ```bash
+   python server.py
+   # or
+   py -3 server.py
+   ```
+3. Open your browser:
+   - **Admin Portal**: [http://localhost:8000/admin.html](http://localhost:8000/admin.html)
+   - **Student Portal**: [http://localhost:8000/index.html](http://localhost:8000/index.html)
+
+---
+
+## 🌐 24/7 Free GitHub Pages Deployment
+
+1. Create a public repository on GitHub (e.g. `campusiq-college-portal`).
+2. Push or upload the project files.
+3. Go to **Settings -> Pages**.
+4. Set Source to **Deploy from a branch**, Branch to **main** (or master), and save.
+5. Your portal goes live 24/7 worldwide at:
+   `https://<your-username>.github.io/campusiq-college-portal/`
+
+---
+
+## 📄 License & Intellectual Property
+&copy; 2026 CAMPUSIQ Collegiate Systems. All institutional records, UI designs, and database schemas protected.
