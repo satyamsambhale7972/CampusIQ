@@ -280,6 +280,17 @@ class SupabaseAcademicService {
     localStorage.setItem("campusiq_tickets", JSON.stringify(tickets));
     window.dispatchEvent(new Event("campusiq_tickets_updated"));
 
+    // Broadcast across tabs instantly
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "NEW_TICKET_SUBMITTED",
+          ticket: tkt
+        });
+      } catch (e) {}
+    }
+
     try {
       await fetch(`${this.url}/rest/v1/support_tickets`, {
         method: "POST",
@@ -544,12 +555,12 @@ class SupabaseAcademicService {
     const entry = {
       id: "ind_" + Date.now(),
       notice_id: "IND-" + Math.floor(100000 + Math.random() * 900000),
-      recipient_student_id: String(notice.recipient_student_id),
+      recipient_student_id: String(notice.recipient_student_id).trim(),
       recipient_name: notice.recipient_name || "Enrolled Student",
       sender_title: notice.sender_title || "Office of the Dean & Academic Senate",
       title: notice.title,
       message: notice.message,
-      priority: notice.priority || "normal",
+      priority: notice.priority || "urgent",
       category: notice.category || "Academic & Disciplinary",
       is_read: false,
       is_acknowledged: false,
@@ -560,6 +571,64 @@ class SupabaseAcademicService {
 
     allNotices.unshift(entry);
     localStorage.setItem("campusiq_individual_notices", JSON.stringify(allNotices));
+
+    // Also merge into common notices store for immediate universal visibility
+    try {
+      const commonNotices = JSON.parse(localStorage.getItem("campusiq_notices") || "[]");
+      commonNotices.unshift({
+        id: entry.id,
+        notice_id: entry.notice_id,
+        title: entry.title,
+        target: entry.recipient_student_id,
+        recipient_student_id: entry.recipient_student_id,
+        student_name: entry.recipient_name,
+        category: entry.category,
+        priority: entry.priority,
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        department: "Office of the Dean",
+        author: entry.sender_title,
+        summary: entry.message,
+        message: entry.message,
+        created_at: entry.created_at
+      });
+      localStorage.setItem("campusiq_notices", JSON.stringify(commonNotices));
+    } catch (e) {}
+
+    // Save directly to Supabase individual_notices table
+    if (this.url && this.key) {
+      fetch(`${this.url}/rest/v1/individual_notices`, {
+        method: "POST",
+        headers: {
+          apikey: this.key,
+          Authorization: `Bearer ${this.key}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          notice_id: entry.notice_id,
+          recipient_student_id: entry.recipient_student_id,
+          recipient_name: entry.recipient_name,
+          sender_title: entry.sender_title,
+          title: entry.title,
+          message: entry.message,
+          priority: entry.priority,
+          category: entry.category,
+          publication_status: "published"
+        })
+      }).catch(err => console.warn("Supabase individual notice cloud sync:", err));
+    }
+
+    // Instant Real-Time Cross-Tab / Cross-App Bus
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "INDIVIDUAL_NOTICE_DISPATCHED",
+          notice: entry,
+          target: entry.recipient_student_id
+        });
+      } catch (err) {}
+    }
 
     this.logAuditEvent({
       action_type: "INDIVIDUAL_NOTICE_DISPATCHED",
@@ -572,14 +641,15 @@ class SupabaseAcademicService {
       }
     });
 
-    // Notify window event so student portal can update reactively
+    // Notify window events so student portal can update reactively
     window.dispatchEvent(new CustomEvent("campusiq:new-notice", { detail: entry }));
+    window.dispatchEvent(new Event("campusiq_notices_updated"));
     return entry;
   }
 
   getStudentIndividualNotices(studentId) {
     const allNotices = JSON.parse(localStorage.getItem("campusiq_individual_notices") || "[]");
-    return allNotices.filter(n => String(n.recipient_student_id) === String(studentId) && n.publication_status === "published");
+    return allNotices.filter(n => String(n.recipient_student_id).trim() === String(studentId).trim() && n.publication_status === "published");
   }
 
   getAllIndividualNotices() {

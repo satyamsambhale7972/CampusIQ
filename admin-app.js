@@ -1023,6 +1023,54 @@ switchTab(tabId) {
     this.applyStudentFilters();
     this.renderOverviewMetrics();
 
+    // If currently authenticated student in localStorage or sessionStorage matches, update immediately!
+    try {
+      const activeAuth = localStorage.getItem("campusiq_authenticated_student");
+      if (activeAuth) {
+        const parsed = JSON.parse(activeAuth);
+        if (parsed && String(parsed.student_id).trim() === String(studentId).trim()) {
+          const merged = { ...parsed, ...target };
+          localStorage.setItem("campusiq_authenticated_student", JSON.stringify(merged));
+          sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(merged));
+        }
+      }
+    } catch (err) {}
+
+    // Live Supabase Sync to profiles table
+    if (window.CampusIQService && window.CampusIQService.url) {
+      fetch(`${window.CampusIQService.url}/rest/v1/profiles?student_id=eq.${studentId}`, {
+        method: "PATCH",
+        headers: {
+          apikey: window.CampusIQService.key,
+          Authorization: `Bearer ${window.CampusIQService.key}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          full_name: newName,
+          overall_attendance: newAtt,
+          cgpa: newCgpa,
+          academic_standing: newStanding,
+          fee_info: target.fee_info,
+          hostel_info: target.hostel_info,
+          subjects: target.subjects,
+          updated_at: new Date().toISOString()
+        })
+      }).catch(err => console.warn("Supabase background sync:", err));
+    }
+
+    // Real-Time Cross-App Bus Broadcast to Student Portal instantly
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "STUDENT_UPDATED",
+          studentId: studentId,
+          student: target
+        });
+      } catch (err) {}
+    }
+
     if (this.state.viewingStudent && this.state.viewingStudent.student_id === studentId) {
       this.openStudentProfileDrawer(studentId);
     }
@@ -1045,21 +1093,47 @@ switchTab(tabId) {
     const noticeTitle = `URGENT: Semester Tuition Fee Due Settlement (₹${dueAmount.toLocaleString()})`;
     const noticeBody = `Official Communication from Office of Finance & Accounts: Student ${student.full_name} (Roll: ${student.student_id}) has an outstanding tuition balance of ₹${dueAmount.toLocaleString()}. In accordance with institutional statutory guidelines, please settle the remaining dues at the university accounts counter within 7 working days to prevent examination hall ticket administrative hold.`;
 
+    // 1. Dispatch through CampusIQService (saves to localStorage, individual_notices, and Supabase)
+    const entry = window.CampusIQService.sendIndividualNotice({
+      recipient_student_id: student.student_id,
+      recipient_name: student.full_name,
+      title: noticeTitle,
+      priority: "urgent",
+      category: "Tuition Fee Default Notice",
+      message: noticeBody
+    });
+
     const newNotice = {
-      id: "fee_notice_" + Date.now(),
+      id: entry.id || "fee_notice_" + Date.now(),
+      notice_id: entry.notice_id,
       title: noticeTitle,
       target: student.student_id,
+      recipient_student_id: student.student_id,
       student_name: student.full_name,
       category: "Tuition Fee Default Notice",
       priority: "urgent",
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       department: student.department,
       author: "Office of Finance & Accounts (Countersigned by Dean)",
-      summary: noticeBody
+      summary: noticeBody,
+      message: noticeBody,
+      created_at: new Date().toISOString()
     };
 
     this.state.notices.unshift(newNotice);
     this.saveNotices();
+
+    // 2. Broadcast across tabs in real-time
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "INDIVIDUAL_NOTICE_DISPATCHED",
+          notice: newNotice,
+          target: student.student_id
+        });
+      } catch (err) {}
+    }
 
     this.showToast(
       "Fee Default Warning Dispatched",
@@ -1079,22 +1153,49 @@ switchTab(tabId) {
 
     unpaidStudents.forEach(s => {
       const due = s.fee_info.due;
+      const noticeTitle = `URGENT: Overdue Semester Fee Balance Settlement (₹${due.toLocaleString()})`;
+      const noticeBody = `Formal notice to ${s.full_name} (Roll: ${s.student_id}): An overdue balance of ₹${due.toLocaleString()} is pending. Please remit immediately at the accounts counter to avoid hall ticket withholding.`;
+      
+      const entry = window.CampusIQService.sendIndividualNotice({
+        recipient_student_id: s.student_id,
+        recipient_name: s.full_name,
+        title: noticeTitle,
+        priority: "urgent",
+        category: "Tuition Fee Default Notice",
+        message: noticeBody
+      });
+
       const newNotice = {
-        id: `fee_rem_${s.student_id}_` + Date.now(),
-        title: `URGENT: Overdue Semester Fee Balance Settlement (₹${due.toLocaleString()})`,
+        id: entry.id || `fee_rem_${s.student_id}_` + Date.now(),
+        notice_id: entry.notice_id,
+        title: noticeTitle,
         target: s.student_id,
+        recipient_student_id: s.student_id,
         student_name: s.full_name,
         category: "Tuition Fee Default Notice",
         priority: "urgent",
         date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         department: s.department,
         author: "Office of Finance & Accounts",
-        summary: `Formal notice to ${s.full_name} (Roll: ${s.student_id}): An overdue balance of ₹${due.toLocaleString()} is pending. Please remit immediately.`
+        summary: noticeBody,
+        message: noticeBody,
+        created_at: new Date().toISOString()
       };
       this.state.notices.unshift(newNotice);
     });
 
     this.saveNotices();
+
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "BULK_NOTICES_DISPATCHED",
+          count: unpaidStudents.length
+        });
+      } catch (err) {}
+    }
+
     this.showToast(
       "Bulk Fee Notices Dispatched",
       `Sent automated overdue warnings to all ${unpaidStudents.length} students with pending fees.`,
@@ -1169,6 +1270,39 @@ switchTab(tabId) {
     this.saveNotices();
     this.renderNoticesList();
 
+    // Live Supabase Sync to announcements table
+    if (window.CampusIQService && window.CampusIQService.url) {
+      fetch(`${window.CampusIQService.url}/rest/v1/announcements`, {
+        method: "POST",
+        headers: {
+          apikey: window.CampusIQService.key,
+          Authorization: `Bearer ${window.CampusIQService.key}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: title,
+          content: body,
+          category: category,
+          priority: priority,
+          author_name: `${ADMIN_CREDENTIALS.name} (${ADMIN_CREDENTIALS.role})`,
+          department: "All Engineering Departments",
+          attachment_name: attachment || null,
+          publish_status: "published"
+        })
+      }).catch(err => console.warn("Supabase announcement sync:", err));
+    }
+
+    // Broadcast to real-time bus
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "COMMON_NOTICE_PUBLISHED",
+          notice: newNotice
+        });
+      } catch (err) {}
+    }
+
     document.getElementById("common-notice-title").value = "";
     document.getElementById("common-notice-body").value = "";
     document.getElementById("common-notice-attach").value = "";
@@ -1186,6 +1320,109 @@ switchTab(tabId) {
     this.saveNotices();
     this.renderNoticesList();
     this.showToast("Notice Revoked", "The circular has been removed from all student dashboards.", "info");
+  }
+
+  // --- Modal 2: Direct Notice to Individual Student ---
+  openDirectNoticeModal(studentId) {
+    const modal = document.getElementById("personal-notice-modal");
+    if (!modal) return;
+
+    const rollInput = document.getElementById("personal-notice-roll");
+    const titleInput = document.getElementById("personal-notice-title");
+    const bodyInput = document.getElementById("personal-notice-body");
+    const prioInput = document.getElementById("personal-notice-priority");
+
+    const sid = studentId || (this.state.viewingStudent ? this.state.viewingStudent.student_id : "");
+    if (rollInput) rollInput.value = sid;
+
+    const student = this.state.students.find(s => s.student_id === sid);
+    if (titleInput) {
+      if (student) {
+        titleInput.value = Number(student.overall_attendance || 0) < 75 
+          ? `Urgent: Attendance Shortage Review for ${student.full_name}`
+          : `Official Dean Notice for ${student.full_name}`;
+      } else {
+        titleInput.value = "";
+      }
+    }
+    if (bodyInput) bodyInput.value = "";
+    if (prioInput) prioInput.value = "urgent";
+
+    modal.classList.remove("hidden");
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeDirectNoticeModal() {
+    const modal = document.getElementById("personal-notice-modal");
+    if (modal) modal.classList.add("hidden");
+  }
+
+  handleSendPersonalNotice(e) {
+    if (e) e.preventDefault();
+    const roll = document.getElementById("personal-notice-roll").value.trim();
+    const title = document.getElementById("personal-notice-title").value.trim();
+    const priority = document.getElementById("personal-notice-priority").value;
+    const body = document.getElementById("personal-notice-body").value.trim();
+
+    if (!roll || !title || !body) {
+      alert("Please enter roll number, notice title, and message body.");
+      return;
+    }
+
+    const student = this.state.students.find(s => s.student_id === roll);
+    const studentName = student ? student.full_name : "Enrolled Student";
+
+    // 1. Dispatch through CampusIQService (saves to localStorage, individual_notices, and Supabase)
+    const entry = window.CampusIQService.sendIndividualNotice({
+      recipient_student_id: roll,
+      recipient_name: studentName,
+      title: title,
+      priority: priority,
+      category: "Direct Administration Notice",
+      message: body
+    });
+
+    // 2. Also register in Admin notices array for management
+    const newNotice = {
+      id: entry.id || "ind_" + Date.now(),
+      notice_id: entry.notice_id,
+      title: title,
+      target: roll,
+      recipient_student_id: roll,
+      student_name: studentName,
+      recipient_name: studentName,
+      category: "Direct Administration Notice",
+      priority: priority,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      department: student ? student.department : "All Engineering Departments",
+      author: `${ADMIN_CREDENTIALS.name} (${ADMIN_CREDENTIALS.role})`,
+      summary: body,
+      message: body,
+      created_at: new Date().toISOString()
+    };
+
+    this.state.notices.unshift(newNotice);
+    this.saveNotices();
+
+    // 3. Broadcast across tabs in real-time
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "INDIVIDUAL_NOTICE_DISPATCHED",
+          notice: newNotice,
+          target: roll
+        });
+      } catch (err) {}
+    }
+
+    this.closeDirectNoticeModal();
+    this.renderNoticesList();
+    this.showToast(
+      "Direct Notice Transmitted",
+      `Sent private notice to ${studentName} (Roll: ${roll}). Immediately visible on their Student Portal!`,
+      "success"
+    );
   }
 
   // --- Tab 4: 12-Hour SLA Grievance Desk ---
@@ -1339,6 +1576,24 @@ switchTab(tabId) {
     this.saveTickets();
     this.renderTicketsQueue();
     this.renderOverviewMetrics();
+
+    // Live Supabase Sync to support_tickets table
+    if (window.CampusIQService && window.CampusIQService.url && this.state.resolvingTicket.ticket_number) {
+      fetch(`${window.CampusIQService.url}/rest/v1/support_tickets?ticket_number=eq.${this.state.resolvingTicket.ticket_number}`, {
+        method: "PATCH",
+        headers: {
+          apikey: window.CampusIQService.key,
+          Authorization: `Bearer ${window.CampusIQService.key}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          admin_reply: actionNotes || "Addressed and verified by Dean of Academics.",
+          updated_at: new Date().toISOString()
+        })
+      }).catch(err => console.warn("Supabase ticket sync:", err));
+    }
+
     this.closeResolveTicketModal();
 
     this.showToast(
@@ -1983,6 +2238,13 @@ switchTab(tabId) {
         message: `Dear ${s.full_name}, your registered overall attendance has dropped to ${s.overall_attendance}%. As per Academic Senate regulations, minimum 75% attendance is mandatory to appear for Semester End Examinations.`
       });
     });
+
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({ type: "BULK_NOTICES_DISPATCHED", count: shortages.length });
+      } catch (err) {}
+    }
 
     this.showToast(`Statutory attendance warnings dispatched to all ${shortages.length} shortage students!`, "success");
   }

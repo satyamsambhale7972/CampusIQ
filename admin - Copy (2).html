@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAMPUSIQ — Administrative Governance ERP &amp; Dean's Executive Portal</title>
+  
+  <meta name="description" content="CAMPUSIQ Administrative Control Portal for University Deans, Registrars, and Faculty. Manage 1,000+ students, broadcast college notices, resolve student grievances, and audit statutory 75% attendance.">
+  <meta name="robots" content="noindex, nofollow">
+  
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script>
+    tailwind = {
+      config: {
+        darkMode: 'class'
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- University Master Student Directory -->
+  <script src="students-database.js"></script>
+  <!-- Supabase Cloud Service Layer -->
+  <script src="supabase-service.js"></script>
+  
+  <!-- Official College Theme CSS (With High-Contrast Light Mode Enhancements) -->
+    <!-- Auto-purge stale cache to ensure all 4 cohorts load fresh & enforce strict login -->
+  <script>
+    (function() {
+      try {
+        var ver = localStorage.getItem("campusiq_registry_version");
+        if (ver !== "2026_cohort_v7_universal_2026") {
+          localStorage.removeItem("campusiq_registry_store");
+          localStorage.setItem("campusiq_registry_version", "2026_cohort_v7_universal_2026");
+        }
+        // STRICT SECURITY: Wipe stored administrative session on page open
+        localStorage.removeItem("campusiq_admin_session");
+        sessionStorage.removeItem("campusiq_admin_active_session");
+      } catch(e) {}
+    })();
+  </script>
+    <!-- Google Fonts: Cinzel & Plus Jakarta Sans / Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="college-theme.css">
+  
+  <!-- HD Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+</head>
+<body class="bg-slate-100 dark:bg-[#070D19] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- ====================================================================
+       VIEW 1: SECURE ADMINISTRATIVE LOGIN GATE
+       Strictly authenticated. Only authorized university administration can sign in.
+       ==================================================================== -->
+  <div id="admin-login-gate" class="min-h-screen bg-gradient-to-br from-[#061122] via-[#0B132B] to-[#1C2541] text-white flex flex-col justify-between p-4 sm:p-8">
+    
+    <!-- Top Bar in Gate -->
+    <div class="max-w-6xl w-full mx-auto flex items-center justify-between text-xs text-slate-300">
+      <div class="flex items-center gap-2 text-amber-300 font-bold">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+        <span>RESTRICTED EXECUTIVE ADMINISTRATIVE CONSOLE &bull; NAAC 'A++'</span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-400 text-[11px] font-mono">
+        <span>SECURITY ENCRYPTED &bull; 256-BIT SSL</span>
+      </div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="max-w-md w-full mx-auto my-auto py-8">
+      <div class="bg-[#1C2541]/95 backdrop-blur-xl p-8 rounded-3xl border border-slate-700/80 shadow-2xl">
+        
+        <!-- College Logo & Administrative Seal -->
+        <div class="flex flex-col items-center text-center mb-6">
+          <div class="relative mb-3 group">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl p-1 bg-gradient-to-tr from-blue-600 via-indigo-500 to-amber-400 shadow-2xl shadow-blue-500/30 flex items-center justify-center ring-2 ring-blue-500/40">
+              <div class="w-full h-full rounded-[14px] bg-[#070D19] flex items-center justify-center overflow-hidden">
+                <img src="campusiq-logo.png" alt="CampusIQ Official Collegiate Seal" class="w-full h-full object-cover select-none pointer-events-none">
+              </div>
+            </div>
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-black text-[9px] px-3 py-0.5 rounded-full uppercase tracking-wider shadow">
+              ADMIN CONTROL
+            </div>
+          </div>
+          
+          <h1 class="font-academic text-2xl font-black text-white tracking-widest flex items-center gap-1.5 mt-2" style="color: #FFFFFF !important;">
+            CAMPUS<span class="text-amber-400" style="color: #F59E0B !important;">IQ</span>
+          </h1>
+          <p class="text-xs text-amber-300 font-mono tracking-widest uppercase font-bold mt-1">
+            Administration &amp; Governance ERP
+          </p>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[11px] font-bold border border-blue-500/30 mt-2.5">
+            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+            <span>Dean &amp; Faculty Master Access Control</span>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="admin-login-error" class="hidden mb-4 p-3 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-xs font-semibold"></div>
+
+        <!-- Login Form -->
+        <form onsubmit="event.preventDefault(); if(window.AdminApp) window.AdminApp.handleAdminLogin(event); return false;" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1">Administrator Login Name *</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="admin-login-email" 
+                required 
+                value="" 
+                autocomplete="off"
+                placeholder=""
+                class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm font-semibold rounded-xl pl-9 pr-4 py-3 border border-slate-600 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                onkeydown="if(event.key==='Enter'){event.preventDefault(); if(window.AdminApp) window.AdminApp.handleAdminLogin(event);}"
+              >
+              <i data-lucide="user-check" class="w-4 h-4 text-amber-400 absolute left-3 top-3.5"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider mb-1">Security Password *</label>
+            <div class="relative">
+              <input 
+                type="password" 
+                id="admin-login-pass" 
+                required 
+                value="" 
+                autocomplete="new-password"
+                placeholder=""
+                class="w-full bg-[#0B132B] text-white placeholder-slate-500 text-xs sm:text-sm font-semibold rounded-xl pl-9 pr-11 py-3 border border-slate-600 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                onkeydown="if(event.key==='Enter'){event.preventDefault(); if(window.AdminApp) window.AdminApp.handleAdminLogin(event);}"
+              >
+              <i data-lucide="key-round" class="w-4 h-4 text-amber-400 absolute left-3 top-3.5"></i>
+              <!-- Password Show / Hide Key Toggle Button -->
+              <button 
+                type="button" 
+                id="btn-toggle-password"
+                onclick="window.AdminApp.togglePasswordVisibility()" 
+                class="absolute right-3 top-3 p-1 text-slate-400 hover:text-amber-400 transition cursor-pointer" 
+                title="Show or hide password"
+              >
+                <i data-lucide="eye" id="toggle-password-icon" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" onclick="event.preventDefault(); if(window.AdminApp) window.AdminApp.handleAdminLogin(event); return false;" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 cursor-pointer">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Authenticate Administrative Session</span>
+          </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-700/60 text-center text-[11px] text-slate-400">
+          <span>Connected to Supabase Cloud Master Registry (Synchronized Institutional Roster)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer in Gate -->
+    <div class="max-w-6xl w-full mx-auto text-center text-xs text-slate-400">
+      &copy; 2026 CAMPUSIQ Higher Education Governance System &bull; All institutional records strictly protected.
+    </div>
+  </div>
+
+
+  <!-- ====================================================================
+       VIEW 2: AUTHENTICATED ADMINISTRATIVE DASHBOARD LAYOUT
+       ==================================================================== -->
+  <div id="admin-portal-layout" class="hidden min-h-screen flex flex-col md:flex-row" style="display: none !important;">
+    
+    <!-- LEFT ADMINISTRATIVE SIDEBAR (Dedicated to Admin only; no student portal link) -->
+    <!-- LEFT ADMINISTRATIVE SIDEBAR (SaaS Multi-Module Navigation Tree) -->
+    <aside id="admin-main-sidebar" class="w-72 bg-[#081225] border-r border-slate-800 text-slate-200 flex-shrink-0 flex flex-col justify-between shadow-2xl custom-scroll md:sticky md:top-0 md:h-screen overflow-y-auto transition-all duration-300">
+      <div class="p-4">
+        
+        <!-- College Brand Header -->
+        <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-slate-800 cursor-pointer">
+          <div class="flex items-center gap-3" onclick="window.AdminApp.switchTab('overview')">
+            <div class="w-10 h-10 flex-shrink-0 rounded-xl p-0.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-amber-400 shadow-lg ring-1 ring-blue-400/40">
+              <div class="w-full h-full rounded-[10px] bg-[#070D19] flex items-center justify-center overflow-hidden">
+                <img src="campusiq-logo.png" alt="CampusIQ Logo" class="w-full h-full object-cover">
+              </div>
+            </div>
+            <div>
+              <h1 class="font-academic text-sm font-black text-white tracking-wider flex items-center gap-1" style="color: #FFFFFF !important;">
+                CAMPUS<span class="text-amber-400">IQ</span>
+              </h1>
+              <p class="text-[9px] text-amber-300 font-mono font-bold uppercase tracking-wider">Enterprise ERP</p>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Dean Officer Active Card -->
+        <div class="bg-[#101E36] p-2.5 rounded-xl border border-slate-700/80 mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold font-academic border border-amber-400/40 flex-shrink-0 text-xs">
+              DRS
+            </div>
+            <div class="min-w-0 flex-1">
+              <h4 class="text-xs font-bold text-white truncate">Dr. Rajeshwar Sen</h4>
+              <p class="text-[9px] text-amber-300 truncate font-semibold">Dean of Academic Affairs &bull; Master Admin</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Collegiate Navigation Menu -->
+        <nav class="space-y-1.5" id="admin-nav-list">
+          <button onclick="window.AdminApp.switchTab('overview')" data-tab="overview" class="admin-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-left">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-400"></i>
+            <span>Overview Dashboard</span>
+          </button>
+
+          <button onclick="window.AdminApp.switchTab('students')" data-tab="students" class="admin-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition text-left">
+            <div class="flex items-center gap-3">
+              <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+              <span>Student Directory</span>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold">1,000</span>
+          </button>
+
+          <button onclick="window.AdminApp.switchTab('notices')" data-tab="notices" class="admin-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition text-left">
+            <div class="flex items-center gap-3">
+              <i data-lucide="bell" class="w-4 h-4 text-blue-400"></i>
+              <span>Circulars &amp; Notices</span>
+            </div>
+            <span id="nav-notices-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono font-bold">Notices</span>
+          </button>
+
+          <button onclick="window.AdminApp.switchTab('grievances')" data-tab="grievances" class="admin-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition text-left">
+            <div class="flex items-center gap-3">
+              <i data-lucide="life-buoy" class="w-4 h-4 text-amber-400"></i>
+              <span>Student Grievance Cell</span>
+            </div>
+            <span id="nav-tickets-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold">12h SLA</span>
+          </button>
+
+          
+
+          <button onclick="window.AdminApp.switchTab('faculty')" data-tab="faculty" class="admin-nav-item w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold transition text-left">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400"></i>
+            <span>Faculty Directory</span>
+          </button>
+
+          <div class="pt-3 pb-1">
+            <div class="text-[10px] font-black uppercase tracking-wider text-cyan-400 px-3 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3 h-3 text-cyan-400"></i>
+              <span>Campus Intelligence AI</span>
+            </div>
+          </div>
+
+          <button onclick="window.AdminApp.openNexoraDrawer()" data-tab="nexora-ai" class="admin-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition text-left bg-gradient-to-r from-blue-900/70 via-indigo-900/60 to-purple-900/50 border border-blue-400/50 shadow-lg shadow-blue-900/30 cursor-pointer">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="bot" class="w-4 h-4 text-cyan-300"></i>
+              <span class="font-black text-cyan-200">NEXORA AI Assistant</span>
+            </div>
+            <span class="text-[9px] px-2 py-0.5 rounded-full bg-cyan-400 text-slate-950 font-black uppercase tracking-wider animate-pulse">Open AI</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Sidebar Bottom: Secure Sign Out Only -->
+      <div class="p-4 border-t border-slate-800 bg-[#060D19]/90">
+        <!-- Sign Out Button -->
+        <button onclick="window.AdminApp.handleAdminLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-950/80 hover:bg-red-900 text-xs font-bold text-red-200 transition border border-red-800 shadow-sm cursor-pointer" title="Sign Out Administrative Session">
+          <i data-lucide="log-out" class="w-4 h-4 text-red-400"></i>
+          <span>Sign Out Session</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN ADMINISTRATIVE WORKSPACE -->
+    <main class="flex-1 flex flex-col min-w-0">
+      
+      <!-- ====================================================================
+           UPPER TOP HEADER: CAMPUSIQ ADMIN ERP (Streamlined Custom Header)
+           ==================================================================== -->
+      <!-- ====================================================================
+           UPPER TOP HEADER: CAMPUSIQ ADMIN ERP (Streamlined Custom Header)
+           ==================================================================== -->
+      <!-- ====================================================================
+           UPPER TOP HEADER: Clean Crest Logo & Primary Controls Only
+           ==================================================================== -->
+      <header class="bg-white dark:bg-[#081225] border-b-2 border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between gap-4 sticky top-0 z-30 shadow-xs">
+        
+        <!-- Left Corner: Upper side logo removed as requested -->
+        <div></div>
+
+        <!-- Right Side: NEXORA AI & Dark / Light Mode Buttons Only -->
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <!-- 1. NEXORA AI Button -->
+          <button onclick="window.AdminApp.openNexoraDrawer()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 text-white text-xs font-black shadow-md cursor-pointer transition transform hover:scale-105" title="Open NEXORA AI Assistant">
+            <i data-lucide="bot" class="w-4 h-4 text-cyan-300"></i>
+            <span>NEXORA AI</span>
+            <span class="w-2 h-2 rounded-full bg-cyan-300 animate-ping hidden sm:inline-block"></span>
+          </button>
+
+          <!-- 2. Dark / Light Mode Button -->
+          <button onclick="window.AdminApp.toggleTheme()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-white text-xs font-black transition shadow-sm border border-slate-700 dark:border-slate-300 cursor-pointer" title="Toggle Dark / Light Mode">
+            <i data-lucide="moon" id="admin-theme-icon" class="w-4 h-4 text-amber-400 dark:text-blue-600"></i>
+            <span id="admin-theme-label" class="hidden sm:inline">Dark / Light</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN ADMINISTRATIVE WORKSPACE (Full Width & Spacious Like Previous Website) -->
+      <div class="p-4 sm:p-8 max-w-7xl w-full mx-auto flex-1 overflow-y-auto custom-scroll">
+        
+        <!-- ==================== TAB 1: EXECUTIVE OVERVIEW ==================== -->
+        <section id="admin-tab-overview" class="space-y-6">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">University Executive Governance Overview</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Real-time academic telemetry across all enrolled undergraduate cohorts and 8 degree programs.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.AdminApp.exportLedgerToCSV()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Master Ledger CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Executive Telemetry Metrics -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-t-4 border-t-blue-600">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">Total Enrolled Cohort</span>
+              <div id="metric-total-students" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">1,000</div>
+              <span class="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold mt-1 block">FE, SE, TE &amp; BE Engineering</span>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-t-4 border-t-emerald-500">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">Overall Campus Attendance</span>
+              <div id="metric-avg-attendance" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">--%</div>
+              <span class="text-[11px] text-slate-900 dark:text-slate-200 font-semibold mt-1 block">Statutory 75% Minimum Target</span>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-t-4 border-t-red-500 cursor-pointer" onclick="window.AdminApp.switchTab('students'); window.AdminApp.state.attFilter='shortage'; document.getElementById('filter-att-status').value='shortage'; window.AdminApp.applyStudentFilters();">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">Critical Shortage Alert</span>
+              <div id="metric-shortage-count" class="text-2xl sm:text-3xl font-black text-red-600 mt-1">--</div>
+              <span class="text-[11px] text-red-600 font-bold mt-1 block">Below 75% Limit &bull; Click to audit</span>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm border-t-4 border-t-amber-500 cursor-pointer" onclick="window.AdminApp.switchTab('grievances')">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200">Campus Grievances</span>
+              <div id="metric-open-tickets" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">--</div>
+              <span class="text-[11px] text-amber-600 font-bold mt-1 block">Expedited Redressal Protocol</span>
+            </div>
+          </div>
+
+          <!-- Two-Column Analytics Layout -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Branch Attendance Comparison -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm sm:text-base mb-4 flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i>
+                <span>Departmental Statutory Attendance Breakdown</span>
+              </h3>
+              <div id="branch-attendance-bars">
+                <!-- Injected dynamically -->
+              </div>
+            </div>
+
+            <!-- Overdue Fees Action Banner & Quick Search -->
+            <div class="space-y-6">
+              
+              <!-- Fee Default Notice Card -->
+              <div class="dark-enclave bg-gradient-to-br from-blue-950 via-[#0B1528] to-[#060D19] text-white p-6 rounded-2xl shadow-lg border border-blue-800/80">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Accounts &amp; Tuition Recovery Desk</span>
+                  <i data-lucide="credit-card" class="w-4 h-4 text-amber-300"></i>
+                </div>
+                <h3 class="text-base font-bold mb-1">Overdue Tuition Warning Dispatch</h3>
+                <p class="text-xs text-slate-200 mb-4 leading-relaxed">
+                  Send formal institutional fee overdue notices directly to student dashboards with 1 click.
+                </p>
+                <div class="flex items-center gap-2">
+                  <button onclick="window.AdminApp.broadcastFeeRemindersToAllUnpaid()" class="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span>Broadcast Fee Warnings to All Unpaid</span>
+                  </button>
+                  <button onclick="window.AdminApp.switchTab('finance')" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition border border-white/20">
+                    View Fee Ledger
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Student Record Search -->
+              <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <h3 class="font-bold text-slate-900 dark:text-white text-sm mb-1 flex items-center gap-2">
+                  <i data-lucide="search" class="w-4 h-4 text-blue-600"></i>
+                  <span>Instant Student Record Lookup</span>
+                </h3>
+                <p class="text-xs text-slate-900 dark:text-slate-200 mb-3">Quick access to all enrolled student profiles to view their 360° profile.</p>
+                <div class="flex gap-2">
+                  <input 
+                    type="text" 
+                    id="quick-student-search-input" 
+                    placeholder="Enter Roll (e.g. 252921201) or Name..." 
+                    class="flex-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    onkeydown="if(event.key === 'Enter') { window.AdminApp.switchTab('students'); document.getElementById('admin-student-search').value = this.value; window.AdminApp.state.searchQuery = this.value; window.AdminApp.applyStudentFilters(); }"
+                  >
+                  <button 
+                    onclick="const val = document.getElementById('quick-student-search-input').value; window.AdminApp.switchTab('students'); document.getElementById('admin-student-search').value = val; window.AdminApp.state.searchQuery = val; window.AdminApp.applyStudentFilters();" 
+                    class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center gap-1 shadow"
+                  >
+                    <span>Search</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 2: UNIVERSITY STUDENT DIRECTORY & 360° EDITOR ==================== -->
+        <section id="admin-tab-students" class="hidden space-y-4">
+          
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">University Student Directory &amp; 360° Profile Hub</h2>
+              <p id="students-filtered-count" class="text-xs text-slate-900 dark:text-slate-200 mt-0.5 font-semibold">Displaying verified institutional records.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.AdminApp.openDirectNoticeModal('')" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                <span>Send Direct Notice</span>
+              </button>
+              <button onclick="window.AdminApp.exportLedgerToCSV()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SMART FILTER TOOLBAR (Cohort & CGPA Thresholds) -->
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+            
+            <!-- Row 1: Academic Year Cohorts & CGPA Threshold Pills -->
+            <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/60">
+              
+              <!-- Year Cohorts -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mr-1 font-extrabold">Cohort:</span>
+                <button onclick="window.AdminApp.setYearFilter('all')" data-year="all" class="year-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition">All Cohorts (1,000)</button>
+                <button onclick="window.AdminApp.setYearFilter('1')" data-year="1" class="year-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">First Year (FE) (250)</button>
+                <button onclick="window.AdminApp.setYearFilter('2')" data-year="2" class="year-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">Second Year (SE) (250)</button>
+                <button onclick="window.AdminApp.setYearFilter('3')" data-year="3" class="year-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">Third Year (TE) (250)</button>
+                <button onclick="window.AdminApp.setYearFilter('4')" data-year="4" class="year-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">Final Year (BE) (250)</button>
+              </div>
+
+              <!-- CGPA Thresholds -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mr-1 font-extrabold">CGPA Metric:</span>
+                <button onclick="window.AdminApp.setCgpaFilter('all')" data-cgpa="all" class="cgpa-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm transition">All CGPA (1,000)</button>
+                <button onclick="window.AdminApp.setCgpaFilter('high')" data-cgpa="high" class="cgpa-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">Distinction (&ge; 7.5 CGPA) (669)</button>
+                <button onclick="window.AdminApp.setCgpaFilter('low')" data-cgpa="low" class="cgpa-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition border border-slate-300 dark:border-slate-700 font-bold">Academic Support (&lt; 7.5 CGPA) (331)</button>
+              </div>
+
+            </div>
+
+            <!-- Row 2: Search, Department, and Attendance Status Dropdowns -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Search Student Profile</label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    id="admin-student-search" 
+                    placeholder="Search by Name, Roll, Dept (e.g. CSE, AIML, Satyam)..." 
+                    oninput="window.AdminApp.state.searchQuery = this.value; window.AdminApp.applyStudentFilters();"
+                    class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase mb-1">Degree Program / Branch (CSE, AIML, etc.)</label>
+                <select 
+                  id="filter-dept" 
+                  onchange="window.AdminApp.state.deptFilter = this.value; window.AdminApp.applyStudentFilters();"
+                  class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold rounded-xl px-3 py-2 border border-slate-400 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <option value="all">All Academic Departments (All 8 Branches)</option>
+                  <option value="Computer Science">Computer Science &amp; Engineering (CSE)</option>
+                  <option value="Artificial Intelligence">AI &amp; Data Science (AI&amp;DS / AIML)</option>
+                  <option value="Information Technology">Information Technology (IT)</option>
+                  <option value="Electronics">Electronics &amp; Telecom (E&amp;TC)</option>
+                  <option value="Mechanical">Mechanical Engineering (MECH)</option>
+                  <option value="Civil">Civil Engineering (CIVIL)</option>
+                  <option value="Electrical">Electrical Engineering (EE)</option>
+                  <option value="MBA">MBA Technology Management (MBA)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Statutory 75% Attendance Filter</label>
+                <select 
+                  id="filter-att-status" 
+                  onchange="window.AdminApp.state.attFilter = this.value; window.AdminApp.applyStudentFilters();"
+                  class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <option value="all">All Attendance Categories</option>
+                  <option value="safe">Statutory Safe (&ge; 75%)</option>
+                  <option value="shortage">Critical Shortage (&lt; 75%)</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Students Table Card -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                    <th class="py-3 px-4">Student Profile</th>
+                    <th class="py-3 px-4">Roll Number</th>
+                    <th class="py-3 px-4">Branch &amp; Cohort</th>
+                    <th class="py-3 px-4">Attendance</th>
+                    <th class="py-3 px-4">CGPA</th>
+                    <th class="py-3 px-4">Tuition Status</th>
+                    <th class="py-3 px-4 text-right">Quick Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-students-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="admin-students-pagination" class="px-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 3: NOTICE & BROADCAST CENTER ==================== -->
+        <section id="admin-tab-notices" class="hidden space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Official Notice &amp; Broadcast Center</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Publish institutional circulars to all academic cohorts or dispatch private warnings to specific roll numbers.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left: Publish Common Notice Form -->
+            <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <i data-lucide="radio" class="w-5 h-5 text-blue-600"></i>
+                <h3 class="font-bold text-slate-900 dark:text-white text-sm">Broadcast Common Notice</h3>
+              </div>
+
+              <form onsubmit="window.AdminApp.handlePublishCommonNotice(event)" class="space-y-3.5">
+                <div>
+                  <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Notice Title *</label>
+                  <input 
+                    type="text" 
+                    id="common-notice-title" 
+                    required 
+                    placeholder="e.g. End-Semester Examination Schedule"
+                    class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Category</label>
+                    <select id="common-notice-cat" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-2.5 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+                      <option>Exam Circular</option>
+                      <option>Academic Council</option>
+                      <option>Holiday Notification</option>
+                      <option>Attendance Audit</option>
+                      <option>Campus Placement Drive</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Priority</label>
+                    <select id="common-notice-priority" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-2.5 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+                      <option value="urgent">Urgent</option>
+                      <option value="high" selected>High</option>
+                      <option value="standard">Standard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Circular Content *</label>
+                  <textarea 
+                    id="common-notice-body" 
+                    required 
+                    rows="4"
+                    placeholder="Enter official text published by the Dean or Examination Controller..."
+                    class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Attached PDF/Document Name (Optional)</label>
+                  <input 
+                    type="text" 
+                    id="common-notice-attach" 
+                    placeholder="e.g. End_Sem_TimeTable_Nov_2026.pdf"
+                    class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3.5 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none"
+                  >
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow">
+                  <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                  <span>Broadcast to All Enrolled Students</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Right: Active Notices Queue -->
+            <div class="lg:col-span-2 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 dark:text-white text-sm">Active College Circulars</h3>
+                <span class="text-xs text-slate-900 dark:text-slate-200 font-bold">Synchronized to Student Portal</span>
+              </div>
+
+              <div id="admin-notices-container">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 4: STUDENT GRIEVANCE & REDRESSAL CELL ==================== -->
+        <section id="admin-tab-grievances" class="hidden space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Student Grievance &amp; Redressal Cell</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Official university channel for student doubts, campus grievances, and expedited academic redressals.</p>
+            </div>
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-300 font-bold">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+              <span>Expedited Redressal Protocol Active</span>
+            </div>
+          </div>
+
+          <!-- Grievance Category Filter Pills -->
+          <div class="flex items-center gap-2 flex-wrap pb-2 border-b border-slate-200 dark:border-slate-800">
+            <span class="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mr-1 font-extrabold">Category:</span>
+            <button onclick="window.AdminApp.setTicketCategoryFilter('all')" data-category="all" class="ticket-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-sm transition">All Doubts &amp; Grievances</button>
+            <button onclick="window.AdminApp.setTicketCategoryFilter('Attendance')" data-category="Attendance" class="ticket-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-200 transition border border-slate-200 dark:border-slate-700">Attendance Discrepancy</button>
+            <button onclick="window.AdminApp.setTicketCategoryFilter('Fee')" data-category="Fee" class="ticket-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-200 transition border border-slate-200 dark:border-slate-700">Fee &amp; Scholarships</button>
+            <button onclick="window.AdminApp.setTicketCategoryFilter('Hostel')" data-category="Hostel" class="ticket-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-200 transition border border-slate-200 dark:border-slate-700">Hostel &amp; Mess Meals</button>
+            <button onclick="window.AdminApp.setTicketCategoryFilter('Exam')" data-category="Exam" class="ticket-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-200 transition border border-slate-200 dark:border-slate-700">Examinations &amp; Results</button>
+          </div>
+
+          <div id="admin-tickets-container">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 5: FACULTY ROSTER ==================== -->
+        <section id="admin-tab-faculty" class="hidden space-y-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Faculty &amp; Lecture Roster Hub</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Institutional directory of senior professors, course allocations, and cabin consultation hours.</p>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                    <th class="py-3 px-4">Faculty ID</th>
+                    <th class="py-3 px-4">Faculty Name &amp; Email</th>
+                    <th class="py-3 px-4">Department</th>
+                    <th class="py-3 px-4">Cabin Room</th>
+                    <th class="py-3 px-4">Assigned Lectures &amp; Labs</th>
+                    <th class="py-3 px-4">Office Consultation Hours</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-faculty-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 6: FINANCIAL CLEARANCE & FEE AUDIT ==================== -->
+        <section id="admin-tab-finance" class="hidden space-y-6">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">University Tuition &amp; Financial Clearance Desk</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Audit fee payments, record institutional scholarships, and dispatch fee default warnings.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.AdminApp.broadcastFeeRemindersToAllUnpaid()" class="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                <span>Broadcast Overdue Warnings</span>
+              </button>
+              <button onclick="window.AdminApp.exportLedgerToCSV()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Ledger CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="admin-finance-summary">
+            <!-- Dynamic finance metrics -->
+          </div>
+
+          <!-- Pending Fees Defaulters Table -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-slate-900 dark:text-white text-sm">Students with Outstanding Semester Dues</h3>
+                <p class="text-xs text-slate-900 dark:text-slate-200 font-medium">Students receiving automated warning notices on their portal dashboard.</p>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                    <th class="py-3 px-4">Student Legal Name</th>
+                    <th class="py-3 px-4">Roll Number</th>
+                    <th class="py-3 px-4">Department</th>
+                    <th class="py-3 px-4">Pending Balance</th>
+                    <th class="py-3 px-4 text-right">Individual Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-unpaid-students-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        </div>
+
+                </div>
+    </main>
+  </div>
+
+
+  <!-- ====================================================================
+       DRAWER: STUDENT 360° INSTITUTIONAL PROFILE FILE (Full Inspection)
+       ==================================================================== -->
+  <div id="student-profile-drawer" class="fixed inset-0 z-50 modal-overlay flex justify-end hidden">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-xl h-full shadow-2xl border-l border-slate-200 dark:border-slate-700 flex flex-col justify-between overflow-y-auto custom-scroll">
+      
+      <!-- Drawer Header -->
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 flex items-center justify-between sticky top-0 z-10 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+          <img id="drawer-stu-avatar" src="" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow">
+          <div>
+            <h3 id="drawer-stu-name" class="font-bold text-slate-900 dark:text-white text-base">Student Name</h3>
+            <div class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400">Roll: <span id="drawer-stu-roll">...</span></div>
+          </div>
+        </div>
+        <button onclick="window.AdminApp.closeStudentProfileDrawer()" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="p-6 space-y-6 flex-1">
+        
+        <!-- Primary Stat Badges -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-900 dark:text-slate-200 block mb-0.5">Attendance</span>
+            <div id="drawer-stu-att" class="text-2xl font-black text-emerald-600">--%</div>
+          </div>
+          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-900 dark:text-slate-200 block mb-0.5">Current CGPA</span>
+            <div id="drawer-stu-cgpa" class="text-2xl font-black text-slate-900 dark:text-white">--</div>
+          </div>
+          <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-900 dark:text-slate-200 block mb-0.5">Academic Status</span>
+            <div id="drawer-stu-standing" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-1.5 truncate">Good Standing</div>
+          </div>
+        </div>
+
+        <!-- Academic & Demographics Block -->
+        <div class="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-900 dark:text-slate-200 font-bold">Department:</span>
+            <span id="drawer-stu-dept" class="font-bold text-slate-900 dark:text-white text-right">Computer Science &amp; Engg</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-900 dark:text-slate-200 font-bold">Academic Cohort:</span>
+            <span id="drawer-stu-year" class="font-bold text-slate-900 dark:text-white">Year 3, Semester 5</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-900 dark:text-slate-200 font-bold">University Email:</span>
+            <span id="drawer-stu-email" class="font-mono text-slate-950 dark:text-slate-100">student@campusiq.edu</span>
+          </div>
+        </div>
+
+        <!-- Subject-Wise Attendance Breakdown Table -->
+        <div>
+          <h4 class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
+            <span>Course-Wise Attended Hours Breakdown</span>
+          </h4>
+          <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-slate-900 text-[10px] font-bold uppercase text-slate-900 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
+                  <th class="py-2 px-3">Subject Name</th>
+                  <th class="py-2 px-3">Code</th>
+                  <th class="py-2 px-3">Hours</th>
+                  <th class="py-2 px-3">Attendance</th>
+                </tr>
+              </thead>
+              <tbody id="drawer-stu-subjects-tbody">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tuition Ledger & Hostel Summary -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+            <span class="font-bold text-slate-950 dark:text-slate-100 block mb-1">Tuition Dues Breakdown</span>
+            <div class="flex justify-between py-0.5"><span class="text-slate-900 dark:text-slate-200 font-bold">Total:</span><span id="drawer-stu-fee-total" class="font-bold">₹145,000</span></div>
+            <div class="flex justify-between py-0.5"><span class="text-slate-900 dark:text-slate-200 font-bold">Paid:</span><span id="drawer-stu-fee-paid" class="font-bold text-emerald-600">₹130,000</span></div>
+            <div class="flex justify-between py-0.5 border-t border-slate-200 dark:border-slate-700 mt-1 pt-1"><span class="text-slate-900 dark:text-slate-200 font-bold">Pending:</span><span id="drawer-stu-fee-due" class="font-bold text-red-600">₹15,000</span></div>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+            <span class="font-bold text-slate-950 dark:text-slate-100 block mb-1">Residence Allocation</span>
+            <div class="flex justify-between py-0.5"><span class="text-slate-900 dark:text-slate-200 font-bold">Hall:</span><span id="drawer-stu-hostel-hall" class="font-bold text-right truncate max-w-[120px]">Ramanujan Hall</span></div>
+            <div class="flex justify-between py-0.5"><span class="text-slate-900 dark:text-slate-200 font-bold">Room:</span><span id="drawer-stu-hostel-room" class="font-bold">Room 304</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Drawer Actions Footer -->
+      <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between gap-3">
+        <button onclick="window.AdminApp.openDirectNoticeModal(window.AdminApp.state.viewingStudent ? window.AdminApp.state.viewingStudent.student_id : '')" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow flex items-center gap-1.5">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span>Send Direct Notice</span>
+        </button>
+
+        <button onclick="window.AdminApp.openEditStudentModal(window.AdminApp.state.viewingStudent ? window.AdminApp.state.viewingStudent.student_id : '')" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow flex items-center gap-1.5">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <span>Edit Student Record</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  
+        <!-- ==================== TAB 2: CAMPUS ACTION CENTER ==================== -->
+        <section id="admin-tab-action-center" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Campus Action Center</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Centralized operational triage: review pending dues, urgent grievances, attendance shortages, and maintenance tickets.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1.5 shadow-xs">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="action-center-count">4 Action Items Pending</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex items-center gap-2 flex-wrap pb-2 border-b border-slate-200 dark:border-slate-800">
+            <span class="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mr-1">Filter:</span>
+            <button onclick="window.AdminApp.filterActionCenter('all')" data-act-filter="all" class="action-filter-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-xs">All Items</button>
+            <button onclick="window.AdminApp.filterActionCenter('grievance')" data-act-filter="grievance" class="action-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">Grievances</button>
+            <button onclick="window.AdminApp.filterActionCenter('fee')" data-act-filter="fee" class="action-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">Fee Defaulters</button>
+            <button onclick="window.AdminApp.filterActionCenter('attendance')" data-act-filter="attendance" class="action-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">Attendance Alerts</button>
+            <button onclick="window.AdminApp.filterActionCenter('hostel')" data-act-filter="hostel" class="action-filter-pill px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700">Hostel Maintenance</button>
+          </div>
+
+          <!-- Action Items Container -->
+          <div id="action-center-items-container" class="space-y-4">
+            <!-- Injected dynamically -->
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 3: CAMPUS ANALYTICS ==================== -->
+        <section id="admin-tab-analytics" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Campus Academic &amp; Operational Analytics</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Institutional telemetry, cross-department attendance compliance, and CGPA distributions across 1,000 enrolled students.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Total Enrolled Registry</span>
+              <div class="text-3xl font-black text-blue-600 dark:text-blue-400 mt-2">1,000</div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-1">250 per cohort across FE, SE, TE, BE</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Dean's Honor List (&ge; 7.5 CGPA)</span>
+              <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">669 Students</div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-1">66.9% Distinction Rate</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Statutory Attendance Average</span>
+              <div class="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-2">82.2%</div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-1">Institutional target &ge; 75% met</p>
+            </div>
+          </div>
+
+          <!-- Departmental Analytics Grid -->
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="font-bold text-slate-900 dark:text-white text-base mb-4 flex items-center gap-2">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+              <span>8-Department Performance &amp; Attendance Breakdown</span>
+            </h3>
+            <div id="analytics-dept-breakdown" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 5: STUDENT 360° COMPREHENSIVE PROFILES ==================== -->
+        <section id="admin-tab-student-360" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Student 360° Comprehensive Dossier</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Single-view holistic academic, financial, attendance, hostel, and grievance record for any verified student.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <select id="student-360-picker" onchange="window.AdminApp.loadStudent360(this.value)" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700">
+                <!-- Dynamically populated with students -->
+              </select>
+            </div>
+          </div>
+
+          <div id="student-360-container">
+            <!-- Injected dynamically -->
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 6: ENROLLMENT & REGISTRATION ==================== -->
+        <section id="admin-tab-enrollment" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Enrollment &amp; Registration Management</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Manage institutional admissions, cohort matriculation status, and register newly admitted students.</p>
+            </div>
+            <button onclick="window.AdminApp.openNewStudentModal()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+              <span>Register New Student</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+              <span class="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400">First Year (FE)</span>
+              <div class="text-2xl font-black text-blue-600 mt-1">250 Enrolled</div>
+              <span class="text-[10px] text-emerald-600 font-bold">100% Intake Capacity</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+              <span class="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400">Second Year (SE)</span>
+              <div class="text-2xl font-black text-blue-600 mt-1">250 Enrolled</div>
+              <span class="text-[10px] text-emerald-600 font-bold">100% Intake Capacity</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+              <span class="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400">Third Year (TE)</span>
+              <div class="text-2xl font-black text-blue-600 mt-1">250 Enrolled</div>
+              <span class="text-[10px] text-emerald-600 font-bold">100% Intake Capacity</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+              <span class="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400">Final Year (BE)</span>
+              <div class="text-2xl font-black text-blue-600 mt-1">250 Enrolled</div>
+              <span class="text-[10px] text-emerald-600 font-bold">100% Intake Capacity</span>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 class="font-bold text-slate-900 dark:text-white text-base mb-3">Institutional Admission Ledger</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mb-4">All registrations are cryptographically synchronized to Supabase Cloud Master profiles.</p>
+            <div id="enrollment-list-table"></div>
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 7: ATTENDANCE MANAGEMENT ==================== -->
+        <section id="admin-tab-attendance" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Statutory 75% Attendance Compliance Desk</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Audit subject-wise attended lecture hours, track debarment risks, and broadcast formal notices.</p>
+            </div>
+            <button onclick="window.AdminApp.broadcastAttendanceShortageWarnings()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+              <span>Dispatch Warnings to All Students &lt;75%</span>
+            </button>
+          </div>
+
+          <div id="attendance-statutory-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 8: EXAMINATION & RESULTS ==================== -->
+        <section id="admin-tab-examinations" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Examination Cell &amp; Results Evaluation</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Controller of Examinations master records, SGPA/CGPA evaluation, and barcode verified hall tickets.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Exam Hall Tickets Issued</span>
+              <div class="text-3xl font-black text-emerald-600 mt-2">1,000 / 1,000</div>
+              <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">100% Barcode Authenticated</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Highest CGPA Awarded</span>
+              <div class="text-3xl font-black text-amber-500 mt-2">9.94 CGPA</div>
+              <span class="text-[10px] text-slate-600 dark:text-slate-300 font-bold">Chancellor's Gold Medal Candidate</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+              <span class="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Average Campus CGPA</span>
+              <div class="text-3xl font-black text-blue-600 mt-2">7.92</div>
+              <span class="text-[10px] text-blue-700 dark:text-blue-400 font-bold">Accredited A++ Benchmark</span>
+            </div>
+          </div>
+
+          <div id="exam-results-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 9: FEE MANAGEMENT ==================== -->
+        <section id="admin-tab-fee-management" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Institutional Tuition &amp; Fee Management</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Configure institutional fee structures across Academic Year 2026-27, audit semester installments, and manage dues.</p>
+          </div>
+          <div id="fee-management-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 10: FEE COLLECTION & RECEIPTS ==================== -->
+        <section id="admin-tab-fee-collection" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Fee Collection Ledger &amp; Official Receipts</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Real-time verified collections, UPI &amp; NetBanking receipts, and downloadable institutional vouchers.</p>
+            </div>
+            <button onclick="window.AdminApp.openRecordPaymentModal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>Record Offline / Bank Payment</span>
+            </button>
+          </div>
+          <div id="fee-collection-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 11: PENDING DUES & DEFAULTERS ==================== -->
+        <section id="admin-tab-fee-defaulters" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Pending Tuition Dues &amp; Defaulters Roster</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Audit outstanding balances exceeding grace periods and broadcast official warning notices.</p>
+            </div>
+            <button onclick="window.AdminApp.broadcastFeeRemindersToAllUnpaid()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>Broadcast Overdue Warnings to All Unpaid</span>
+            </button>
+          </div>
+          <div id="fee-defaulters-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 12: SCHOLARSHIPS & CONCESSIONS ==================== -->
+        <section id="admin-tab-scholarships" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Scholarships, Concessions &amp; Financial Aid</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Dean's Merit Scholarships, fee concessions, and financial aid disbursements for Academic Session 2026-27.</p>
+          </div>
+          <div id="scholarships-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 13: PAYMENT RECONCILIATION ==================== -->
+        <section id="admin-tab-reconciliation" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Payment Gateway &amp; Bank Reconciliation</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Audit bank settlements, prevent duplicate transactions, and verify account ledgers.</p>
+          </div>
+          <div id="reconciliation-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 14: HOSTEL OVERVIEW ==================== -->
+        <section id="admin-tab-hostel-overview" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Campus Residence Halls Overview</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Total capacity, active bed allocations, vacancy counts, and chief warden directory across all 4 residence halls.</p>
+          </div>
+          <div id="hostel-halls-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+        </section>
+
+
+        <!-- ==================== TAB 15: HOSTEL ALLOTMENT ==================== -->
+        <section id="admin-tab-hostel-allotment" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Hostel Applications &amp; Bed Allotments</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Process room allotment requests, record check-in/out dates, and manage active residents.</p>
+            </div>
+            <button onclick="window.AdminApp.openHostelAllotmentModal()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="key" class="w-3.5 h-3.5"></i>
+              <span>Allot New Bed</span>
+            </button>
+          </div>
+          <div id="hostel-allotments-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 16: ROOM & BED ALLOCATION ==================== -->
+        <section id="admin-tab-room-allocation" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Interactive Room &amp; Bed Allocation Grid</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Visual room occupancy matrix: Bed A &amp; Bed B assignments with strict capacity enforcement.</p>
+            </div>
+            <select id="room-grid-hall-picker" onchange="window.AdminApp.loadRoomGrid(this.value)" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700">
+              <option value="Ramanujan Hall of Residence">Ramanujan Hall (Boys)</option>
+              <option value="Dr. Vikram Sarabhai Hostel">Sarabhai Hostel (Boys)</option>
+              <option value="Kalpana Chawla Hall of Residence">Kalpana Chawla Hall (Girls)</option>
+              <option value="Aryabhata Hall (PG & Research)">Aryabhata Hall (PG)</option>
+            </select>
+          </div>
+          <div id="room-grid-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3.5"></div>
+        </section>
+
+
+        <!-- ==================== TAB 17: HOSTEL FEES ==================== -->
+        <section id="admin-tab-hostel-fees" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Hostel &amp; Mess Accommodation Fee Ledger</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Room rent, mess meal deposits, security guarantees, and clearance ledgers.</p>
+          </div>
+          <div id="hostel-fees-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 18: HOSTEL PENDING DUES ==================== -->
+        <section id="admin-tab-hostel-dues" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Hostel Pending Dues &amp; Room Defaulters</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Residents with overdue accommodation balances and automatic warning notices.</p>
+            </div>
+          </div>
+          <div id="hostel-dues-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 19: HOSTEL COMPLAINTS & MAINTENANCE ==================== -->
+        <section id="admin-tab-hostel-maintenance" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Hostel Maintenance &amp; Complaints Tracker</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Track Wi-Fi, Electrical, Plumbing, and Furniture tickets with assigned technicians.</p>
+            </div>
+            <button onclick="window.AdminApp.openHostelMaintenanceModal()" class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+              <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
+              <span>Log Maintenance Ticket</span>
+            </button>
+          </div>
+          <div id="hostel-maintenance-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 21: INDIVIDUAL STUDENT NOTICES ==================== -->
+        <section id="admin-tab-individual-notices" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Individual Student Notice Composer</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Send private, confidential notices directly to one verified student with recipient isolation.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Composer Form -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm mb-4">Compose Private Notice</h3>
+              <form onsubmit="window.AdminApp.handleSendIndividualNotice(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Select Target Student *</label>
+                  <select id="ind-notice-target-student" onchange="window.AdminApp.updateIndNoticePreview(this.value)" required class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Notice Title / Subject *</label>
+                  <input type="text" id="ind-notice-title" oninput="window.AdminApp.refreshIndNoticePreview()" required placeholder="e.g. Mandatory Attendance Remediation Hearing" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Priority</label>
+                    <select id="ind-notice-priority" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-2.5 border border-slate-300 dark:border-slate-700">
+                      <option value="normal">Normal</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="critical">Critical / Debarment</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Category</label>
+                    <select id="ind-notice-category" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-2.5 border border-slate-300 dark:border-slate-700">
+                      <option value="Academic & Disciplinary">Academic &amp; Disciplinary</option>
+                      <option value="Tuition Fee Due">Tuition Fee Due</option>
+                      <option value="Hostel Maintenance">Hostel &amp; Mess</option>
+                      <option value="Examination Advisory">Examination Advisory</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-900 dark:text-slate-200 uppercase mb-1">Direct Message Body *</label>
+                  <textarea id="ind-notice-body" oninput="window.AdminApp.refreshIndNoticePreview()" required rows="4" placeholder="Enter personalized notice body visible exclusively to this student..." class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                  <span>Confirm &amp; Dispatch Private Notice</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Real-Time Recipient Preview Card -->
+            <div class="space-y-4">
+              <div class="bg-gradient-to-br from-blue-950 via-[#0B1528] to-[#060D19] text-white p-6 rounded-2xl border border-blue-800 shadow-md">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Recipient Verification Preview</span>
+                  <i data-lucide="eye" class="w-4 h-4 text-amber-300"></i>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 mb-4">
+                  <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm text-white" id="ind-preview-avatar">S</div>
+                  <div>
+                    <h4 class="font-bold text-white text-sm" id="ind-preview-name">Select a Student</h4>
+                    <p class="text-xs text-slate-300" id="ind-preview-roll">Roll: --</p>
+                  </div>
+                </div>
+                <h4 class="text-sm font-bold text-amber-300 mb-1" id="ind-preview-title">Notice Title Preview</h4>
+                <p class="text-xs text-slate-200 leading-relaxed italic bg-black/20 p-3 rounded-xl" id="ind-preview-body">Notice body content will appear here in real time as you type...</p>
+                <div class="text-[10px] text-emerald-400 font-semibold mt-3 flex items-center gap-1.5">
+                  <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                  <span>Recipient Isolated: Only visible to this student's authenticated portal</span>
+                </div>
+              </div>
+
+              <!-- Dispatched History -->
+              <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <h4 class="font-bold text-slate-900 dark:text-white text-xs uppercase mb-3">Recently Dispatched Individual Notices</h4>
+                <div id="dispatched-ind-notices-list" class="space-y-2 max-h-56 overflow-y-auto custom-scroll"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== TAB 22: BULK ANNOUNCEMENTS ==================== -->
+        <section id="admin-tab-bulk-announcements" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Bulk Circulars &amp; Targeted Announcements</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Broadcast notices to entire collegiate cohorts or specific academic departments.</p>
+          </div>
+          <div id="bulk-announcements-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 23: SCHEDULED NOTIFICATIONS ==================== -->
+        <section id="admin-tab-scheduled-notices" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Scheduled Circulars &amp; Timed Releases</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Queue announcements for scheduled future publication with cancellation support.</p>
+          </div>
+          <div id="scheduled-notices-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 24: DELIVERY & READ TRACKING ==================== -->
+        <section id="admin-tab-delivery-tracking" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Notice Delivery, Read &amp; Acknowledgement Tracking</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Audit read receipts and mandatory acknowledgements across all published notices.</p>
+          </div>
+          <div id="delivery-tracking-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 26: ACADEMIC CALENDAR & EVENTS ==================== -->
+        <section id="admin-tab-calendar-events" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Academic Calendar &amp; Institutional Events</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Official academic schedule, examination blocks, national holidays, and campus symposiums.</p>
+          </div>
+          <div id="calendar-events-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 28: DOCUMENT MANAGEMENT ==================== -->
+        <section id="admin-tab-documents" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Institutional Document &amp; Transcript Repository</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Official course syllabus PDFs, NAAC accreditation files, and authenticated digital transcripts.</p>
+          </div>
+          <div id="documents-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB: NEXORA AI CONVERSATIONAL ASSISTANT ==================== -->
+        <section id="admin-tab-nexora-ai" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          
+          <!-- AI Executive Header -->
+          <div class="bg-white dark:bg-gradient-to-r dark:from-blue-950 dark:via-slate-900 dark:to-indigo-950 p-6 rounded-3xl border border-slate-200 dark:border-blue-500/30 shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-5 text-slate-900 dark:text-white">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0 ring-2 ring-cyan-400/40">
+                <i data-lucide="bot" class="w-8 h-8 text-white"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 class="text-xl sm:text-2xl font-black font-academic tracking-wide">NEXORA AI</h2>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950 font-mono shadow-sm">
+                    Autonomous Campus Intelligence v5.2
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300 mt-1 font-medium leading-relaxed">Ask any question regarding student profiles, statutory 75% attendance compliance, fee defaulters, hostel allocations, faculty, or collegiate bylaws.</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-start md:self-center flex-wrap">
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-slate-200">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>1,000 Profiles Connected</span>
+              </div>
+              <button onclick="window.AdminApp.clearNexoraChat()" class="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white transition border border-slate-700 flex items-center gap-1.5" title="Clear Conversation">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span>Reset Chat</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Suggestion Topic Pills -->
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span class="flex items-center gap-1.5"><i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> Suggested Inquiries (Tap to Ask):</span>
+              <span class="text-[11px] text-slate-400 font-normal">Real-Time Database Queries</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="window.AdminApp.runNexoraQuery('Show students with attendance shortage below 75%')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/80 text-red-900 dark:text-red-200 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-600"></i>
+                <span>Attendance Shortage (&lt; 75%)</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('Which students have unpaid tuition fees?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="credit-card" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>Tuition Fee Defaulters</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('Who is the top student in Computer Science?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/80 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="trophy" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>Top CGPA Rankers</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('What are the minimum attendance rules?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="scroll" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Attendance Condonation Bylaws</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('Tell me about student Aarav Sharma')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-purple-600"></i>
+                <span>Search Student Dossier</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('What are the hostel curfew timings?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-50 dark:bg-cyan-950/80 text-cyan-900 dark:text-cyan-200 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="home" class="w-3.5 h-3.5 text-cyan-600"></i>
+                <span>Hostel Vacancies &amp; Curfew</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('How is CGPA calculated?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="calculator" class="w-3.5 h-3.5 text-slate-600 dark:text-slate-300"></i>
+                <span>10-Point CGPA Formula</span>
+              </button>
+              <button onclick="window.AdminApp.runNexoraQuery('Who is the HOD of Computer Science?')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Department Faculty &amp; Cabins</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Conversational Messages Viewport -->
+          <div id="nexora-tab-chat-thread" class="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+            <!-- Messages injected dynamically by AdminApp.renderNexoraMessages() -->
+          </div>
+
+          <!-- Interactive Conversational Input Bar -->
+          <div class="sticky bottom-4 z-20">
+            <div class="bg-white dark:bg-slate-800 p-2.5 rounded-2xl border-2 border-blue-500/50 shadow-2xl flex items-center gap-2">
+              <div class="pl-2.5 text-blue-600 dark:text-cyan-400">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+              </div>
+              <input 
+                type="text" 
+                id="nexora-tab-query-input" 
+                placeholder="Ask NEXORA anything about students, CGPA, attendance, fees, faculty, college rules..." 
+                onkeydown="if(event.key==='Enter') window.AdminApp.submitNexoraQuery('nexora-tab-query-input')"
+                class="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 text-xs sm:text-sm font-semibold focus:outline-none px-2 py-2"
+              >
+              <button onclick="window.AdminApp.submitNexoraQuery('nexora-tab-query-input')" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer flex-shrink-0">
+                <span>Ask AI</span>
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+
+        <!-- ==================== TAB 30: SMART ANALYTICS & REPORTS ==================== -->
+        <section id="admin-tab-smart-reports" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Proactive Student Support &amp; Early Warning Radar</h2>
+              <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Automated identification of compounding risks: students with simultaneous attendance shortages and academic backlogs.</p>
+            </div>
+            <button onclick="window.AdminApp.exportEarlyWarningReport()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Export CSV Report</span>
+            </button>
+          </div>
+          <div id="smart-reports-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 31: LIVE ACTIVITY & AUDIT LOGS ==================== -->
+        <section id="admin-tab-audit-logs" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Live Administrative Audit Trail</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Immutable administrative action ledger: recording actor identity, action type, affected records, and timestamps.</p>
+          </div>
+          <div id="audit-logs-table-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 32: TRUST & SECURITY CENTER ==================== -->
+        <section id="admin-tab-security-center" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Trust, Security &amp; Compliance Center</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">System integrity status, Supabase cloud encryption, Row Level Security (RLS) enforcement, and backup verifications.</p>
+          </div>
+          <div id="security-center-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 33: USER ROLES & PERMISSIONS ==================== -->
+        <section id="admin-tab-roles-permissions" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Institutional Roles &amp; Permissions Matrix</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Role-based access control (RBAC): Super Admin, Dean, Registrar, Accounts Desk, Hostel Warden, Faculty.</p>
+          </div>
+          <div id="roles-permissions-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 34: DATABASE & SYSTEM HEALTH ==================== -->
+        <section id="admin-tab-system-health" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Database &amp; Infrastructure Health</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Supabase REST API latency, in-memory query throughput, cache efficiency, and cloud health monitoring.</p>
+          </div>
+          <div id="system-health-container"></div>
+        </section>
+
+
+        <!-- ==================== TAB 35: SETTINGS ==================== -->
+        <section id="admin-tab-settings" class="tab-pane hidden p-4 sm:p-8 space-y-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-academic">Institutional System Settings</h2>
+            <p class="text-xs text-slate-900 dark:text-slate-200 mt-1 font-semibold">Configure collegiate academic term, statutory 75% threshold, fee payment grace periods, and emergency broadcasts.</p>
+          </div>
+          <div id="settings-container"></div>
+        </section>
+
+
+  <!-- ====================================================================
+       MODAL 1: IN-PLACE STUDENT RECORD & ATTENDANCE EDITOR
+       ==================================================================== -->
+  <div id="edit-student-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4 max-h-[92vh] overflow-y-auto custom-scroll">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 flex items-center justify-center">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Edit Official Student Record</h3>
+            <p class="text-[11px] text-slate-900 dark:text-slate-200 font-semibold">Changes persist to Supabase &amp; update the Student Portal immediately.</p>
+          </div>
+        </div>
+        <button onclick="window.AdminApp.closeEditStudentModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="window.AdminApp.saveStudentEdits(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Student Legal Name</label>
+            <input type="text" id="edit-stu-name" required class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Roll Number (Permanent)</label>
+            <input type="text" id="edit-stu-roll" readonly class="w-full bg-slate-100 dark:bg-slate-950 text-slate-500 font-mono text-xs rounded-xl px-3 py-2 border border-slate-200 dark:border-slate-800 cursor-not-allowed">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Department / Branch</label>
+          <input type="text" id="edit-stu-dept" readonly class="w-full bg-slate-100 dark:bg-slate-950 text-slate-500 text-xs rounded-xl px-3 py-2 border border-slate-200 dark:border-slate-800 cursor-not-allowed">
+        </div>
+
+        <!-- Attendance & CGPA Overrides -->
+        <div class="grid grid-cols-3 gap-3 p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl border border-blue-200 dark:border-blue-900/40">
+          <div>
+            <label class="block text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase mb-1">Overall Attendance %</label>
+            <input type="number" step="0.1" min="0" max="100" id="edit-stu-att" required class="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-black text-sm rounded-xl px-3 py-1.5 border border-blue-300 dark:border-blue-800 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase mb-1">CGPA (10.0 Scale)</label>
+            <input type="number" step="0.01" min="0" max="10" id="edit-stu-cgpa" required class="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-black text-sm rounded-xl px-3 py-1.5 border border-blue-300 dark:border-blue-800 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase mb-1">Academic Standing</label>
+            <select id="edit-stu-standing" class="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-2 py-2 border border-blue-300 dark:border-blue-800 focus:outline-none">
+              <option>Dean's Honor List</option>
+              <option>Good Standing</option>
+              <option>Attendance Shortage Alert</option>
+              <option>Disciplinary Probation</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Outstanding Fee Due (₹)</label>
+            <input type="number" id="edit-stu-due" required class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Hostel Room Allotted</label>
+            <input type="text" id="edit-stu-hostel" placeholder="e.g. Room 304 or Day Scholar" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Official Reason for Adjustment (Audit Log)</label>
+          <input type="text" id="edit-stu-reason" placeholder="e.g. Medical leave verified by HOD on Oct 29, 2026" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button type="button" onclick="window.AdminApp.closeEditStudentModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-950 dark:text-slate-100 text-xs font-bold hover:bg-slate-100">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Commit Update to Master Registry</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ====================================================================
+       MODAL 2: SEND PERSONAL / DIRECT NOTICE TO STUDENT
+       ==================================================================== -->
+  <div id="personal-notice-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Send Direct Notice to Individual Student</h3>
+            <p class="text-[11px] text-slate-900 dark:text-slate-200 font-semibold">Visible exclusively to this student on their overview dashboard.</p>
+          </div>
+        </div>
+        <button onclick="window.AdminApp.closeDirectNoticeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="window.AdminApp.handleSendPersonalNotice(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Target Student Roll No *</label>
+          <input type="text" id="personal-notice-roll" required placeholder="e.g. 252921201" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs rounded-xl px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Notice Subject *</label>
+          <input type="text" id="personal-notice-title" required placeholder="e.g. Mandatory Attendance Disciplinary Consultation" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Priority Level</label>
+          <select id="personal-notice-priority" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+            <option value="urgent">Urgent Disciplinary / Action Required</option>
+            <option value="high">High Priority</option>
+            <option value="standard">Standard Institutional Notice</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Direct Message Body *</label>
+          <textarea id="personal-notice-body" required rows="4" placeholder="Enter personalized message regarding attendance shortage, fee reminder, or project review..." class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button type="button" onclick="window.AdminApp.closeDirectNoticeModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-950 dark:text-slate-100 text-xs font-bold">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow flex items-center gap-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span>Send Direct Notice</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ====================================================================
+       MODAL 3: STUDENT GRIEVANCE & REDRESSAL CELL RESOLUTION MODAL
+       ==================================================================== -->
+  <div id="resolve-ticket-modal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Take Action on Student Grievance</h3>
+            <p class="text-[11px] text-slate-900 dark:text-slate-200 font-semibold">Official Grievance &amp; Redressal Cell Action</p>
+          </div>
+        </div>
+        <button onclick="window.AdminApp.closeResolveTicketModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-900 dark:text-slate-200 font-bold">Ticket Number:</span>
+          <span id="resolve-tkt-num" class="font-mono font-bold text-blue-700 dark:text-blue-400">TKT-829104</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-900 dark:text-slate-200 font-bold">Student:</span>
+          <span id="resolve-tkt-student" class="font-bold text-slate-900 dark:text-slate-200">Satyam Sambhale</span>
+        </div>
+        <div>
+          <span class="text-slate-900 dark:text-slate-200 font-bold">Subject:</span>
+          <div id="resolve-tkt-subject" class="font-bold text-slate-900 dark:text-white mt-0.5">Biometric Scanner Issue</div>
+        </div>
+        <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+          <span class="text-slate-900 dark:text-slate-200 font-bold">Student Appeal Details:</span>
+          <p id="resolve-tkt-msg" class="text-slate-950 dark:text-slate-100 mt-1 italic leading-relaxed"></p>
+        </div>
+      </div>
+
+      <form onsubmit="window.AdminApp.handleSaveTicketResolution(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Update Status</label>
+          <select id="resolve-tkt-status" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl px-3 py-2 border border-slate-300 dark:border-slate-700 focus:outline-none">
+            <option value="resolved">Action Taken - Resolved</option>
+            <option value="in_progress">Under Investigation / In Review</option>
+            <option value="open">Keep Open</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-950 dark:text-slate-100 uppercase mb-1">Dean's Official Action Taken &amp; Resolution Notes *</label>
+          <textarea id="resolve-tkt-notes" required rows="3" placeholder="e.g. Attendance records verified with Dr. Deshmukh; 2 attended lecture credits awarded in master ledger." class="w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs rounded-xl p-3 border border-slate-300 dark:border-slate-700 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <button type="button" onclick="window.AdminApp.closeResolveTicketModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-950 dark:text-slate-100 text-xs font-bold">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center gap-1.5">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span>Commit Resolution</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Floating Toast Notifications Container -->
+  <div id="admin-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Administrative ERP Engine Script -->
+  <script src="admin-app.js"></script>
+  
+  <!-- ====================================================================
+       FULL RIGHT-SIDE NEXORA AI ASSISTANT SLIDE-OVER DRAWER
+       Opens on the full right side when requested; leaves main website clean like before!
+       ==================================================================== -->
+  <!-- Backdrop Overlay -->
+  <div id="nexora-drawer-backdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden transition-opacity" onclick="window.AdminApp.closeNexoraDrawer()"></div>
+
+  <!-- Full Right-Side AI Drawer (w-full sm:w-[500px] xl:w-[540px]) -->
+  <aside id="nexora-right-drawer" class="fixed inset-y-0 right-0 w-full sm:w-[500px] xl:w-[540px] z-50 bg-white dark:bg-[#070D19] shadow-2xl border-l-2 border-slate-300 dark:border-slate-800 flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Drawer Header -->
+    <div class="p-4 border-b-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-[#0A1226] flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md text-white flex-shrink-0 ring-1 ring-cyan-400/40">
+          <i data-lucide="bot" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-black text-sm text-slate-950 dark:text-white font-academic">NEXORA AI</h3>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-cyan-100 text-cyan-950 dark:bg-cyan-950 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
+              Campus Intelligence
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-800 dark:text-slate-300 font-bold">1,000 Verified Students &bull; 8 Departments</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="window.AdminApp.clearNexoraChat()" class="p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition" title="Clear Chat">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+        <button onclick="window.AdminApp.closeNexoraDrawer()" class="p-2 rounded-xl text-slate-800 hover:text-red-600 dark:text-slate-200 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition font-black cursor-pointer" title="Close AI Assistant (Esc)">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Suggestion Topic Chips -->
+    <div class="p-3.5 bg-white dark:bg-[#081020] border-b-2 border-slate-200 dark:border-slate-800 space-y-2">
+      <div class="flex items-center justify-between text-[11px] font-black text-slate-950 dark:text-slate-100">
+        <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> Suggested Inquiries:</span>
+        <span class="text-[10px] text-slate-500 font-bold">Instant Database Lookups</span>
+      </div>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button onclick="window.AdminApp.runNexoraQuery('Show students with attendance shortage below 75%')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-950 dark:text-red-200 border border-red-300 dark:border-red-800 hover:bg-red-200 transition">
+          Attendance &lt; 75%
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('Which students have unpaid tuition fees?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800 hover:bg-amber-200 transition">
+          Fee Defaulters
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('Who is the top student in Computer Science?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800 hover:bg-blue-200 transition">
+          Top CGPA
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('What are the minimum attendance rules?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-200 transition">
+          Attendance Rules
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('Tell me about student Aarav Sharma')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800 hover:bg-purple-200 transition">
+          Search Student
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('What are the hostel curfew timings?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-100 dark:bg-cyan-950 text-cyan-950 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-800 hover:bg-cyan-200 transition">
+          Hostel Rules
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('Who is the HOD of Computer Science?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200 border border-indigo-300 dark:border-indigo-800 hover:bg-indigo-200 transition">
+          Faculty Cabins
+        </button>
+        <button onclick="window.AdminApp.runNexoraQuery('How does the 12 hour student grievance resolution work?')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-300 transition">
+          12h Grievance SLA
+        </button>
+      </div>
+    </div>
+
+    <!-- Conversational Message Feed -->
+    <div id="nexora-chat-thread" class="flex-1 p-4 space-y-4 overflow-y-auto custom-scroll bg-slate-50 dark:bg-[#060D19]/70">
+      <!-- Injected dynamically by AdminApp.renderNexoraMessages() -->
+    </div>
+
+    <!-- Bottom Input Bar -->
+    <div class="p-3 bg-white dark:bg-[#0A1226] border-t-2 border-slate-200 dark:border-slate-800">
+      <div class="relative flex items-center">
+        <input 
+          type="text" 
+          id="nexora-query-input" 
+          placeholder="Ask NEXORA anything about students, rules, faculty..." 
+          onkeydown="if(event.key==='Enter') window.AdminApp.submitNexoraQuery()"
+          class="w-full bg-slate-100 dark:bg-slate-900 text-slate-950 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 text-xs font-bold rounded-xl pl-9 pr-20 py-3 border-2 border-slate-300 dark:border-slate-700 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+        >
+        <i data-lucide="sparkles" class="w-4 h-4 text-blue-600 dark:text-cyan-400 absolute left-3"></i>
+        <button onclick="window.AdminApp.submitNexoraQuery()" class="absolute right-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow transition flex items-center gap-1 cursor-pointer">
+          <span>Ask</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+</body>
+</html>

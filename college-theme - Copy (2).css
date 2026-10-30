@@ -1,0 +1,335 @@
+/* ====================================================================
+   CAMPUSIQ — Precision Collegiate Dual-Theme Design System v7.5
+   Guarantees 100% visible typography, crystal-clear light mode,
+   deep obsidian dark mode with zero blank keywords or washed-out text,
+   smooth horizontal scrolling circulars marquee, and isolated section printing.
+   ==================================================================== */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-academic {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* Custom Scrollbars */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+/* Sidebar Architecture (Persistent Dark Collegiate Navy) */
+.college-sidebar,
+#admin-main-sidebar {
+  background-color: #070D19 !important;
+  border-right: 1px solid rgba(51, 65, 85, 0.5) !important;
+  color: #FFFFFF !important;
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #94A3B8;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.sidebar-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.sidebar-nav-link.active {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.sidebar-nav-link.active i {
+  color: #FFFFFF !important;
+}
+
+/* Base Card Surfaces */
+.portal-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);
+}
+
+.portal-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FFFFFF;
+}
+
+.timetable-row {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  transition: all 0.15s;
+}
+
+.timetable-row:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.timetable-row.active-now {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+}
+
+/* Smart Student ID Card */
+.smart-id-card {
+  background: linear-gradient(135deg, #061122 0%, #0B132B 50%, #1C2541 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  border-radius: 1.25rem;
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   HORIZONTAL CONTINUOUS SCROLLING OFFICIAL CIRCULARS MARQUEE
+   Smooth endless horizontal glide across the screen with hover-pause
+   ========================================================================== */
+.ticker-wrap {
+  background: #FEF3C7;
+  border-bottom: 1.5px solid #FDE68A;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.ticker-track {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marqueeHorizontal 32s linear infinite;
+}
+
+.ticker-content:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeHorizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1E293B;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ticker-item:hover {
+  color: #1D4ED8;
+  text-decoration: underline;
+}
+
+.barcode-strip {
+  letter-spacing: 2px;
+  font-family: var(--font-mono);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+/* ==========================================================================
+   DARK THEME HARMONIZATION (Applied when <html class="dark">)
+   Smoothly flips backgrounds to deep obsidian and dark text to crisp white,
+   WITHOUT overriding specific badge colors (amber, emerald, red, blue).
+   ========================================================================== */
+html.dark body {
+  background-color: #070D19;
+  color: #F8FAFC;
+}
+
+html.dark header {
+  background-color: #081225;
+  border-color: #1E293B;
+}
+
+html.dark .bg-white {
+  background-color: #0F172A;
+  border-color: #1E293B;
+}
+
+html.dark .portal-card,
+html.dark .timetable-row {
+  background-color: #0F172A;
+  border-color: #1E293B;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+html.dark .timetable-row.active-now {
+  background-color: #0F2042;
+  border-color: #2563EB;
+}
+
+html.dark .portal-card-header {
+  background-color: #0F172A;
+  border-color: #1E293B;
+}
+
+/* Headings in Dark Mode */
+html.dark main h1,
+html.dark main h2,
+html.dark main h3,
+html.dark main h4 {
+  color: #FFFFFF;
+}
+
+html.dark label {
+  color: #CBD5E1;
+}
+
+/* Slate Text in Dark Mode (High Contrast, No Blank Keywords) */
+html.dark .text-slate-900 {
+  color: #F8FAFC;
+}
+
+html.dark .text-slate-800 {
+  color: #F1F5F9;
+}
+
+html.dark .text-slate-700 {
+  color: #E2E8F0;
+}
+
+html.dark .text-slate-600 {
+  color: #CBD5E1;
+}
+
+html.dark .text-slate-500 {
+  color: #94A3B8;
+}
+
+/* Card Surface Backgrounds in Dark Mode */
+html.dark .portal-card .bg-slate-50,
+html.dark .portal-card .bg-slate-100,
+html.dark main .bg-slate-50,
+html.dark main .bg-slate-100 {
+  background-color: #141E33;
+  border-color: #1E293B;
+}
+
+html.dark .portal-card .border-slate-100,
+html.dark .portal-card .border-slate-200,
+html.dark main .border-slate-200 {
+  border-color: #1E293B;
+}
+
+html.dark .portal-card .divide-slate-100 > * + * {
+  border-color: #1E293B;
+}
+
+/* Marquee Ticker in Dark Mode */
+html.dark .ticker-wrap {
+  background: #0B132B;
+  border-color: #1E293B;
+}
+
+html.dark .ticker-item {
+  color: #E2E8F0;
+}
+
+html.dark .ticker-item:hover {
+  color: #60A5FA;
+}
+
+/* Table Harmonization in Dark Mode */
+html.dark table th {
+  background-color: #0B1325;
+  color: #E2E8F0;
+  border-color: #1E293B;
+}
+
+html.dark table td {
+  border-color: #1E293B;
+  color: #E2E8F0;
+}
+
+html.dark table tr:hover td {
+  background-color: #0F1B33;
+}
+
+/* Form Inputs in Dark Mode */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0B1325;
+  color: #FFFFFF;
+  border-color: #334155;
+}
+
+/* ==========================================================================
+   ISOLATED SECTION PRINTING & DOWNLOAD SYSTEM
+   When printing any section or card, hides all background layout elements.
+   ========================================================================== */
+@media print {
+  header, 
+  aside, 
+  #sidebar, 
+  #admin-main-sidebar, 
+  nav, 
+  .sidebar-nav-link,
+  #toast-container, 
+  .modal-overlay button, 
+  .no-print,
+  #portal-spotlight-search-modal, 
+  #sla-hotline-modal {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

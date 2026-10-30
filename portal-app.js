@@ -278,7 +278,12 @@ class CampusIQPortalController {
     const current = window.CampusIQService ? window.CampusIQService.currentUser : null;
     this.checkSessionAndRender(current);
 
-    // 3. Init AI Chat Welcome
+    // 3. Load notices & setup cross-app real-time synchronization
+    this.loadNoticesFromStorage();
+    this.setupCrossTabSync();
+    this.startLiveSupabaseSync();
+
+    // 4. Init AI Chat Welcome
     this.initAICopilot();
 
     this.setupEventListeners();
@@ -332,6 +337,7 @@ class CampusIQPortalController {
   }
 
   checkSessionAndRender(student) {
+    this.state.student = student;
     const loginGate = document.getElementById("login-gate-screen");
     const portalApp = document.getElementById("authenticated-portal-layout");
 
@@ -354,61 +360,172 @@ class CampusIQPortalController {
       // Show portal; hide login gate
       if (loginGate) loginGate.classList.add("hidden");
       if (portalApp) portalApp.classList.remove("hidden");
+      this.loadNoticesFromStorage();
       this.renderAllViewsForStudent(student);
     }
 
     if (window.lucide) window.lucide.createIcons();
   }
 
-
   loadNoticesFromStorage() {
+    let combined = [];
+
+    // 1. Common institutional circulars
     const cached = localStorage.getItem("campusiq_notices");
     if (cached) {
       try {
         const adminNotices = JSON.parse(cached);
         if (Array.isArray(adminNotices) && adminNotices.length > 0) {
-          // Merge with built-in default notices
           const mapped = adminNotices.map(n => ({
-            id: n.id,
+            id: n.id || n.notice_id || ("not_" + Math.random()),
+            notice_id: n.notice_id,
             title: n.title,
-            target: n.target || "all",
-            student_name: n.student_name || "",
-            badgeType: n.priority === "urgent" ? "badge-exam" : "badge-circular",
-            sourceLabel: n.author || "Office of the Dean",
+            target: n.target || n.recipient_student_id || "all",
+            student_name: n.student_name || n.recipient_name || "",
+            badgeType: n.priority === "urgent" || n.priority === "critical" ? "badge-exam" : "badge-circular",
+            sourceLabel: n.author || n.sender_title || "Office of the Dean",
             category: n.category ? n.category.toLowerCase() : "academic",
             priority: n.priority || "high",
             date: n.date || "Today",
             department: n.department || "All Engineering Departments",
-            author: n.author || "Dean of Academic Affairs",
+            author: n.author || n.sender_title || "Dean of Academic Affairs",
             summary: n.summary || n.message || "",
-            attachmentName: n.attachment || "Official_Notification.pdf",
-            attachmentSize: "240 KB"
+            message: n.message || n.summary || "",
+            attachmentName: n.attachment || n.attachmentName || "Official_Notification.pdf",
+            attachmentSize: n.attachmentSize || "240 KB",
+            created_at: n.created_at || new Date().toISOString()
           }));
-          this.state.notices = mapped;
+          combined = mapped;
         }
       } catch (e) {
         console.warn("Notice parse error:", e);
       }
     }
+
+    // 2. Individual notices targeted to this student
+    const studentId = this.state.student ? String(this.state.student.student_id).trim() : "";
+    if (studentId) {
+      const indCached = localStorage.getItem("campusiq_individual_notices");
+      if (indCached) {
+        try {
+          const indNotices = JSON.parse(indCached);
+          if (Array.isArray(indNotices)) {
+            indNotices.forEach(n => {
+              if (String(n.recipient_student_id).trim() === studentId) {
+                const exists = combined.some(c => (c.id && c.id === n.id) || (c.notice_id && c.notice_id === n.notice_id));
+                if (!exists) {
+                  combined.unshift({
+                    id: n.id || n.notice_id || ("ind_" + Date.now()),
+                    notice_id: n.notice_id,
+                    title: n.title,
+                    target: studentId,
+                    recipient_student_id: studentId,
+                    student_name: n.recipient_name || "",
+                    badgeType: "badge-exam",
+                    sourceLabel: n.sender_title || "Official Notice from Dean",
+                    category: n.category ? n.category.toLowerCase() : "academic",
+                    priority: n.priority || "urgent",
+                    date: n.created_at ? new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Today",
+                    department: "Office of the Dean",
+                    author: n.sender_title || "Academic Dean",
+                    summary: n.message,
+                    message: n.message,
+                    attachmentName: "Dean_Directive.pdf",
+                    attachmentSize: "180 KB",
+                    created_at: n.created_at || new Date().toISOString()
+                  });
+                }
+              }
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (combined.length > 0) {
+      this.state.notices = combined;
+    }
   }
 
   setupCrossTabSync() {
+    // 1. BroadcastChannel for instant real-time message bus across all open tabs/windows
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.onmessage = (event) => {
+          const data = event.data;
+          if (!data || !data.type) return;
+
+          console.log("[CampusIQ RealTime Bus Received]:", data.type, data);
+
+          if (data.type === "STUDENT_UPDATED") {
+            const sid = data.studentId || (data.student && data.student.student_id);
+            const currentRoll = this.state.student ? String(this.state.student.student_id).trim() : "";
+            if (currentRoll && String(sid).trim() === currentRoll) {
+              const updated = data.student;
+              this.state.student = { ...this.state.student, ...updated };
+              if (window.CampusIQService) {
+                window.CampusIQService.currentUser = this.state.student;
+                localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
+                sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
+              }
+              this.renderAllViewsForStudent(this.state.student);
+              this.showToast("⚡ Real-Time Update from Administration", `Your attendance / records were updated to ${this.state.student.overall_attendance}%.`, "info");
+            }
+          } else if (data.type === "INDIVIDUAL_NOTICE_DISPATCHED") {
+            const currentRoll = this.state.student ? String(this.state.student.student_id).trim() : "";
+            const targetRoll = data.target ? String(data.target).trim() : (data.notice?.recipient_student_id ? String(data.notice.recipient_student_id).trim() : "");
+            if (targetRoll === "all" || targetRoll === currentRoll) {
+              this.loadNoticesFromStorage();
+              this.renderNotices();
+              this.renderTicker();
+              this.showToast("🔔 New Direct Circular from Dean", data.notice?.title || "New notice received", "warning");
+            }
+          } else if (data.type === "COMMON_NOTICE_PUBLISHED" || data.type === "BULK_NOTICES_DISPATCHED") {
+            this.loadNoticesFromStorage();
+            this.renderNotices();
+            this.renderTicker();
+            this.showToast("📢 New Campus Circular Published", data.notice?.title || "Check circulars section", "info");
+          } else if (data.type === "NEW_TICKET_SUBMITTED") {
+            this.renderTicketsList();
+          }
+        };
+      }
+    } catch (e) {
+      console.warn("BroadcastChannel not supported or error:", e);
+    }
+
+    // 2. Storage event fallback for cross-window / cross-process synchronization
     window.addEventListener("storage", (e) => {
-      if (e.key === "campusiq_registry_store") {
+      if (e.key === "campusiq_registry_store" || e.key === "campusiq_authenticated_student") {
         try {
-          const store = JSON.parse(e.newValue || "[]");
           if (this.state.student) {
-            const updated = store.find(s => s.student_id === this.state.student.student_id);
+            const currentRoll = String(this.state.student.student_id).trim();
+            let updated = null;
+            if (e.key === "campusiq_authenticated_student" && e.newValue) {
+              const parsed = JSON.parse(e.newValue);
+              if (parsed && String(parsed.student_id).trim() === currentRoll) {
+                updated = parsed;
+              }
+            } else if (e.newValue) {
+              const store = JSON.parse(e.newValue || "[]");
+              updated = store.find(s => String(s.student_id).trim() === currentRoll);
+            }
+
             if (updated) {
-              this.state.student = updated;
-              this.renderAllViewsForStudent(updated);
-              this.showToast("Record Updated by Administration", `Your attendance / records were updated to ${updated.overall_attendance}%.`, "info");
+              this.state.student = { ...this.state.student, ...updated };
+              if (window.CampusIQService) {
+                window.CampusIQService.currentUser = this.state.student;
+              }
+              this.renderAllViewsForStudent(this.state.student);
+              this.showToast("Record Updated by Administration", `Your attendance / records were updated to ${this.state.student.overall_attendance}%.`, "info");
             }
           }
         } catch (err) {}
-      } else if (e.key === "campusiq_notices") {
+      } else if (e.key === "campusiq_notices" || e.key === "campusiq_individual_notices") {
         this.loadNoticesFromStorage();
         this.renderNotices();
+        this.renderTicker();
       } else if (e.key === "campusiq_tickets") {
         this.renderTicketsList();
       }
@@ -417,11 +534,109 @@ class CampusIQPortalController {
     window.addEventListener("campusiq_notices_updated", () => {
       this.loadNoticesFromStorage();
       this.renderNotices();
+      this.renderTicker();
     });
 
     window.addEventListener("campusiq:new-notice", () => {
+      this.loadNoticesFromStorage();
       this.renderNotices();
+      this.renderTicker();
     });
+  }
+
+  startLiveSupabaseSync() {
+    if (this._supabaseSyncInterval) return;
+
+    const syncTick = async () => {
+      if (!this.state.student) return;
+      const studentId = String(this.state.student.student_id).trim();
+      const service = window.CampusIQService;
+      if (!service || !service.url || !service.key) return;
+
+      try {
+        // 1. Sync student profile (attendance, CGPA, dues, hostel)
+        const profileRes = await fetch(`${service.url}/rest/v1/profiles?student_id=eq.${studentId}&select=*`, {
+          headers: { apikey: service.key, Authorization: `Bearer ${service.key}` }
+        });
+
+        if (profileRes.ok) {
+          const rows = await profileRes.json();
+          if (rows && rows.length > 0) {
+            const remote = rows[0];
+            const currentAtt = Number(this.state.student.overall_attendance || 0);
+            const remoteAtt = Number(remote.overall_attendance || 0);
+            const currentCgpa = String(this.state.student.cgpa || "");
+            const remoteCgpa = String(remote.cgpa || "");
+
+            let hasChanged = false;
+            if (remote.overall_attendance !== undefined && remoteAtt !== currentAtt) hasChanged = true;
+            if (remote.cgpa !== undefined && remoteCgpa !== currentCgpa) hasChanged = true;
+            if (remote.full_name && remote.full_name !== this.state.student.full_name) hasChanged = true;
+            if (remote.fee_info && JSON.stringify(remote.fee_info) !== JSON.stringify(this.state.student.fee_info)) hasChanged = true;
+            if (remote.hostel_info && JSON.stringify(remote.hostel_info) !== JSON.stringify(this.state.student.hostel_info)) hasChanged = true;
+
+            if (hasChanged) {
+              console.log("[CampusIQ Live Supabase Sync] Updated profile detected:", remote);
+              this.state.student = { ...this.state.student, ...remote };
+              if (window.CampusIQService) {
+                window.CampusIQService.currentUser = this.state.student;
+              }
+              localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
+              sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
+              this.renderAllViewsForStudent(this.state.student);
+              this.showToast("⚡ Cloud Sync", `Updated attendance / academic records from college database.`, "info");
+            }
+          }
+        }
+      } catch (err) {}
+
+      try {
+        // 2. Sync individual notices for this student from Supabase
+        const noticeRes = await fetch(`${service.url}/rest/v1/individual_notices?recipient_student_id=eq.${studentId}&order=created_at.desc&limit=20`, {
+          headers: { apikey: service.key, Authorization: `Bearer ${service.key}` }
+        });
+
+        if (noticeRes.ok) {
+          const remoteNotices = await noticeRes.json();
+          if (Array.isArray(remoteNotices) && remoteNotices.length > 0) {
+            const localInd = JSON.parse(localStorage.getItem("campusiq_individual_notices") || "[]");
+            let addedNew = false;
+
+            remoteNotices.forEach(rn => {
+              const nid = rn.notice_id || rn.id;
+              const exists = localInd.some(ln => (ln.notice_id && ln.notice_id === nid) || (ln.id && ln.id === nid));
+              if (!exists) {
+                localInd.unshift({
+                  id: rn.id || ("ind_" + Date.now()),
+                  notice_id: rn.notice_id || nid,
+                  recipient_student_id: rn.recipient_student_id,
+                  recipient_name: rn.recipient_name,
+                  sender_title: rn.sender_title || "Office of the Dean",
+                  title: rn.title,
+                  message: rn.message,
+                  priority: rn.priority || "urgent",
+                  category: rn.category || "Academic & Disciplinary",
+                  created_at: rn.created_at || new Date().toISOString(),
+                  publication_status: "published"
+                });
+                addedNew = true;
+              }
+            });
+
+            if (addedNew) {
+              localStorage.setItem("campusiq_individual_notices", JSON.stringify(localInd));
+              this.loadNoticesFromStorage();
+              this.renderNotices();
+              this.renderTicker();
+              this.showToast("🔔 New Dean Circular", "Received a new personal notice from college administration.", "warning");
+            }
+          }
+        }
+      } catch (err) {}
+    };
+
+    // Run poll every 4 seconds
+    this._supabaseSyncInterval = setInterval(syncTick, 4000);
   }
 
   renderAllViewsForStudent(student) {
@@ -637,12 +852,15 @@ class CampusIQPortalController {
   }
 
   dismissPersonalNotice(noticeId) {
-    this.state.notices = this.state.notices.filter(n => n.id !== noticeId);
+    this.state.notices = this.state.notices.filter(n => n.id !== noticeId && n.notice_id !== noticeId);
     try {
       localStorage.setItem("campusiq_notices", JSON.stringify(this.state.notices));
+      const ind = JSON.parse(localStorage.getItem("campusiq_individual_notices") || "[]");
+      const filteredInd = ind.filter(n => n.id !== noticeId && n.notice_id !== noticeId);
+      localStorage.setItem("campusiq_individual_notices", JSON.stringify(filteredInd));
     } catch (e) {}
     this.renderNotices();
-    this.showToast("Notice Acknowledged", "Notice archived from your active notices list.", "info");
+    this.showToast("Notice Acknowledged", "Notice archived from your active circulars list.", "info");
   }
 
   renderNotices() {
@@ -650,32 +868,49 @@ class CampusIQPortalController {
     const overviewListEl = document.getElementById("overview-notices-container");
     if (!listEl && !overviewListEl) return;
 
-    const studentId = this.state.student ? this.state.student.student_id : "";
+    const studentId = this.state.student ? String(this.state.student.student_id).trim() : "";
     
     // Check for personal direct notices from local notices + individual notices service
     let indNotices = [];
-    if (window.CampusIQService && window.CampusIQService.getStudentIndividualNotices) {
+    if (window.CampusIQService && window.CampusIQService.getStudentIndividualNotices && studentId) {
       indNotices = window.CampusIQService.getStudentIndividualNotices(studentId).map(n => ({
         id: n.id || n.notice_id,
+        notice_id: n.notice_id,
         target: studentId,
+        recipient_student_id: studentId,
         title: n.title,
         summary: n.message,
         message: n.message,
         category: n.category || "Official Notice",
         priority: n.priority || "high",
-        date: new Date(n.created_at).toLocaleDateString(),
-        sourceLabel: "Official Notice from Dean",
+        date: n.created_at ? new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Today",
+        sourceLabel: n.sender_title || "Official Notice from Dean",
         badgeType: "bg-amber-100 text-amber-800 border border-amber-300 font-bold"
       }));
     }
-    const personalNotices = [
-      ...this.state.notices.filter(n => n.target && n.target === studentId),
+
+    const allPersonal = [
+      ...this.state.notices.filter(n => n.target && String(n.target).trim() === studentId),
       ...indNotices
     ];
-    this.renderPersonalNoticeBanner(personalNotices);
 
-    // Visible notices: common broadcast to all OR personal to this student
-    let filtered = this.state.notices.filter(n => !n.target || n.target === "all" || n.target === studentId);
+    const uniquePersonal = [];
+    const seenIds = new Set();
+    allPersonal.forEach(n => {
+      const key = String(n.notice_id || n.id || n.title).trim();
+      if (!seenIds.has(key)) {
+        seenIds.add(key);
+        uniquePersonal.push(n);
+      }
+    });
+
+    this.renderPersonalNoticeBanner(uniquePersonal);
+
+    // Visible notices: common broadcast to all OR personal to this specific student
+    let filtered = this.state.notices.filter(n => {
+      const t = String(n.target || n.recipient_student_id || "all").trim();
+      return t === "all" || t === "" || t === studentId;
+    });
 
     if (this.state.noticeFilter !== "all") {
       filtered = filtered.filter(n => n.category === this.state.noticeFilter || (n.priority && n.priority === this.state.noticeFilter));
@@ -684,9 +919,9 @@ class CampusIQPortalController {
     if (this.state.searchQuery.trim() !== "") {
       const q = this.state.searchQuery.toLowerCase();
       filtered = filtered.filter(n => 
-        n.title.toLowerCase().includes(q) || 
-        n.summary.toLowerCase().includes(q) || 
-        n.department.toLowerCase().includes(q)
+        (n.title && n.title.toLowerCase().includes(q)) || 
+        (n.summary && n.summary.toLowerCase().includes(q)) || 
+        (n.department && n.department.toLowerCase().includes(q))
       );
     }
 

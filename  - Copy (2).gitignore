@@ -1,0 +1,18 @@
+# CampusIQ - Git Ignore Rules
+*.zip
+*.log
+*.tmp
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+temp-*.js
+admin-app-backup-*.js
+admin-app-test-*.js
+test-*.jpg
+test_*.py
+generate_*.py
+inspect_*.py
+update_*.py
+apply_*.py
+package_*.py
