@@ -314,6 +314,9 @@ class CampusIQAdminApp {
 
   saveDatabase() {
     localStorage.setItem("campusiq_registry_store", JSON.stringify(this.state.students));
+    if (window.CampusIQService) {
+      window.CampusIQService.allStudentsRegistry = this.state.students;
+    }
     window.dispatchEvent(new Event("campusiq_registry_updated"));
   }
 
@@ -1007,9 +1010,25 @@ switchTab(tabId) {
     if (target.fee_info) {
       target.fee_info.due = newDue;
       target.fee_info.status = newDue === 0 ? "100% Cleared" : "Partial Dues";
+      target.fee_info.paid = Math.max(0, (target.fee_info.total || 145000) - newDue);
+    } else {
+      target.fee_info = {
+        total: 145000,
+        paid: Math.max(0, 145000 - newDue),
+        due: newDue,
+        status: newDue === 0 ? "100% Cleared" : "Partial Dues"
+      };
     }
     if (target.hostel_info) {
       target.hostel_info.room = newHostel;
+    } else {
+      target.hostel_info = {
+        hall: "Ramanujan Hall of Residence",
+        room: newHostel,
+        bed: "A",
+        warden: "Dr. V. K. Sharma",
+        roommate: "Aarav Sharma"
+      };
     }
 
     if (target.subjects && target.subjects.length > 0) {

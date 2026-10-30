@@ -691,8 +691,17 @@ class CampusIQPortalController {
       total += s.total;
       attended += s.attended;
     });
-    const pct = total > 0 ? ((attended / total) * 100).toFixed(1) : "0.0";
-    const isSafe = parseFloat(pct) >= 75;
+
+    // Priority 1: Use student.overall_attendance directly (synced from admin/database)
+    let pctNum = 0;
+    if (student.overall_attendance !== undefined && student.overall_attendance !== null && !isNaN(student.overall_attendance)) {
+      pctNum = parseFloat(student.overall_attendance);
+    } else {
+      pctNum = total > 0 ? (attended / total) * 100 : 0;
+    }
+
+    const pct = pctNum.toFixed(1);
+    const isSafe = pctNum >= 75;
 
     const attVal = document.getElementById("stat-attendance-val");
     const attSub = document.getElementById("stat-attendance-sub");
@@ -1071,9 +1080,20 @@ class CampusIQPortalController {
     const container = document.getElementById("attendance-subjects-container");
     if (!container || !student || !student.subjects) return;
 
+    const overallPct = (student.overall_attendance !== undefined && student.overall_attendance !== null && !isNaN(student.overall_attendance))
+      ? parseFloat(student.overall_attendance)
+      : null;
+
     const html = student.subjects.map(s => {
-      const pct = s.total > 0 ? ((s.attended / s.total) * 100).toFixed(1) : "0.0";
-      const pctNum = parseFloat(pct);
+      let pctNum = 0;
+      if (s.percentage !== undefined && s.percentage !== null && !isNaN(s.percentage)) {
+        pctNum = parseFloat(s.percentage);
+      } else if (s.total > 0) {
+        pctNum = (s.attended / s.total) * 100;
+      } else if (overallPct !== null) {
+        pctNum = overallPct;
+      }
+      const pct = pctNum.toFixed(1);
 
       let statusColor = "bg-emerald-500";
       let statusTextColor = "text-emerald-700";
@@ -2317,58 +2337,14 @@ class CampusIQPortalController {
   // ====================================================================
   renderFeesView(student) {
     if (!student) return;
-    const cgpa = parseFloat(student.cgpa) || 7.5;
-    const rollNum = parseInt(student.student_id.slice(-3)) || 201;
-    
-    let totalFee = 145000;
-    let paidFee = 120000;
-    let dueFee = 25000;
-    let paidPct = "82.8% Cleared (4 Installments)";
-    let grantAmt = 20000;
-    let grantName = "State Merit-cum-Means Fellowship";
-    let isFullPaid = false;
-
-    if (student.student_id === "252921201") {
-      // Satyam Sambhale (Dean's Honors)
-      totalFee = 145000; paidFee = 120000; dueFee = 25000;
-      paidPct = "82.8% Cleared (4 Installments)";
-      grantAmt = 20000; grantName = "State Merit-cum-Means Fellowship";
-    } else if (student.student_id === "252921202") {
-      // Aarav Sharma (Shortage Warning)
-      totalFee = 145000; paidFee = 85000; dueFee = 60000;
-      paidPct = "58.6% Cleared (2 Installments)";
-      grantAmt = 0; grantName = "No Active Concession (CGPA < 7.5)";
-    } else if (student.student_id === "252921203") {
-      // Priya Sharma (Gold Medalist)
-      totalFee = 145000; paidFee = 145000; dueFee = 0;
-      paidPct = "100% Cleared (All Installments Paid)";
-      grantAmt = 40000; grantName = "Chancellor's Gold Medal Fellowship";
-      isFullPaid = true;
-    } else if (student.student_id === "252921204") {
-      // Rohan Deshmukh (Borderline Safe)
-      totalFee = 145000; paidFee = 110000; dueFee = 35000;
-      paidPct = "75.8% Cleared (3 Installments)";
-      grantAmt = 15000; grantName = "EBC Category Institutional Assistance";
-    } else {
-      // Deterministic for any of the 120 students in the database
-      if (cgpa >= 9.0) {
-        paidFee = 145000; dueFee = 0; isFullPaid = true;
-        paidPct = "100% Cleared (All Installments Paid)";
-        grantAmt = 35000; grantName = "University High Honors Fellowship";
-      } else if (cgpa >= 8.0) {
-        paidFee = 120000; dueFee = 25000;
-        paidPct = "82.8% Cleared (4 Installments)";
-        grantAmt = 20000; grantName = "State Higher Education Grant";
-      } else if (cgpa >= 7.0) {
-        paidFee = 100000; dueFee = 45000;
-        paidPct = "68.9% Cleared (3 Installments)";
-        grantAmt = 10000; grantName = "Technical Education Assistance";
-      } else {
-        paidFee = 80000; dueFee = 65000;
-        paidPct = "55.1% Cleared (2 Installments)";
-        grantAmt = 0; grantName = "General Category (Full Fee Scheme)";
-      }
-    }
+    const f = student.fee_info || {};
+    const totalFee = f.total !== undefined ? Number(f.total) : 145000;
+    const dueFee = f.due !== undefined ? Number(f.due) : 0;
+    const paidFee = f.paid !== undefined ? Number(f.paid) : Math.max(0, totalFee - dueFee);
+    const isFullPaid = dueFee === 0;
+    const paidPct = isFullPaid
+      ? "100% Cleared (All Installments Paid)"
+      : (totalFee > 0 ? `${((paidFee / totalFee) * 100).toFixed(1)}% Cleared (${f.status || 'Partial Dues'})` : "100% Cleared");
 
     const totalEl = document.getElementById("fee-total-amount");
     const paidEl = document.getElementById("fee-paid-amount");
@@ -2486,17 +2462,17 @@ class CampusIQPortalController {
   // ====================================================================
   renderHostelView(student) {
     if (!student) return;
-    const isFemale = /priya|deepika|ananya|sneha|neha|pooja|kavita|aditi|riya|swati|tanvi|shreya|divya|isha|megha/i.test(student.full_name);
-    const rollSuffix = parseInt(student.student_id.slice(-3)) || 201;
+    const h = student.hostel_info || {};
+    const rollSuffix = parseInt(String(student.student_id).slice(-3)) || 201;
 
-    let hall = isFemale ? "Gargi Hall of Residence (Girls Wing C)" : (rollSuffix % 2 === 0 ? "Ramanujan Hall (Boys Wing A)" : "Aryabhata Hall (Boys Wing B)");
-    let roomNo = isFemale ? `Room ${201 + (rollSuffix % 15)}` : (rollSuffix % 2 === 0 ? `Room ${101 + (rollSuffix % 25)}` : `Room ${301 + (rollSuffix % 25)}`);
-    let bedId = (rollSuffix % 2 === 0) ? "Bed B (Window)" : "Bed A (Window View)";
-    let warden = isFemale ? "Dr. Sunita Kapse" : (rollSuffix % 2 === 0 ? "Prof. P. M. Shinde" : "Dr. S. K. Kulkarni");
-    let wardenOffice = isFemale ? "Girls Residence Wing Office (Ext: 4432)" : (rollSuffix % 2 === 0 ? "Admin Block 108 (Ext: 4418)" : "Admin Block 102 (Ext: 4421)");
-    let roommate = isFemale ? "Sneha Patel" : (rollSuffix % 2 === 0 ? "Vikram Singh" : "Rohan Deshmukh");
-    let roommateDept = isFemale ? "CSE • Roll 252921235" : (rollSuffix % 2 === 0 ? "IT • Roll 252921208" : "CSE • Roll 252921204");
-    let wifiName = isFemale ? `Gargi-C-${roomNo.replace(/[^0-9]/g, '')}` : (rollSuffix % 2 === 0 ? `Ramanujan-A-${roomNo.replace(/[^0-9]/g, '')}` : `Aryabhata-B-${roomNo.replace(/[^0-9]/g, '')}`);
+    let hall = h.hall || (rollSuffix % 2 === 0 ? "Ramanujan Hall (Boys Wing A)" : "Aryabhata Hall (Boys Wing B)");
+    let roomNo = h.room ? (String(h.room).startsWith("Room") ? h.room : `Room ${h.room}`) : "Room 304";
+    let bedId = h.bed ? (String(h.bed).startsWith("Bed") ? h.bed : `Bed ${h.bed}`) : "Bed A (Window View)";
+    let warden = h.warden || "Dr. V. K. Sharma (Chief Warden)";
+    let wardenOffice = "Admin Block 102 (Ext: 4421)";
+    let roommate = h.roommate || "Aarav Sharma";
+    let roommateDept = `${student.department} • Year 3`;
+    let wifiName = `CampusIQ-Hostel-${String(roomNo).replace(/[^0-9]/g, '') || 'Net'}`;
 
     // Update Hostel Card DOM
     const hostelCard = document.querySelector("#tab-hostel-mess .grid.grid-cols-2");

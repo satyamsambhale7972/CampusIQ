@@ -56,16 +56,47 @@ class SupabaseAcademicService {
     this.allStudentsRegistry = validRegistry;
 
     // 3. Restore authenticated session (if previously logged in)
-    const activeSession = sessionStorage.getItem("campusiq_authenticated_student");
+    const activeSession = sessionStorage.getItem("campusiq_authenticated_student") || localStorage.getItem("campusiq_authenticated_student");
     if (activeSession) {
       try {
-        this.currentUser = JSON.parse(activeSession);
+        const parsed = JSON.parse(activeSession);
+        if (parsed && parsed.student_id) {
+          // Re-sync with latest registry store so admin edits are immediately live
+          const latestFromRegistry = this.allStudentsRegistry.find(s => String(s.student_id).trim() === String(parsed.student_id).trim());
+          this.currentUser = latestFromRegistry ? { ...parsed, ...latestFromRegistry } : parsed;
+          sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
+          localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
+        } else {
+          this.currentUser = null;
+        }
       } catch (e) {
         this.currentUser = null;
       }
     } else {
       // By default, student must login! No public leak
       this.currentUser = null;
+    }
+
+    // 3b. Real-time storage listener to sync allStudentsRegistry across windows/tabs
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", (e) => {
+        if (e.key === "campusiq_registry_store" && e.newValue) {
+          try {
+            const updatedRegistry = JSON.parse(e.newValue);
+            if (Array.isArray(updatedRegistry)) {
+              this.allStudentsRegistry = updatedRegistry;
+              if (this.currentUser) {
+                const refreshed = updatedRegistry.find(s => String(s.student_id).trim() === String(this.currentUser.student_id).trim());
+                if (refreshed) {
+                  this.currentUser = { ...this.currentUser, ...refreshed };
+                  localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
+                  sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.currentUser));
+                }
+              }
+            }
+          } catch (err) {}
+        }
+      });
     }
 
     // 4. Test connectivity
@@ -108,8 +139,16 @@ class SupabaseAcademicService {
     const cleanId = String(rollOrEmail).trim().toLowerCase();
     const cleanPass = String(password || "").trim();
     
-    // Ensure allStudentsRegistry is loaded
-    if (!this.allStudentsRegistry || this.allStudentsRegistry.length === 0) {
+    // Always refresh allStudentsRegistry from localStorage so any admin updates are immediately present
+    const cachedRegistry = localStorage.getItem("campusiq_registry_store");
+    if (cachedRegistry) {
+      try {
+        const parsed = JSON.parse(cachedRegistry);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.allStudentsRegistry = parsed;
+        }
+      } catch (e) {}
+    } else if (!this.allStudentsRegistry || this.allStudentsRegistry.length === 0) {
       if (typeof window !== "undefined" && window.CAMPUSIQ_STUDENTS && window.CAMPUSIQ_STUDENTS.length > 0) {
         this.allStudentsRegistry = window.CAMPUSIQ_STUDENTS;
       }
