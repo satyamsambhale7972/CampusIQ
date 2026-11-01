@@ -464,6 +464,9 @@ class CampusIQPortalController {
             if (currentRoll && String(sid).trim() === currentRoll) {
               const updated = data.student;
               this.state.student = { ...this.state.student, ...updated };
+              if (!this.state.student.updated_at) {
+                this.state.student.updated_at = new Date().toISOString();
+              }
               if (window.CampusIQService) {
                 window.CampusIQService.currentUser = this.state.student;
                 localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
@@ -488,6 +491,18 @@ class CampusIQPortalController {
             this.showToast("📢 New Campus Circular Published", data.notice?.title || "Check circulars section", "info");
           } else if (data.type === "NEW_TICKET_SUBMITTED") {
             this.renderTicketsList();
+          } else if (data.type === "STUDENT_DELETED") {
+            const currentRoll = this.state.student ? String(this.state.student.student_id).trim() : "";
+            if (currentRoll && String(data.studentId).trim() === currentRoll) {
+              alert("Notice from Office of the Registrar: Your student enrollment record has been updated or removed by administration. You are being securely signed out.");
+              if (window.CampusIQService) {
+                window.CampusIQService.logoutStudent();
+              }
+            }
+          } else if (data.type === "NOTICE_DELETED") {
+            this.loadNoticesFromStorage();
+            this.renderNotices();
+            this.renderTicker();
           }
         };
       }
@@ -513,12 +528,16 @@ class CampusIQPortalController {
             }
 
             if (updated) {
-              this.state.student = { ...this.state.student, ...updated };
-              if (window.CampusIQService) {
-                window.CampusIQService.currentUser = this.state.student;
+              const localT = this.state.student.updated_at ? new Date(this.state.student.updated_at).getTime() : 0;
+              const newT = updated.updated_at ? new Date(updated.updated_at).getTime() : 0;
+              if (newT >= localT) {
+                this.state.student = { ...this.state.student, ...updated };
+                if (window.CampusIQService) {
+                  window.CampusIQService.currentUser = this.state.student;
+                }
+                this.renderAllViewsForStudent(this.state.student);
+                this.showToast("Record Updated by Administration", `Your attendance / records were updated to ${this.state.student.overall_attendance}%.`, "info");
               }
-              this.renderAllViewsForStudent(this.state.student);
-              this.showToast("Record Updated by Administration", `Your attendance / records were updated to ${this.state.student.overall_attendance}%.`, "info");
             }
           }
         } catch (err) {}
@@ -568,23 +587,49 @@ class CampusIQPortalController {
             const currentCgpa = String(this.state.student.cgpa || "");
             const remoteCgpa = String(remote.cgpa || "");
 
-            let hasChanged = false;
-            if (remote.overall_attendance !== undefined && remoteAtt !== currentAtt) hasChanged = true;
-            if (remote.cgpa !== undefined && remoteCgpa !== currentCgpa) hasChanged = true;
-            if (remote.full_name && remote.full_name !== this.state.student.full_name) hasChanged = true;
-            if (remote.fee_info && JSON.stringify(remote.fee_info) !== JSON.stringify(this.state.student.fee_info)) hasChanged = true;
-            if (remote.hostel_info && JSON.stringify(remote.hostel_info) !== JSON.stringify(this.state.student.hostel_info)) hasChanged = true;
+            const localTime = this.state.student.updated_at ? new Date(this.state.student.updated_at).getTime() : 0;
+            const remoteTime = remote.updated_at ? new Date(remote.updated_at).getTime() : 0;
 
-            if (hasChanged) {
-              console.log("[CampusIQ Live Supabase Sync] Updated profile detected:", remote);
+            // Only accept remote cloud data if it is GENUINELY NEWER than local data (prevents reverting on refresh)
+            if (remoteTime > localTime + 1000) {
+              console.log("[CampusIQ Live Supabase Sync] Newer cloud profile detected:", remote);
               this.state.student = { ...this.state.student, ...remote };
               if (window.CampusIQService) {
                 window.CampusIQService.currentUser = this.state.student;
               }
               localStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
               sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(this.state.student));
+              try {
+                const reg = JSON.parse(localStorage.getItem("campusiq_registry_store") || "[]");
+                const rIdx = reg.findIndex(s => String(s.student_id).trim() === studentId);
+                if (rIdx !== -1) {
+                  reg[rIdx] = { ...reg[rIdx], ...remote };
+                  localStorage.setItem("campusiq_registry_store", JSON.stringify(reg));
+                }
+              } catch (e) {}
               this.renderAllViewsForStudent(this.state.student);
-              this.showToast("⚡ Cloud Sync", `Updated attendance / academic records from college database.`, "info");
+              this.showToast("⚡ Cloud Sync", "Updated academic records synchronized from college database.", "info");
+            } else if (localTime > remoteTime + 1000) {
+              // Local update is newer! Push local changes to Supabase so cloud stays in sync
+              fetch(`${service.url}/rest/v1/profiles?student_id=eq.${studentId}`, {
+                method: "PATCH",
+                headers: {
+                  apikey: service.key,
+                  Authorization: `Bearer ${service.key}`,
+                  "Content-Type": "application/json",
+                  "Prefer": "return=minimal"
+                },
+                body: JSON.stringify({
+                  full_name: this.state.student.full_name,
+                  overall_attendance: this.state.student.overall_attendance,
+                  cgpa: this.state.student.cgpa,
+                  academic_standing: this.state.student.academic_standing,
+                  fee_info: this.state.student.fee_info,
+                  hostel_info: this.state.student.hostel_info,
+                  subjects: this.state.student.subjects,
+                  updated_at: this.state.student.updated_at
+                })
+              }).catch(() => {});
             }
           }
         }
@@ -1186,6 +1231,7 @@ class CampusIQPortalController {
 
     await window.CampusIQService.logAttendance(subjectId, isPresent);
     const student = window.CampusIQService.currentUser;
+    this.state.student = student; // Keep local state in sync
     this.renderAttendanceCalculator(student);
     this.renderOverviewStats(student);
 
@@ -2448,6 +2494,82 @@ class CampusIQPortalController {
 
     const modalTotalPaid = document.getElementById("modal-receipt-total-paid");
     if (modalTotalPaid) modalTotalPaid.textContent = "₹1,45,000 (100% Cleared)";
+
+    // Update Student Record in Memory & Persist to Supabase Cloud
+    if (student) {
+      const nowIso = new Date().toISOString();
+      const totalAmount = student.fee_info ? (student.fee_info.total || 145000) : 145000;
+      student.fee_info = {
+        total: totalAmount,
+        paid: totalAmount,
+        due: 0,
+        status: "100% Cleared"
+      };
+      student.updated_at = nowIso;
+      this.state.student = student;
+
+      // Save to session & local storage
+      localStorage.setItem("campusiq_authenticated_student", JSON.stringify(student));
+      sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(student));
+
+      // Update registry
+      try {
+        const registry = JSON.parse(localStorage.getItem("campusiq_registry_store") || "[]");
+        const idx = registry.findIndex(s => s.student_id === student.student_id);
+        if (idx !== -1) {
+          registry[idx] = { ...registry[idx], fee_info: student.fee_info };
+          localStorage.setItem("campusiq_registry_store", JSON.stringify(registry));
+        }
+      } catch (err) {}
+
+      // Live Supabase Sync to profiles table
+      if (window.CampusIQService && window.CampusIQService.url) {
+        fetch(`${window.CampusIQService.url}/rest/v1/profiles?student_id=eq.${student.student_id}`, {
+          method: "PATCH",
+          headers: {
+            apikey: window.CampusIQService.key,
+            Authorization: `Bearer ${window.CampusIQService.key}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify({
+            fee_info: student.fee_info,
+            updated_at: new Date().toISOString()
+          })
+        }).catch(err => console.warn("Supabase fee sync:", err));
+      }
+
+      // Log Fee Payment Event to Supabase audit_logs table
+      if (window.CampusIQService) {
+        window.CampusIQService.logAuditEvent({
+          action_type: "FEE_PAYMENT_PROCESSED",
+          actor_name: student.full_name,
+          actor_role: "Student",
+          target_entity: "TuitionLedger",
+          target_id: student.student_id,
+          details: {
+            student_id: student.student_id,
+            amount_cleared: totalAmount,
+            mode: mode,
+            transaction_ref: `TXN-ONLINE-${roll.slice(-4)}01`,
+            status: "100% Cleared"
+          },
+          ip_address: "10.0.12.84 (Campus Student Portal)"
+        });
+      }
+
+      // Broadcast update across apps so Admin Portal sees cleared dues immediately
+      if (typeof BroadcastChannel !== "undefined") {
+        try {
+          const bus = new BroadcastChannel("campusiq_realtime_bus");
+          bus.postMessage({
+            type: "STUDENT_UPDATED",
+            studentId: student.student_id,
+            student: student
+          });
+        } catch (err) {}
+      }
+    }
 
     this.closePayDuesModal();
     this.showToast("Payment Successful!", `Outstanding dues processed via ${mode}. Fee Ledger updated to 100% Paid.`, "success");

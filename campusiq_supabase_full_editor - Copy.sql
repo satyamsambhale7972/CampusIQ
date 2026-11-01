@@ -389,7 +389,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- 3. Support Tickets (Helpdesk Queries)
 INSERT INTO public.support_tickets (ticket_number, student_id, student_name, subject, category, priority, status, message, sla_guarantee)
 VALUES
-('TKT-829104', '252921201', 'Satyam Sambhale', 'Biometric Attendance Scanner Reboot on Oct 18', 'Attendance Grievance', 'high', 'in_progress', 'Scanner rebooted during CSE-303 lecture; faculty confirmed presence.', '12 Hours (HOD & Dean Expedited Review)')
+('TKT-829104', '252921201', 'Satyam Sambhale', 'Biometric Attendance Scanner Reboot on Oct 18', 'Attendance Grievance', 'high', 'in_progress', 'Scanner rebooted during CSE-303 lecture, faculty confirmed presence.', '12 Hours (HOD & Dean Expedited Review)')
 ON CONFLICT (ticket_number) DO UPDATE SET
   subject = EXCLUDED.subject,
   message = EXCLUDED.message;

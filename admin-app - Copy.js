@@ -228,12 +228,39 @@ class CampusIQAdminApp {
     });
     sessionStorage.setItem("campusiq_admin_active_session", sessionData);
     localStorage.setItem("campusiq_admin_session", sessionData);
+
+    // Save Admin Login to Supabase audit_logs table
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "ADMIN_LOGIN",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "AdminSession",
+        target_id: "ADMIN-CAMPUSIQ",
+        details: { message: "Authenticated Dean administrative session with master credentials." },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
+    }
+
     this.showToast("Administrative Session Authorized", "Welcome, Dr. Rajeshwar Sen (Dean of Academic Affairs).", "success");
     this.showDashboard();
     return true;
   }
 
   handleAdminLogout() {
+    // Save Admin Logout to Supabase audit_logs table
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "ADMIN_LOGOUT",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "AdminSession",
+        target_id: "ADMIN-CAMPUSIQ",
+        details: { message: "Administrative session signed out." },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
+    }
+
     localStorage.removeItem("campusiq_admin_session");
     this.state.isAuthenticated = false;
     this.showLogin();
@@ -483,6 +510,28 @@ class CampusIQAdminApp {
       this.renderTicketsQueue();
       this.renderOverviewMetrics();
     });
+
+    // Real-Time Cross-App Broadcast Listener
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.onmessage = (event) => {
+          const data = event.data;
+          if (!data || !data.type) return;
+
+          if (data.type === "STUDENT_UPDATED" || data.type === "ATTENDANCE_LOGGED" || data.type === "FEE_PAYMENT_PROCESSED") {
+            this.loadDatabase();
+            this.applyStudentFilters();
+            this.renderOverviewMetrics();
+          } else if (data.type === "NEW_TICKET_SUBMITTED") {
+            this.loadTickets();
+            this.renderTicketsQueue();
+            this.renderOverviewMetrics();
+            this.showToast("New Support Ticket", `Ticket ${data.ticket?.ticket_number} submitted by ${data.ticket?.student_name || "Student"}`, "warning");
+          }
+        };
+      } catch (e) {}
+    }
   }
 
   // --- Navigation & Tabs ---
@@ -852,6 +901,9 @@ switchTab(tabId) {
                 <i data-lucide="edit-3" class="w-3 h-3"></i>
                 <span>Edit</span>
               </button>
+              <button onclick="window.AdminApp.deleteStudent('${s.student_id}')" class="p-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 font-bold text-[11px] transition border border-red-200 dark:border-red-800 flex items-center justify-center" title="Delete Student Record from Supabase">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
           </td>
         </tr>
@@ -986,6 +1038,83 @@ switchTab(tabId) {
     this.state.editingStudent = null;
   }
 
+    // --- Student Deletion with Supabase Sync ---
+  deleteStudent(studentId) {
+    if (!studentId) return;
+    const target = this.state.students.find(s => s.student_id === studentId);
+    if (!target) return;
+
+    const confirmMsg = `Are you sure you want to permanently delete student ${target.full_name} (Roll: ${studentId}) from the college registry and Supabase cloud database? This action is irreversible.`;
+    if (!confirm(confirmMsg)) return;
+
+    // 1. Remove from local state
+    this.state.students = this.state.students.filter(s => s.student_id !== studentId);
+    this.state.filteredStudents = this.state.filteredStudents.filter(s => s.student_id !== studentId);
+    if (window.CampusIQService) {
+      window.CampusIQService.allStudentsRegistry = this.state.students;
+    }
+    localStorage.setItem("campusiq_registry_store", JSON.stringify(this.state.students));
+
+    // 2. Delete from Supabase profiles table
+    if (window.CampusIQService && window.CampusIQService.url) {
+      fetch(`${window.CampusIQService.url}/rest/v1/profiles?student_id=eq.${studentId}`, {
+        method: "DELETE",
+        headers: {
+          apikey: window.CampusIQService.key,
+          Authorization: `Bearer ${window.CampusIQService.key}`,
+          "Prefer": "return=minimal"
+        }
+      }).catch(err => console.warn("Supabase student delete:", err));
+    }
+
+    // 3. Log Deletion to Supabase audit_logs
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "STUDENT_RECORD_DELETED",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "StudentProfile",
+        target_id: studentId,
+        details: {
+          deleted_student_name: target.full_name,
+          student_id: studentId,
+          department: target.department,
+          cgpa: target.cgpa,
+          overall_attendance: target.overall_attendance
+        },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
+    }
+
+    // 4. Real-time broadcast
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "STUDENT_DELETED",
+          studentId: studentId
+        });
+      } catch (err) {}
+    }
+
+    // 5. Close drawer or modal if viewing this student
+    if (this.state.viewingStudent && this.state.viewingStudent.student_id === studentId) {
+      this.closeStudentProfileDrawer();
+    }
+    if (this.state.editingStudent && this.state.editingStudent.student_id === studentId) {
+      this.closeEditStudentModal();
+    }
+
+    this.applyStudentFilters();
+    this.renderOverviewMetrics();
+
+    this.showToast(
+      "Student Record Deleted",
+      `Student ${target.full_name} (${studentId}) removed from registry and deleted from Supabase cloud database.`,
+      "info"
+    );
+  }
+
   saveStudentEdits(e) {
     if (e) e.preventDefault();
     if (!this.state.editingStudent) return;
@@ -1002,11 +1131,13 @@ switchTab(tabId) {
     const newHostel = document.getElementById("edit-stu-hostel").value.trim();
     const auditReason = document.getElementById("edit-stu-reason").value.trim();
 
+    const nowIso = new Date().toISOString();
     const target = this.state.students[idx];
     target.full_name = newName;
     target.overall_attendance = newAtt;
     target.cgpa = newCgpa;
     target.academic_standing = newStanding;
+    target.updated_at = nowIso;
     if (target.fee_info) {
       target.fee_info.due = newDue;
       target.fee_info.status = newDue === 0 ? "100% Cleared" : "Partial Dues";
@@ -1048,9 +1179,12 @@ switchTab(tabId) {
       if (activeAuth) {
         const parsed = JSON.parse(activeAuth);
         if (parsed && String(parsed.student_id).trim() === String(studentId).trim()) {
-          const merged = { ...parsed, ...target };
+          const merged = { ...parsed, ...target, updated_at: nowIso };
           localStorage.setItem("campusiq_authenticated_student", JSON.stringify(merged));
           sessionStorage.setItem("campusiq_authenticated_student", JSON.stringify(merged));
+          if (window.CampusIQService) {
+            window.CampusIQService.currentUser = merged;
+          }
         }
       }
     } catch (err) {}
@@ -1076,6 +1210,28 @@ switchTab(tabId) {
           updated_at: new Date().toISOString()
         })
       }).catch(err => console.warn("Supabase background sync:", err));
+    }
+
+    // Save Student Update Event to Supabase audit_logs
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "STUDENT_UPDATED",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "StudentProfile",
+        target_id: studentId,
+        details: {
+          student_id: studentId,
+          full_name: newName,
+          overall_attendance: newAtt,
+          cgpa: newCgpa,
+          academic_standing: newStanding,
+          fee_due: newDue,
+          hostel_room: newHostel,
+          audit_reason: auditReason || "Administrative Academic Record Update"
+        },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
     }
 
     // Real-Time Cross-App Bus Broadcast to Student Portal instantly
@@ -1326,6 +1482,24 @@ switchTab(tabId) {
     document.getElementById("common-notice-body").value = "";
     document.getElementById("common-notice-attach").value = "";
 
+    // Log to Supabase audit_logs
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "ANNOUNCEMENT_PUBLISHED",
+        actor_name: `${ADMIN_CREDENTIALS.name} (${ADMIN_CREDENTIALS.role})`,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "Announcement",
+        target_id: title,
+        details: {
+          title: title,
+          category: category,
+          priority: priority,
+          department: "All Engineering Departments"
+        },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
+    }
+
     this.showToast(
       "Circular Broadcasted",
       `Published "${title}" to all 1,000 students. Immediately visible on student portal!`,
@@ -1335,10 +1509,61 @@ switchTab(tabId) {
 
   deleteNotice(id) {
     if (!confirm("Are you sure you want to revoke and delete this official notice?")) return;
-    this.state.notices = this.state.notices.filter(n => n.id !== id);
+    const targetNotice = this.state.notices.find(n => n.id === id || n.notice_id === id);
+    this.state.notices = this.state.notices.filter(n => n.id !== id && n.notice_id !== id);
     this.saveNotices();
+
+    // Delete from individual notices storage
+    try {
+      const ind = JSON.parse(localStorage.getItem("campusiq_individual_notices") || "[]");
+      const filteredInd = ind.filter(n => n.id !== id && n.notice_id !== id);
+      localStorage.setItem("campusiq_individual_notices", JSON.stringify(filteredInd));
+    } catch (e) {}
+
     this.renderNoticesList();
-    this.showToast("Notice Revoked", "The circular has been removed from all student dashboards.", "info");
+
+    // Supabase Cloud Deletion
+    if (window.CampusIQService && window.CampusIQService.url) {
+      fetch(`${window.CampusIQService.url}/rest/v1/individual_notices?notice_id=eq.${id}`, {
+        method: "DELETE",
+        headers: { apikey: window.CampusIQService.key, Authorization: `Bearer ${window.CampusIQService.key}` }
+      }).catch(() => {});
+      if (targetNotice && targetNotice.title) {
+        fetch(`${window.CampusIQService.url}/rest/v1/announcements?title=eq.${encodeURIComponent(targetNotice.title)}`, {
+          method: "DELETE",
+          headers: { apikey: window.CampusIQService.key, Authorization: `Bearer ${window.CampusIQService.key}` }
+        }).catch(() => {});
+      }
+    }
+
+    // Log to Supabase audit_logs
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "NOTICE_REVOKED",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "Notice",
+        target_id: String(id),
+        details: {
+          notice_id: id,
+          title: targetNotice ? targetNotice.title : id
+        },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
+    }
+
+    // Broadcast across apps
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        const bus = new BroadcastChannel("campusiq_realtime_bus");
+        bus.postMessage({
+          type: "NOTICE_DELETED",
+          noticeId: id
+        });
+      } catch (err) {}
+    }
+
+    this.showToast("Notice Revoked", "The circular has been removed and deleted from Supabase cloud database.", "info");
   }
 
   // --- Modal 2: Direct Notice to Individual Student ---
@@ -1611,6 +1836,23 @@ switchTab(tabId) {
           updated_at: new Date().toISOString()
         })
       }).catch(err => console.warn("Supabase ticket sync:", err));
+    }
+
+    // Log to Supabase audit_logs
+    if (window.CampusIQService) {
+      window.CampusIQService.logAuditEvent({
+        action_type: "SUPPORT_TICKET_RESOLVED",
+        actor_name: ADMIN_CREDENTIALS.name,
+        actor_role: ADMIN_CREDENTIALS.role,
+        target_entity: "SupportTicket",
+        target_id: this.state.resolvingTicket.ticket_number,
+        details: {
+          ticket_number: this.state.resolvingTicket.ticket_number,
+          new_status: newStatus,
+          admin_reply: actionNotes || "Addressed and verified by Dean of Academics."
+        },
+        ip_address: "10.0.4.18 (Campus Admin VPN)"
+      });
     }
 
     this.closeResolveTicketModal();
@@ -2050,6 +2292,7 @@ switchTab(tabId) {
           <div class="flex items-center gap-2">
             <button onclick="window.AdminApp.openDirectNoticeModal('${s.student_id}')" class="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow flex items-center gap-1.5"><i data-lucide="mail" class="w-3.5 h-3.5"></i> Send Private Notice</button>
             <button onclick="window.AdminApp.openEditStudentModal('${s.student_id}')" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/30 flex items-center gap-1.5"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Record</button>
+            <button onclick="window.AdminApp.deleteStudent('${s.student_id}')" class="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow flex items-center gap-1.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Student</button>
           </div>
         </div>
 
@@ -2990,10 +3233,12 @@ switchTab(tabId) {
   }
 
   // --- Module 31: Live Activity & Audit Logs ---
-  renderAuditLogs() {
+  async renderAuditLogs() {
     const container = document.getElementById("audit-logs-table-container");
     if (!container) return;
-    const logs = window.CampusIQService.getAuditLogs();
+    const logs = window.CampusIQService && window.CampusIQService.fetchAuditLogsFromCloud 
+      ? await window.CampusIQService.fetchAuditLogsFromCloud(60) 
+      : window.CampusIQService.getAuditLogs();
 
     container.innerHTML = `
       <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">

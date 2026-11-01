@@ -1,0 +1,68 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+  <defs>
+    <linearGradient id="cShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="55%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#060D19"/>
+    </linearGradient>
+    <linearGradient id="cGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="35%" stop-color="#FDE68A"/>
+      <stop offset="70%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="cCrimsonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Shield Frame -->
+  <path d="M50 4 C78 4, 92 16, 92 46 C92 76, 68 93, 50 98 C32 93, 8 76, 8 46 C8 16, 22 4, 50 4 Z" 
+        fill="url(#cShieldGrad)" stroke="url(#cGoldGrad)" stroke-width="3.5" stroke-linejoin="round"/>
+  
+  <!-- Graduation Mortarboard Cap at Top -->
+  <g transform="translate(50, 22)">
+    <polygon points="0,-10 24,0 0,10 -24,0" fill="#0A0F1D" stroke="url(#cGoldGrad)" stroke-width="1.8"/>
+    <path d="M-12,3 C-12,9 12,9 12,3" fill="#0F172A" stroke="url(#cGoldGrad)" stroke-width="1.2"/>
+    <circle cx="0" cy="0" r="2.2" fill="#FBBF24"/>
+    <path d="M0,0 Q-12,3 -16,13" fill="none" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="-18" y="13" width="4" height="3" rx="0.5" fill="#D97706"/>
+  </g>
+
+  <!-- Open Academic Book in Center -->
+  <g transform="translate(50, 56)">
+    <!-- Left Page -->
+    <path d="M-2,-2 C-14,-7 -30,-5 -34,-2 L-34,16 C-30,13 -14,11 -2,16 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.5"/>
+    <!-- Right Page -->
+    <path d="M2,-2 C14,-7 30,-5 34,-2 L34,16 C30,13 14,11 2,16 Z" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.5"/>
+    <!-- Center Ribbon Bookmark -->
+    <line x1="0" y1="-3" x2="0" y2="16" stroke="#D97706" stroke-width="2"/>
+    <path d="M0,16 L-2.5,23 L0,21 L2.5,23 Z" fill="url(#cCrimsonGrad)"/>
+    <!-- Page Lines Left -->
+    <line x1="-26" y1="2" x2="-8" y2="0" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="-25" y1="6" x2="-8" y2="4" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="-24" y1="10" x2="-8" y2="8" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+    <!-- Page Lines Right -->
+    <line x1="8" y1="0" x2="26" y2="2" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="8" y1="4" x2="25" y2="6" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="8" y1="8" x2="24" y2="10" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Feather Quill Pen Crossing Diagonally -->
+  <g transform="translate(50, 56)">
+    <path d="M18,-18 Q14,-4 2,14 L-2,10 Q6,-8 10,-22 Z" fill="url(#cGoldGrad)" stroke="#78350F" stroke-width="0.8"/>
+    <line x1="12" y1="-14" x2="16" y2="-17" stroke="#92400E" stroke-width="0.8"/>
+    <line x1="9" y1="-8" x2="14" y2="-10" stroke="#92400E" stroke-width="0.8"/>
+    <line x1="6" y1="-2" x2="11" y2="-4" stroke="#92400E" stroke-width="0.8"/>
+    <polygon points="2,14 -1,20 -3,17" fill="#FBBF24" stroke="#78350F" stroke-width="0.6"/>
+    <circle cx="-0.5" cy="18" r="0.5" fill="#0F172A"/>
+  </g>
+
+  <!-- 3 Stars at Base -->
+  <g transform="translate(50, 85)">
+    <polygon points="0,-4 1.2,-1 4.5,-1 1.8,1 2.8,4.2 0,2.2 -2.8,4.2 -1.8,1 -4.5,-1 -1.2,-1" fill="#FBBF24"/>
+    <polygon points="-14,-3 -13,-0.5 -10,-0.5 -12,1 -11,3.5 -14,1.8 -16,3.5 -15,1 -17,-0.5 -14.5,-0.5" fill="#F59E0B"/>
+    <polygon points="14,-3 15,-0.5 18,-0.5 16,1 17,3.5 14,1.8 12,3.5 13,1 11,-0.5 13.5,-0.5" fill="#F59E0B"/>
+  </g>
+</svg>
